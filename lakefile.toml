@@ -1,0 +1,14 @@
+name = "lean_of_rudin_analysis"
+version = "0.1.0"
+keywords = ["math"]
+defaultTargets = ["Rudin"]
+
+[leanOptions]
+pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+
+[[lean_lib]]
+name = "Rudin"
