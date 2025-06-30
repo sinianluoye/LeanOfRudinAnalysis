@@ -183,6 +183,15 @@ instance : LawfulFunctor Set where
 
 -/
 
+
 theorem mem_setOf {a : α} {p : α → Prop} : a ∈ { x | p x } ↔ p a := Iff.rfl
+
+def univ : Set α := {_a | True}
+
+theorem ne_univ (S: Set α): S ≠ univ ↔ ∃ x, x ∉ S := by
+  simp [univ]
+
+
+
 
 end Set
