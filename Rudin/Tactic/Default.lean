@@ -1,6 +1,6 @@
 import Mathlib.Tactic.Use
 import Mathlib.Tactic.ApplyAt
-
+import Batteries.Tactic.Init
 
 example :∃ a, a > 1 := by
   use 2
