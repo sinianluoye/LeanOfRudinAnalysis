@@ -102,4 +102,13 @@ theorem le_iff_lt_or_eq {A B : Set α} : A ≤ B ↔ (A < B ∨ A = B) := by
     intro hx
     exact hx
 
+@[simp] theorem mem_setOf_eq {x : α} {p : α → Prop} : (x ∈ {y | p y}) = p x := rfl
+
+theorem eq_mem_setOf (p : α → Prop) : p = (· ∈ {a | p a}) := rfl
+
+theorem mem_setOf {a : α} {p : α → Prop} : a ∈ { x | p x } ↔ p a := Iff.rfl
+
+@[simp] theorem setOf_mem_eq {s : Set α} : { x | x ∈ s } = s := rfl
+
+
 end Set
