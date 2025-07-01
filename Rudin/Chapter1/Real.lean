@@ -21,6 +21,18 @@ theorem ext {a b : Cut} (hab : a.carrier = b.carrier) : a = b := by
   cases hab
   simp
 
+theorem ne_iff_carrier_ne {a b:Cut} : a ≠ b ↔ a.carrier ≠ b.carrier := by
+  constructor
+  intro h h1
+  apply h
+  apply ext
+  exact h1
+  intro h h1
+  rw [h1] at h
+  apply h
+  rfl
+
+
 
 instance : Membership ℚ Cut where
   mem α q  := q ∈ α.carrier
@@ -54,7 +66,28 @@ instance : LT Cut where
 instance : LE Cut where
   le a b := a.carrier ≤ b.carrier
 
-namespace Cut
+
+theorem le_iff_not_gt {a b:Cut} : a ≤ b ↔ ¬ a > b := by
+  simp [instLTCut, instLECut, ← Set.ssub_iff_lt, ← Set.sub_iff_le]
+  constructor
+  intro h1 h2
+  rw [Set.ssub_def] at h2
+  rcases h2 with ⟨ h3, h4⟩
+  rcases h4 with ⟨ x, ⟨ hx1, hx2⟩ ⟩
+  rw [Set.sub_def] at h1
+  have h7:= h1 x hx1
+  exact hx2 h7
+  intro h
+  rw [Set.sub_def]
+  intro x hx
+  simp [Set.ssub_def] at h
+  by_cases hy: ∃ y, y ∈ b.carrier
+  rcases hy with ⟨ y, hy⟩
+  by_cases hy1: y ∈ a.carrier
+  sorry
+
+
+
 
 
 instance : Rudin.Ordered Cut where
@@ -69,7 +102,17 @@ instance : Rudin.Ordered Cut where
     (a < b ∧ ¬ a = b ∧ ¬ b < a) ∨
     (¬ a < b ∧ a = b ∧ ¬ b < a) ∨
     (¬ a < b ∧ ¬ a = b ∧ b < a) := by
-    sorry
+    intro a b
+    by_cases h: a = b
+    <;>simp [h, instLTCut, ← Set.ssub_iff_lt]
+    by_cases h1: a.carrier ⊂ b.carrier
+    <;>simp [h1]
+
+
+
+
+
+
 
   le_iff_lt_or_eq : ∀ a b : Cut, a ≤ b ↔ (a < b ∨ a = b) := by
     simp [instLTCut, instLECut]
@@ -96,6 +139,8 @@ instance : Rudin.Ordered Cut where
 
 
 
+
+namespace Cut
 
 
 end Cut
