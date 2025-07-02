@@ -110,5 +110,25 @@ theorem mem_setOf {a : α} {p : α → Prop} : a ∈ { x | p x } ↔ p a := Iff.
 
 @[simp] theorem setOf_mem_eq {s : Set α} : { x | x ∈ s } = s := rfl
 
+theorem not_empty_iff_ex_mem {A : Set α} : A ≠ ∅ ↔ ∃ x, x ∈ A := by
+  simp [ne_iff_ex_not_in]
+
+@[simp] theorem univ_subset_iff {s : Set α} : univ ⊆ s ↔ s = univ := by
+  simp [Set.sub_def, univ]
+  constructor
+  intro h
+  apply ext
+  intro x
+  simp
+  exact h x
+  intro h
+  intro x
+  simp [h]
+
+
+
+
+theorem eq_univ_iff_forall {s : Set α} : s = univ ↔ ∀ x, x ∈ s :=
+  univ_subset_iff.symm.trans <| forall_congr' fun _ => imp_iff_right trivial
 
 end Set

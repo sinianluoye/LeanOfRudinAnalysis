@@ -97,7 +97,10 @@ theorem sup_lb_set_exist_and_eq_inf
   have hL_have_sup : ∃ s, Sup L s := by
     apply LeastUpperBoundProperty.subset_sup_exist
     constructor
-    . sorry
+    . simp [Set.ne_iff_ex_not_in]
+      use l
+      rw [Set.mem_setOf]
+      exact hl
     . exact hB_bound_above_L
 
 

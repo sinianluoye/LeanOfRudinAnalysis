@@ -151,18 +151,39 @@ abbrev Real := Real.Cut
 abbrev ℝ := Real
 
 instance : LeastUpperBoundProperty ℝ where
-  subset_sup_exist : ∀ (E : Set ℝ), BoundAbove E → ∃ a, Sup E a := by
+  subset_sup_exist : ∀ (E : Set ℝ), E ≠ ∅ ∧ BoundAbove E → ∃ a, Sup E a := by
     intro A hA
-    simp [BoundAbove] at hA
-    rcases hA with ⟨ β, hA ⟩
+    simp only [BoundAbove] at hA
+    rcases hA with ⟨ hA1, ⟨ β  ,  hA2 ⟩⟩
     -- p ∈ γ if and only if p ∈ α for some α ∈ A
     let carr: Set ℚ := {p : ℚ | ∃ α : ℝ, α ∈ A ∧ p ∈ α}
+    rw [UpperBound] at hA2
 
     have carr_ne_empty : carr ≠ ∅ := by
-      sorry
+      rw [Set.not_empty_iff_ex_mem]
+      rw [Set.not_empty_iff_ex_mem] at hA1
+      obtain ⟨ α , hα ⟩ := hA1
+      simp [carr]
+      have :  ∃ x, x ∈ α := Set.not_empty_iff_ex_mem.mp α.ne_nempty
+      obtain ⟨ x, hx ⟩ := this
+      use x
+      use α
 
     have carr_ne_univ : carr ≠ Set.univ := by
-      sorry
+      intro h
+      have h1:= β.ne_univ
+      have h2: β.carrier = Set.univ := by
+        simp [Set.eq_univ_iff_forall]
+        intro x
+        simp [Set.eq_univ_iff_forall, carr] at h
+        have h3:= (h x)
+        rcases h3 with ⟨ α, ha⟩
+        have h4:= hA2 α ha.left
+        simp [Real.Cut.instOrdered, Real.Cut.instLE] at h4
+        simp [← Set.sub_iff_le] at h4
+        simp [Set.sub_def] at h4
+        exact h4 x ha.right
+      exact h1 h2
 
     have carr_lt_then_in {p q:ℚ} (hp: p ∈ carr) (hq: q < p): q ∈ carr := by
       sorry
