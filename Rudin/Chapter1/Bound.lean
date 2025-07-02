@@ -34,10 +34,10 @@ the following is true:
  If E ⊂ S, Eis not empty, and E is bounded above, then supE exists in S.
 -/
 class LeastUpperBoundProperty (α: Type u) extends Ordered α where
-  subset_sup_exist : ∀ (E : Set α), BoundAbove E → ∃ a, Sup E a
+  subset_sup_exist : ∀ (E : Set α), E ≠ ∅ ∧ BoundAbove E → ∃ a, Sup E a
 
 class GreatestLowerBoundProperty (α: Type u) extends Ordered α where
-  subset_inf_exist : ∀ (E : Set α), BoundBelow E → ∃ a, Inf E a
+  subset_inf_exist : ∀ (E : Set α), E ≠ ∅ ∧ BoundBelow E → ∃ a, Inf E a
 
 
 theorem sup_only_one
@@ -96,7 +96,10 @@ theorem sup_lb_set_exist_and_eq_inf
 
   have hL_have_sup : ∃ s, Sup L s := by
     apply LeastUpperBoundProperty.subset_sup_exist
-    exact hB_bound_above_L
+    constructor
+    . sorry
+    . exact hB_bound_above_L
+
 
   rcases hL_have_sup with ⟨ s, hs ⟩
   use s
