@@ -177,6 +177,8 @@ abbrev Real := Real.Cut
 
 abbrev ℝ := Real
 
+namespace Real
+
 instance : LeastUpperBoundProperty ℝ where
   subset_sup_exist : ∀ (E : Set ℝ), E ≠ ∅ ∧ BoundAbove E → ∃ a, Sup E a := by
     intro A hA
@@ -276,8 +278,55 @@ instance : LeastUpperBoundProperty ℝ where
     have h6 := h5 s hα2
     exact hs2 h6
 
+def AddDef (α:ℝ) (β:ℝ) := {p | ∃ r ∈ α, ∃ s ∈ β, p = r + s}
+
+-- structure Cut where
+--   carrier : Set ℚ
+--   ne_nempty : carrier ≠ ∅
+--   ne_univ : carrier ≠ Set.univ
+--   lt_then_in {p q:ℚ} (hp: p ∈ carrier) (hq: q < p): q ∈ carrier
+--   ex_gt {p:ℚ} (hp: p ∈ carrier): ∃ r ∈ carrier, p < r
+
+theorem add_def_ne_empty {α β:ℝ} : AddDef α β ≠ ∅ := by
+  simp [AddDef, Set.not_empty_iff_ex_mem]
+  have h1:= α.ne_nempty
+  have h2:= β.ne_nempty
+  simp [Set.not_empty_iff_ex_mem] at h1 h2
+  rcases h1 with ⟨ r, hr⟩
+  rcases h2 with ⟨ s, hs⟩
+  use r + s
+  use r
+  constructor
+  exact hr
+  use s
+  constructor
+  exact hs
+  rfl
+
+theorem add_def_ne_univ {α β:ℝ} : AddDef α β ≠ Set.univ := by
+  simp [AddDef, Set.ne_univ_iff_ex_not_in]
+  have h1 := α.ne_univ
+  have h2 := β.ne_univ
+  simp [Set.ne_univ_iff_ex_not_in] at h1 h2
+  rcases h1 with ⟨ r, hr⟩
+  rcases h2 with ⟨ s, hs⟩
+  use r + s
+  intro a ha
+  intro b hb
+  have hra : r > a := Cut.in_lt_not_in ha hr
+  have hsb : s > b := Cut.in_lt_not_in hb hs
+  apply Rat.ne_of_gt
+  apply Rat.add_lt_add
+  exact hra
+  exact hsb
 
 
+
+
+instance : Add ℝ where
+  add a b := sorry
+
+end Real
 
 
 end Rudin
