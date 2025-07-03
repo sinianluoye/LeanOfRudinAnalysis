@@ -46,4 +46,13 @@ instance : Rudin.OrderedField ℚ where
 
   gtz_mul_gtz_then_gtz := by apply Rat.gtz_mul_gtz_then_gtz
 
+def Avg2 (a:Rat) (b:Rat) := (a + b) / 2
+
+def lt_then_lt_avg2 (hab: a < b) : a < Avg2 a b := by
+  simp [Avg2]
+  rw [← add_lt_left_cancel (a:=a)] at hab
+  rw [div_eq_mul_inv]
+  sorry
+
+
 end Rat

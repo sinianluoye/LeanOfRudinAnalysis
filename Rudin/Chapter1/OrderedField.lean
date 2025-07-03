@@ -1,6 +1,8 @@
 
+import Rudin.Tactic
 import Rudin.Chapter1.Ordered
 import Rudin.Chapter1.Field
+
 
 namespace Rudin
 
@@ -372,5 +374,19 @@ theorem lt_iff_inv_gt_when_same_sign (h: SameSign a b) : a < b ↔ (1/a) > (1/b)
   exact hanz
   exact hbnz
   exact hab
+
+theorem ex_lt : ∃ t, t < a := by
+  use a + -1
+  rw (occs := .pos [2]) [← add_zero (a:=a)]
+  rw [add_lt_left_cancel]
+  simp
+
+theorem ex_gt : ∃ t, t > a := by
+  simp
+  use a + 1
+  rw (occs := .pos [1]) [← add_zero (a:=a)]
+  rw [add_lt_left_cancel]
+  simp
+
 
 end Rudin
