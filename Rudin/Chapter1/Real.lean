@@ -1,10 +1,11 @@
-import Rudin.Tactic
+import Mathlib
+import Rudin.Command
 import Rudin.Basic
 import Rudin.Chapter1.Set
 import Rudin.Chapter1.Field
 import Rudin.Chapter1.Ordered
 import Rudin.Chapter1.OrderedField
-import Rudin.Chapter1.Ratitional
+import Rudin.Chapter1.Rational
 import Rudin.Chapter1.Bound
 
 namespace Rudin
@@ -33,8 +34,8 @@ theorem ext {a b : Cut} (hab : a.carrier = b.carrier) : a = b := by
   simp
 
 
-theorem mem_iff_mem_carrier {x:ℚ} {a:Cut} : x ∈ a ↔ x ∈ a.carrier := by
-  simp [instMembershipℚCut]
+@[simp] theorem mem_iff_mem_carrier {x:ℚ} {a:Cut} : x ∈ a ↔ x ∈ a.carrier := by
+  simp [Rudin.Real.instMembershipRatCut]
 
 theorem ne_iff_carrier_ne {a b:Cut} : a ≠ b ↔ a.carrier ≠ b.carrier := by
   constructor
@@ -65,6 +66,16 @@ theorem in_lt_not_in {p q:ℚ} (hp: p ∈ α) (hq: q ∉ α) : p < q := by
   have h1:= α.lt_then_in hp hpq
   exact (hq h1).elim
 
+theorem ex_mem : ∃ x:ℚ, x ∈ α := by
+  have h:= α.ne_nempty
+  rw [Set.not_empty_iff_ex_mem] at h
+  exact h
+
+theorem ex_not_mem : ∃ x:ℚ, x ∉ α := by
+  have h:= α.ne_univ
+  rw [Set.ne_univ_iff_ex_not_in] at h
+  exact h
+
 instance : LT Cut where
   lt a b := a.carrier < b.carrier
 
@@ -77,7 +88,7 @@ theorem lt_then_ex_not_in_carrier {a b:Cut} (h: a < b): ∃ x ∈ b, x ∉ a := 
   simp [instLT, ← Set.ssub_iff_lt, Set.ssub_def] at h
   rcases h with ⟨h1, x, hx1, hx2⟩
   use x
-  simp [instMembershipℚCut]
+  simp [Rudin.Real.instMembershipRatCut]
   constructor
   exact hx1
   exact hx2
@@ -128,10 +139,15 @@ instance : Ordered Cut where
     <;>simp [h1]
     simp [Cut.ne_iff_carrier_ne] at h
     rw [Set.ssub_iff_lt] at h1
-    simp only [Set.instLT_rudin] at h1
+    simp at h1
     have h2 : ¬(a ≤ b ∧ a.carrier ≠ b.carrier) := by
-      simp only [Cut.instLE]
-      exact h1
+      simp [instLE]
+      intro h3
+      exfalso
+      simp [← Set.le_iff_subset, Set.le_iff_lt_or_eq] at h3
+      rcases h3 with h3|h3
+      <;>contradiction
+
     rw [Cut.le_iff_not_gt] at h2
     rw [Classical.not_and_iff_not_or_not] at h2
     simp [Cut.instLT] at h2
@@ -160,12 +176,16 @@ instance : Ordered Cut where
     exact h1.mpr (Or.inr this)
 
 theorem le_def {a b:Cut} : a ≤ b ↔ (∀ x, x ∈ a.carrier → x ∈ b.carrier) := by
-  simp [Real.instMembershipℚCut, instLE, ← Set.sub_iff_le, Set.sub_def]
+  simp [Rudin.Real.instMembershipRatCut, instLE, ← Set.sub_iff_le, Set.sub_def]
 
 
 theorem lt_def {a b:Cut} : a < b ↔ (∀ x, x ∈ a.carrier → x ∈ b.carrier) ∧ ∃ x ∈ b.carrier, x ∉ a.carrier:= by
-  simp [lt_iff_le_not_le, le_def]
+  simp [Rudin.Real.instMembershipRatCut, instLT, ← Set.ssub_iff_lt, Set.ssub_def]
 
+theorem ex_mul_mem_and_mul_not_mem {d x:ℚ} {α:Cut} (hx: x > 0) (hd: d > 0):
+  ∃ m n, m < n ∧ n - m < d ∧ m * x ∈ α ∧ n * x ∉ α := by
+    simp
+    sorry
 
 
 end Cut
@@ -175,17 +195,17 @@ end Real
 
 abbrev Real := Real.Cut
 
-abbrev ℝ := Real
+abbrev RR := Real /-use RR instead of ℝ to avoid confilict with mathlib-/
 
 namespace Real
 
-instance : LeastUpperBoundProperty ℝ where
-  subset_sup_exist : ∀ (E : Set ℝ), E ≠ ∅ ∧ BoundAbove E → ∃ a, Sup E a := by
+instance : LeastUpperBoundProperty RR where
+  subset_sup_exist : ∀ (E : Set RR), E ≠ ∅ ∧ BoundAbove E → ∃ a, Sup E a := by
     intro A hA
     simp only [BoundAbove] at hA
     rcases hA with ⟨ hA1, ⟨ β  ,  hA2 ⟩⟩
     -- p ∈ γ if and only if p ∈ α for some α ∈ A
-    let carr: Set ℚ := {p : ℚ | ∃ α : ℝ, α ∈ A ∧ p ∈ α}
+    let carr: Set ℚ := {p : ℚ | ∃ α : RR, α ∈ A ∧ p ∈ α}
     rw [UpperBound] at hA2
 
     have carr_ne_empty : carr ≠ ∅ := by
@@ -197,6 +217,8 @@ instance : LeastUpperBoundProperty ℝ where
       obtain ⟨ x, hx ⟩ := this
       use x
       use α
+      constructor
+      <;>assumption
 
     have carr_ne_univ : carr ≠ Set.univ := by
       intro h
@@ -230,18 +252,15 @@ instance : LeastUpperBoundProperty ℝ where
       constructor
       simp [carr]
       use α
-      constructor
-      exact ha1
-      exact hr1
-      exact hr2
+      assumption
 
-    let γ:ℝ := ⟨carr, carr_ne_empty, carr_ne_univ,  carr_lt_then_in, carr_ex_gt⟩
+    let γ:RR := ⟨carr, carr_ne_empty, carr_ne_univ,  carr_lt_then_in, carr_ex_gt⟩
     use γ
     by_cases h: ∃ δ, δ < γ ∧ Sup A δ
     rcases h with ⟨ δ, h1, h2 ⟩
     have h3:= Real.Cut.lt_then_ex_not_in_carrier h1
     rcases h3 with ⟨ s, hs1, hs2⟩
-    simp [Real.instMembershipℚCut] at hs1
+    simp [Real.instMembershipRatCut] at hs1
     rw [Set.mem_setOf] at hs1
     simp [Sup, UpperBound] at h2
     rcases h2 with ⟨ h3, h4⟩
@@ -278,9 +297,9 @@ instance : LeastUpperBoundProperty ℝ where
     have h6 := h5 s hα2
     exact hs2 h6
 
-def AddDef (α:ℝ) (β:ℝ) := {p | ∃ r ∈ α, ∃ s ∈ β, p = r + s}
+def AddDef (α:RR) (β:RR) := {p | ∃ r ∈ α, ∃ s ∈ β, p = r + s}
 
-theorem add_def_ne_empty {α β:ℝ} : AddDef α β ≠ ∅ := by
+theorem add_def_ne_empty {α β:RR} : AddDef α β ≠ ∅ := by
   simp [AddDef, Set.not_empty_iff_ex_mem]
   have h1:= α.ne_nempty
   have h2:= β.ne_nempty
@@ -292,11 +311,8 @@ theorem add_def_ne_empty {α β:ℝ} : AddDef α β ≠ ∅ := by
   constructor
   exact hr
   use s
-  constructor
-  exact hs
-  rfl
 
-theorem add_def_ne_univ {α β:ℝ} : AddDef α β ≠ Set.univ := by
+theorem add_def_ne_univ {α β:RR} : AddDef α β ≠ Set.univ := by
   simp [AddDef, Set.ne_univ_iff_ex_not_in]
   have h1 := α.ne_univ
   have h2 := β.ne_univ
@@ -313,7 +329,7 @@ theorem add_def_ne_univ {α β:ℝ} : AddDef α β ≠ Set.univ := by
   exact hra
   exact hsb
 
-theorem add_def_lt_then_in {α β:ℝ} {p q:ℚ} (hp: p ∈ AddDef α β) (hq: q < p): q ∈ (AddDef α β) := by
+theorem add_def_lt_then_in {α β:RR} {p q:ℚ} (hp: p ∈ AddDef α β) (hq: q < p): q ∈ (AddDef α β) := by
   simp [AddDef] at *
   rcases hp with ⟨ r, hr, s ,hs, hrs⟩
   rw [hrs] at hq
@@ -330,7 +346,7 @@ theorem add_def_lt_then_in {α β:ℝ} {p q:ℚ} (hp: p ∈ AddDef α β) (hq: q
   exact hqr2
   simp
 
-theorem add_def_ex_gt {α β:ℝ} {p:ℚ} (hp: p ∈ AddDef α β): ∃ r ∈ AddDef α β, p < r := by
+theorem add_def_ex_gt {α β:RR} {p:ℚ} (hp: p ∈ AddDef α β): ∃ r ∈ AddDef α β, p < r := by
   simp [AddDef] at *
   rcases hp with ⟨ r, hr, s ,hs, hrs⟩
   rcases α.ex_gt hr with ⟨ a, ha1, ha2⟩
@@ -341,19 +357,22 @@ theorem add_def_ex_gt {α β:ℝ} {p:ℚ} (hp: p ∈ AddDef α β): ∃ r ∈ Ad
   constructor
   exact ha1
   use b
-  constructor
-  exact hb1
-  simp
   rw [hrs]
   apply Rat.add_lt_add
   exact ha2
   exact hb2
 
 
-instance : Add ℝ where
+instance : Add RR where
   add a b := ⟨ AddDef a b, add_def_ne_empty, add_def_ne_univ, add_def_lt_then_in, add_def_ex_gt⟩
 
-def OfRatDef (p:ℚ) := {x:ℚ | x < p}
+theorem mem_add_def_iff {α β:RR} {x : ℚ}: x ∈ (α + β) ↔ ∃ r ∈ α, ∃ s ∈ β, x = r + s := by
+  simp [Rudin.Real.instMembershipRatCut, HAdd.hAdd, instAddRR, AddDef]
+
+
+
+def OfRatDef (n:ℚ) := {x:ℚ | x < n}
+
 
 -- structure Cut where
 --   carrier : Set ℚ
@@ -362,68 +381,364 @@ def OfRatDef (p:ℚ) := {x:ℚ | x < p}
 --   lt_then_in {p q:ℚ} (hp: p ∈ carrier) (hq: q < p): q ∈ carrier
 --   ex_gt {p:ℚ} (hp: p ∈ carrier): ∃ r ∈ carrier, p < r
 
-theorem ofRat_def_ne_empty (p:ℚ) : OfRatDef p ≠ ∅ := by
+theorem ofRat_def_ne_empty {n:ℚ} : OfRatDef n ≠ ∅ := by
   simp [OfRatDef, Set.not_empty_iff_ex_mem]
-  use p-1
+  use n-1
   rw [← sub_ltz_iff_lt]
   rw [sub_eq_add_neg (b:=1)]
   rw [add_sub_cancel]
   simp
 
-theorem zero_def_ne_univ : ZeroDef ≠ Set.univ := by
-  simp [ZeroDef, Set.ne_univ_iff_ex_not_in]
-  use 0
-  simp
+theorem ofRat_def_ne_univ {n:ℚ} : OfRatDef n ≠ Set.univ := by
+  simp [OfRatDef, Set.ne_univ_iff_ex_not_in]
+  use n
 
-theorem zero_def_lt_then_in {p q:ℚ} (hp: p ∈ ZeroDef) (hq: q < p): q ∈ ZeroDef := by
-  simp [ZeroDef] at *
+
+theorem OfRat_lt_then_in {n p q:ℚ} (hp: p ∈ OfRatDef n) (hq: q < p): q ∈ OfRatDef n := by
+  simp [OfRatDef] at *
   exact lt_trans hq hp
 
-theorem zero_def_ex_gt {p:ℚ} (hp: p ∈ ZeroDef): ∃ r ∈ ZeroDef, p < r := by
-  simp [ZeroDef] at *
-  use p / 2
-  have h: p / 2 < 0 := by
-    rw [Rat.div_eq_mul_inv]
-    rw [mul_comm]
-    apply gtz_mul_ltz_ltz
-    apply gtz_then_inv_gtz
-    norm_cast
-    exact hp
+theorem OfRat_def_ex_gt {n p:ℚ} (hp: p ∈ OfRatDef n): ∃ r ∈ OfRatDef n, p < r := by
+  simp [OfRatDef] at *
+  use (p+n) / 2
   constructor
-  exact h
-  rw [← sub_ltz_iff_lt]
-  rw [div_eq_mul_inv]
-  rw (occs := .pos [1])[← mul_one (a:=p)]
-  rw [← mul_sub]
-  have : (1:Rat) = 2 / 2 := by
-    rw [div_eq_mul_inv (b:=2)]
-    rw [mul_div_cancel']
-    norm_cast
-  rw (occs := .pos [1])[this]
-  rw [div_eq_mul_inv]
-  rw (occs := .pos [2])[← one_mul (a:=1 / 2)]
-  rw [← sub_mul]
-  have : (2:Rat) - 1 = 1 := by
-    rw [← Rat.mkRat_self 2]
-    rw [← Rat.mkRat_self 1]
-    rw [Rat.mkRat_sub_mkRat]
+  rw [← add_lt_left_cancel (a:=-n)]
+  rw [add_comm]
+  rw [← sub_eq_add_neg]
+  rw [neg_add]
+  rw [← gtz_mul_lt_left_cancel (a:=2)]
+  ring_nf
+  simp [hp]
+  simp
+  rw [← add_lt_left_cancel (a:=-p)]
+  rw [add_comm]
+  rw [← sub_eq_add_neg]
+  rw [sub_self]
+  rw [← gtz_mul_lt_left_cancel (a:=2)]
+  ring_nf
+  simp [hp]
+  simp
+
+
+instance instOfNatRR (n : Nat) : OfNat RR n where
+  ofNat := ⟨ OfRatDef n, ofRat_def_ne_empty, ofRat_def_ne_univ, OfRat_lt_then_in, OfRat_def_ex_gt⟩
+
+instance : Zero RR where
+  zero := (instOfNatRR 0).ofNat
+
+instance : One RR where
+  one := (instOfNatRR 1).ofNat
+
+theorem zero_def : (0 : RR) = ⟨ OfRatDef 0, ofRat_def_ne_empty, ofRat_def_ne_univ, OfRat_lt_then_in, OfRat_def_ex_gt⟩ := rfl
+
+theorem one_def : (1 : RR) = ⟨ OfRatDef 1, ofRat_def_ne_empty, ofRat_def_ne_univ, OfRat_lt_then_in, OfRat_def_ex_gt⟩ := rfl
+
+
+def NegDef (α : RR) := {p:ℚ | ∃ r:ℚ, r > 0 ∧ - p - r ∉ α }
+
+theorem neg_def_ne_empty {α: RR} : NegDef α ≠ ∅ := by
+  simp [Set.not_empty_iff_ex_mem, NegDef]
+  have h:= α.ne_univ
+  rw [Set.ne_univ_iff_ex_not_in] at h
+  rcases h with ⟨ s, hs⟩
+  let p := -s -1
+  have h1: -p-1 ∉ α.carrier := by
+    simp [p]
+    exact hs
+  use p
+  use 1
+  simp
+  exact h1
+
+theorem neg_def_ne_univ {α: RR} : NegDef α ≠ Set.univ := by
+  simp [Set.ne_univ_iff_ex_not_in, NegDef]
+  have h:= α.ne_nempty
+  rw [Set.not_empty_iff_ex_mem] at h
+  rcases h with ⟨r, hr⟩
+  use -r
+  intro x hx
+  simp
+  have h: r - x < r := by
     simp
-    rw [Rat.mkRat_eq_iff]
-    simp [ ← Rat.ofInt_ofNat, Rat.ofInt_den, Rat.ofInt_num]
-    rw [Rat.ofNat_den]
-    norm_cast
-    norm_cast
-    rw [Rat.ofNat_den]
-    norm_cast
-    rw [Rat.ofNat_den]
-    norm_cast
-  rw [this]
-  rw [one_mul]
-  rw [← div_eq_mul_inv]
+    exact hx
+  apply α.lt_then_in hr h
+
+
+theorem neg_def_lt_then_in {α: RR} {p q:ℚ} (hp: p ∈ NegDef α) (hq: q < p): q ∈ NegDef α := by
+  simp [NegDef] at *
+  rcases hp with ⟨ r, hr, hpr⟩
+  use r
+  constructor
+  exact hr
+  intro hqr
+  have h:= α.in_lt_not_in hqr hpr
+  simp at h
+  linarith
+
+theorem neg_def_ex_gt {α: RR} {p:ℚ} (hp: p ∈ NegDef α): ∃ r ∈ NegDef α, p < r := by
+  simp [NegDef] at *
+  rcases hp with ⟨ r, hr, hpr⟩
+  have h := α.ne_nempty
+  rw [Set.not_empty_iff_ex_mem] at h
+  rcases h with ⟨ x, hx⟩
+  use p + r / 2
+  simp
+  constructor
+  use r / 2
+  simp
+  constructor
+  assumption
+  ring_nf
+  rw [neg_sub_comm]
+  exact hpr
+  exact hr
+
+instance : Neg RR where
+  neg a := ⟨
+    NegDef a,
+    neg_def_ne_empty,
+    neg_def_ne_univ,
+    neg_def_lt_then_in,
+    neg_def_ex_gt⟩
+
+theorem neg_def {α:RR} : -α = ⟨
+    NegDef α,
+    neg_def_ne_empty,
+    neg_def_ne_univ,
+    neg_def_lt_then_in,
+    neg_def_ex_gt⟩ := by rfl
+
+/-
+class Field (α : Type u) extends
+  Add α, Mul α, Sub α, Neg α, Div α, Zero α, One α, Pow α Nat, HMul Nat α α where
+  -- add axioms
+  add_comm  : ∀ a b : α, a + b = b + a
+  add_assoc : ∀ a b c : α, (a + b) + c = a + (b + c)
+  zero_add  : ∀ a : α, 0 + a = a
+  add_neg   : ∀ a : α, a + -a = 0
+  -- mul axioms
+  mul_comm  : ∀ a b : α, a * b = b * a
+  mul_assoc : ∀ a b c : α, (a * b) * c = a * (b * c)
+  one_nz : (1 : α) ≠ (0 : α)
+  one_mul   : ∀ a : α, 1 * a = a
+  mul_inv_when_nz   : ∀ a : α, a ≠ 0 → a * (1 / a) = 1
+  -- distributive law
+  mul_add   : ∀ a b c : α, a * (b + c) = a * b + a * c
+
+  -- remarks
+  sub_eq_add_neg : ∀ a b : α, a - b = a + -b
+  div_eq_mul_inv : ∀ a b : α, a / b = a * (1 / b)
+  pow_nat_def : ∀ a : α, ∀ n : Nat, a ^ n = if n = 0 then 1 else a ^ (n - 1) * a
+  nat_mul_def : ∀ a : α, ∀ n : Nat, n * a = if n = 0 then 0 else (n - 1) * a + a
+-/
+
+theorem add_comm {a b : RR} : a + b = b + a := by
+  apply Cut.ext
+  simp [HAdd.hAdd, instAddRR, AddDef]
+  apply Set.ext
+  intro x
+  simp
+  constructor
+  <;>intro h
+  <;>rcases h with ⟨ r, hr, s, hs, hrs⟩
+  <;>use s
+  <;>constructor
+  assumption
+  use r
+  constructor
+  assumption
+  simp [hrs]
+  simpa [HAdd.hAdd] using (Rat.add_comm (a:=r) (b:=s))
+  exact hs
+  use r
+  constructor
+  assumption
+  simp [hrs]
+  simpa [HAdd.hAdd] using (Rat.add_comm (a:=r) (b:=s))
+
+theorem add_assoc {a b c: RR} : (a + b) + c = a + (b + c) := by
+  apply Cut.ext
+  simp [HAdd.hAdd, instAddRR, AddDef]
+  apply Set.ext
+  intro x
+  simp
+  constructor
+  <;>intro h
+  rcases h with ⟨n, ⟨⟨ r, hr0, ⟨ s, hs0, hs1⟩ ⟩, t, ⟨ ht0, ht1⟩ ⟩ ⟩
+  use r
+  constructor
+  assumption
+  use s + t
+  constructor
+  use s
+  constructor
+  assumption
+  use t
+  constructor
+  assumption
+  rfl
+  rw [ht1, hs1]
+  simpa [HAdd.hAdd] using (Rat.add_assoc (a:=r) (b:=s))
+  rcases h with ⟨r, hr0, h⟩
+  rcases h with ⟨n, h, hrn⟩
+  rcases h with ⟨s, hs0, h⟩
+  rcases h with ⟨t, ht0, hst⟩
+  use r + s
+  constructor
+  use r
+  constructor
+  assumption
+  use s
+  constructor
+  assumption
+  rfl
+  use t
+  constructor
+  assumption
+  simp [hrn, hst]
+  have h := (Rat.add_assoc (a:=r) (b:=s) (c:=t)).symm
   exact h
 
-instance : Zero ℝ where
-  zero := ⟨ ZeroDef, zero_def_ne_empty, zero_def_ne_univ, zero_def_lt_then_in, zero_def_ex_gt⟩
+theorem zero_add {a:RR} : 0 + a = a := by
+  apply Cut.ext
+  simp [zero_def, OfRatDef]
+  simp [HAdd.hAdd, instAddRR, AddDef]
+  apply Set.ext
+  intro x
+  constructor
+  <;>intro h
+  -- rw [Set.mem_setOf] at h
+  rcases h with ⟨ r, hr, s, hs, hrs⟩
+  rw [← Rat.add_lt_left_cancel (a:=s), add_zero] at hr
+  have : x = r + s := hrs
+  rw [Rat.add_comm] at this
+  rw [← this] at hr
+  apply a.lt_then_in (p:=s)
+  exact hs
+  exact hr
+  simp
+  have h1:= a.ex_gt h
+  rcases h1 with ⟨ r, hr1, hr2⟩
+  use x - r
+  constructor
+  simp [hr2]
+  use r
+  constructor
+  exact hr1
+  have : Add.add (x - r) r = (x - r) + r := by rfl
+  rw [this]
+  simp
+
+theorem add_neg {a:RR} : a + -a = 0 := by
+  simp [neg_def, zero_def]
+  simp [HAdd.hAdd, instAddRR, AddDef, OfRatDef, NegDef]
+  apply Set.ext
+  intro x
+  simp
+  constructor
+  intro h
+  rcases h with ⟨ r, hr, s, h, hrs⟩
+  rcases h with ⟨ t, ht, hst⟩
+  have := Cut.in_lt_not_in  hr hst
+  have h : x = r + s := by
+    rw [hrs]
+    rfl
+  rw [h]
+  have h: r + s < -t := by linarith
+  have h1: -t < 0 := by linarith
+  have h2: r + s < 0 := by linarith
+  exact h2
+  intro hx
+  let y := -x/2
+  have hy : y > 0 := by
+    simp [y]
+    exact hx
+  have h : ∃ m n, m < n ∧ n - m < 1 ∧ m * y ∈ a ∧ n * y ∉ a := by
+    simp
+    rcases Cut.ex_mem (α := a) with ⟨ r, hr⟩
+    rcases Cut.ex_not_mem (α := a) with ⟨ s, hs⟩
+    use (r - 1) / y
+    use (s + 1) / y
+    have hynz : y ≠ 0 := ne_of_gt hy
+    have h: r < s := Cut.in_lt_not_in hr hs
+    constructor
+    rw [Rudin.lt_div_gtz_iff_mul_lt hy]
+    rw [Rudin.div_mul_cancel hynz]
+    linarith
+    rw [Rudin.div_mul_cancel hynz]
+    have hr1: r - 1 < r := by linarith
+    have hs1: s + 1 > s := by linarith
+    have h1:= a.lt_then_in hr hr1
+    constructor
+    exact h1
+    rw [Rudin.div_mul_cancel hynz]
+    intro hs2
+    exact hs (a.lt_then_in hs2 hs1)
+  rcases h with ⟨m, n, hmn, hm, hn⟩
+  use m * y - y
+  constructor
+  apply a.lt_then_in hm
+  simp
+  exact hy
+  use x - m * y + y
+  constructor
+
+
+  -- use m * y
+  -- constructor
+  -- exact hm
+  -- use x - m * y
+  -- constructor
+  -- use x + m * y - n * y
+  -- constructor
+  -- simp only [y]
+  -- ring_nf
+  -- rw (occs := .pos [1])[← Rat.mul_one x]
+  -- rw [Rat.mul_assoc (a:=x)]
+  -- rw [← Rat.mul_add (a:=x) (b:=1)]
+  -- rw [Rat.mul_assoc (a:=x)]
+  -- rw [← Rat.mul_add (a:=x)]
+  -- apply ltz_mul_ltz_gtz
+  -- exact hx
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 end Real
 

@@ -1,5 +1,4 @@
 import Rudin.Basic
-import Rudin.Tactic
 import Rudin.Chapter1.Ordered
 import Rudin.Chapter1.Field
 import Rudin.Chapter1.OrderedField

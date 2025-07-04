@@ -1,5 +1,4 @@
-
-import Rudin.Tactic
+import Mathlib
 import Rudin.Chapter1.Ordered
 import Rudin.Chapter1.Field
 
@@ -359,7 +358,7 @@ theorem lt_iff_inv_gt_when_same_sign (h: SameSign a b) : a < b ↔ (1/a) > (1/b)
   rw [← gtz_mul_lt_left_cancel (a:=a*b)]
   rw [← div_eq_mul_inv, ← div_eq_mul_inv]
   rw (occs := .pos [1]) [mul_comm]
-  rw [mul_div_cancel, mul_div_cancel]
+  rw [mul_div_cancel_left, mul_div_cancel_left]
   exact h
   exact hanz
   exact hbnz
@@ -369,7 +368,7 @@ theorem lt_iff_inv_gt_when_same_sign (h: SameSign a b) : a < b ↔ (1/a) > (1/b)
   rw [← gtz_mul_lt_left_cancel (a:=a*b)] at h
   rw [← div_eq_mul_inv, ← div_eq_mul_inv] at h
   rw (occs := .pos [1]) [mul_comm] at h
-  rw [mul_div_cancel, mul_div_cancel] at h
+  rw [mul_div_cancel_left, mul_div_cancel_left] at h
   exact h
   exact hanz
   exact hbnz
@@ -392,13 +391,13 @@ theorem lt_div_gtz_iff_mul_lt (h: c > 0) : a < b / c ↔ a * c < b := by
   constructor
   <;>intro h1
   rw [← gtz_mul_lt_left_cancel (a:=c)] at h1
-  rw [mul_div_cancel'] at h1
+  rw [mul_div_cancel_left'] at h1
   rw [mul_comm]
   exact h1
   exact gt_then_ne h
   exact h
   rw [← gtz_mul_lt_left_cancel (a:=c)]
-  rw [mul_div_cancel']
+  rw [mul_div_cancel_left']
   rw [mul_comm]
   exact h1
   exact gt_then_ne h
@@ -409,14 +408,14 @@ theorem lt_div_ltz_iff_mul_gt (h: c < 0) : a < b / c ↔ a * c > b := by
   <;>intro h1
   apply gt_iff_lt.mpr at h1
   rw [← ltz_mul_lt_left_cancel (a:=c)] at h1
-  rw [mul_div_cancel'] at h1
+  rw [mul_div_cancel_left'] at h1
   rw [mul_comm]
   exact h1
   exact lt_then_ne h
   exact h
   rw [← gt_iff_lt]
   rw [← ltz_mul_lt_left_cancel (a:=c)]
-  rw [mul_div_cancel']
+  rw [mul_div_cancel_left']
   rw [mul_comm]
   exact h1
   exact lt_then_ne h

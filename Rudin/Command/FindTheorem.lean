@@ -6,14 +6,12 @@ open Lean.Elab.Command
 
 /--
 `find_thms "xxx" "yyy" "-zzz" …`
-在当前环境中查找包含 xxx 且包含 yyy 但不包含 zzz 的定理。
-定理的分词是按 `.` 和 `_` 分割的
+find the theorems whose names contain the strings "xxx" and "yyy", but not "zzz" etc.
 -/
 syntax (name := findThms) "#find_thms" (str)+ : command
 
 @[command_elab findThms]
 def elabFindThms : CommandElab := fun stx => do
-  -- 解析所有参数字符串
   let args := stx[1].getArgs.map fun s =>
     s.isStrLit?
     |>.get!
@@ -38,7 +36,6 @@ def elabFindThms : CommandElab := fun stx => do
 
   let res := thms.filter (fun (nm, _) => filter_name nm)
 
-  -- -- 输出
   if res.isEmpty then
     logInfo m!"[find_thms] no matching theorems"
   else

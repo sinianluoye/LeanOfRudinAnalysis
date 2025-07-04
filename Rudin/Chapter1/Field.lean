@@ -204,7 +204,12 @@ theorem mul_div_assoc {a b c : α} :
   rw [← mul_assoc]
   rw [← div_eq_mul_inv]
 
-@[simp] theorem mul_div_cancel' {a b : α} (ha : a ≠ 0) :
+@[simp] theorem div_self {a:α} (ha: a ≠ 0) : a / a = 1 := by
+  rw [div_eq_mul_inv]
+  rw [mul_inv]
+  exact ha
+
+@[simp] theorem mul_div_cancel_left' {a b : α} (ha : a ≠ 0) :
     a * (b / a) = b := by
   rw [div_eq_mul_inv,
     ← mul_assoc,
@@ -214,18 +219,27 @@ theorem mul_div_assoc {a b c : α} :
     mul_comm,
     one_mul]
 
-@[simp] theorem mul_div_cancel {a b : α} (ha : a ≠ 0) : a * b / a = b := by
+@[simp] theorem mul_div_cancel_left {a b : α} (ha : a ≠ 0) : a * b / a = b := by
   rw [← mul_div_assoc]
-  rw [mul_div_cancel' ha]
+  rw [mul_div_cancel_left' ha]
+
+@[simp] theorem mul_div_cancel {a b:α} (hb : b ≠ 0) : a * b / b = a := by
+  rw [← mul_div_assoc]
+  simp [hb]
+  rw [mul_comm, one_mul]
+
+@[simp] theorem div_mul_cancel {a b:α} (hb : b ≠ 0) : a / b * b = a := by
+  rw [mul_comm]
+  simp [hb]
 
 /-1.15 a-/
 theorem mul_eq_left_cancel {a b c : α} (ha : a ≠ 0) :
     (a * b = a * c) ↔ (b = c) := by
   constructor
   <;>intro h
-  rw [← mul_div_cancel (a:=a) (b:=b) ha]
+  rw [← mul_div_cancel_left (a:=a) (b:=b) ha]
   rw [h]
-  rw [mul_div_cancel ha]
+  rw [mul_div_cancel_left ha]
   rw [h]
 
 @[simp] theorem mul_one {a : α} : a * 1 = a := by
@@ -361,18 +375,18 @@ theorem pow_two {a : α} : a ^ 2 = a * a := by simp [pow_nat_def]
 theorem div_eq_div_iff_mul_eq_mul {a b c d:α} (hbnz: b ≠ 0) (hdnz: d ≠ 0) : a / b = c / d ↔ a * d = b * c := by
   constructor
   . intro h
-    rw [← mul_div_cancel (a:=b) (b:=a*d) hbnz]
+    rw [← mul_div_cancel_left (a:=b) (b:=a*d) hbnz]
     rw [← mul_comm, mul_assoc]
     rw [mul_comm]
     rw [← mul_div_assoc]
     rw [h]
     rw [mul_comm (a:=d)]
     rw [mul_assoc]
-    rw [mul_div_cancel' hdnz]
+    rw [mul_div_cancel_left' hdnz]
   . intro h
-    rw [← mul_div_cancel (a:=d) (b:=a) hdnz, mul_comm]
+    rw [← mul_div_cancel_left (a:=d) (b:=a) hdnz, mul_comm]
     rw [h]
-    rw [← mul_div_assoc, mul_div_cancel (a:=b) (b:=c/d) hbnz]
+    rw [← mul_div_assoc, mul_div_cancel_left (a:=b) (b:=c/d) hbnz]
 
 @[simp] theorem neg_one_mul {a:α} : -1 * a = -a := by
   rw [← one_mul (a:=-a)]

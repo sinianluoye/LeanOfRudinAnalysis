@@ -4,6 +4,7 @@ import Rudin.Chapter1.Field
 import Rudin.Chapter1.Ordered
 import Rudin.Chapter1.OrderedField
 
+namespace Rudin
 
 namespace Rat
 variable {a b:ℚ}
@@ -47,39 +48,6 @@ instance : Rudin.OrderedField ℚ where
 
   gtz_mul_gtz_then_gtz := by apply Rat.gtz_mul_gtz_then_gtz
 
-namespace Rudin
-
-def Avg2 (a:Rat) (b:Rat) := (a + b) / 2
-
-#find_thms "lt" "div" "-Nat" "-BitVec" "-UInt64"
-
-def lt_then_lt_avg2 (hab: a < b) : a < Avg2 a b := by
-  simp [Avg2]
-  rw [← add_lt_left_cancel (a:=a)] at hab
-  rw [Rudin.lt_div_gtz_iff_mul_lt]
-  have : (2:Rat) = 1 + 1 := by
-    repeat rw [← Rat.ofInt_ofNat]
-    rw [← mkRat_self (ofInt 2), ← mkRat_self (ofInt 1)]
-    rw [Rat.mkRat_add_mkRat]
-    rw [Rat.mkRat_eq_iff]
-    simp [Rat.ofInt_num, Rat.ofInt_den]
-    rw [Rat.ofInt_den]
-    norm_cast
-    rw [Rat.ofInt_den]
-    norm_cast
-    rw [Rat.ofInt_den]
-    norm_cast
-    rw [Rat.ofInt_den]
-    norm_cast
-
-
-  rw [this]
-  simp [mul_add]
-  exact hab
-
-
-
+end Rat
 
 end Rudin
-
-end Rat
