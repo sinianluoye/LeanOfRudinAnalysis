@@ -388,5 +388,39 @@ theorem ex_gt : ∃ t, t > a := by
   rw [add_lt_left_cancel]
   simp
 
+theorem lt_div_gtz_iff_mul_lt (h: c > 0) : a < b / c ↔ a * c < b := by
+  constructor
+  <;>intro h1
+  rw [← gtz_mul_lt_left_cancel (a:=c)] at h1
+  rw [mul_div_cancel'] at h1
+  rw [mul_comm]
+  exact h1
+  exact gt_then_ne h
+  exact h
+  rw [← gtz_mul_lt_left_cancel (a:=c)]
+  rw [mul_div_cancel']
+  rw [mul_comm]
+  exact h1
+  exact gt_then_ne h
+  exact h
+
+theorem lt_div_ltz_iff_mul_gt (h: c < 0) : a < b / c ↔ a * c > b := by
+  constructor
+  <;>intro h1
+  apply gt_iff_lt.mpr at h1
+  rw [← ltz_mul_lt_left_cancel (a:=c)] at h1
+  rw [mul_div_cancel'] at h1
+  rw [mul_comm]
+  exact h1
+  exact lt_then_ne h
+  exact h
+  rw [← gt_iff_lt]
+  rw [← ltz_mul_lt_left_cancel (a:=c)]
+  rw [mul_div_cancel']
+  rw [mul_comm]
+  exact h1
+  exact lt_then_ne h
+  exact h
+
 
 end Rudin
