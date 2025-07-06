@@ -19,7 +19,6 @@ structure Cut where
   lt_then_in {p q:ℚ} (hp: p ∈ carrier) (hq: q < p): q ∈ carrier
   ex_gt {p:ℚ} (hp: p ∈ carrier): ∃ r ∈ carrier, p < r
 
-
 instance : Membership ℚ Cut where
   mem α q  := q ∈ α.carrier
 
@@ -32,7 +31,6 @@ theorem ext {a b : Cut} (hab : a.carrier = b.carrier) : a = b := by
   cases b
   cases hab
   simp
-
 
 @[simp] theorem mem_iff_mem_carrier {x:ℚ} {a:Cut} : x ∈ a ↔ x ∈ a.carrier := by
   simp [Rudin.Real.instMembershipRatCut]
@@ -47,7 +45,6 @@ theorem ne_iff_carrier_ne {a b:Cut} : a ≠ b ↔ a.carrier ≠ b.carrier := by
   rw [h1] at h
   apply h
   rfl
-
 
 theorem no_max : ¬ ∃ x ∈ α, ∀ y ∈ α, x > y := by
   rintro ⟨ x, hx⟩
@@ -76,13 +73,45 @@ theorem ex_not_mem : ∃ x:ℚ, x ∉ α := by
   rw [Set.ne_univ_iff_ex_not_in] at h
   exact h
 
+theorem mem_then_ex_add_mem_and_add_delta_not_mem {r d:ℚ} (hr: r ∈ α) (hd: d > 0) :
+  ∃ n:ℕ, r + n * d ∈ α ∧ r + (n+1) * d ∉ α := by
+  by_contra h
+  simp at h
+  have h2: ∀ (n:ℕ), r + n * d ∈ α := by
+    intro n
+    induction n with
+    | zero =>
+      simp
+      exact hr
+    | succ n ih =>
+      rw [Nat.cast_succ]
+      apply h
+      exact ih
+
+  rcases ex_not_mem (α := α) with ⟨ s, hs⟩
+  rcases exists_nat_gt ((s-r)/d) with ⟨ n, hn⟩
+  have h4 : r + ((s - r) / d) * d < r + ↑n * d := by
+    rw [mul_comm]
+    rw (occs := .pos [2])[mul_comm]
+    rw [add_lt_left_cancel, gtz_mul_lt_left_cancel hd]
+    exact hn
+  have h3 := h2 n
+  have h5 := α.lt_then_in h3 h4
+  simp [hd] at h5
+  exact hs h5
+
+theorem ex_mem_and_add_not_mem {d:ℚ}(hd: d > 0) : ∃ x, x ∈ α ∧ x + d ∉ α := by
+  rcases ex_mem (α := α) with ⟨r, hr⟩
+  rcases mem_then_ex_add_mem_and_add_delta_not_mem hr hd with ⟨n, hn⟩
+  use r + ↑n * d
+  simp [add_mul, ← add_assoc] at hn
+  exact hn
+
 instance : LT Cut where
   lt a b := a.carrier < b.carrier
 
 instance : LE Cut where
   le a b := a.carrier ≤ b.carrier
-
-
 
 theorem lt_then_ex_not_in_carrier {a b:Cut} (h: a < b): ∃ x ∈ b, x ∉ a := by
   simp [instLT, ← Set.ssub_iff_lt, Set.ssub_def] at h
@@ -92,10 +121,6 @@ theorem lt_then_ex_not_in_carrier {a b:Cut} (h: a < b): ∃ x ∈ b, x ∉ a := 
   constructor
   exact hx1
   exact hx2
-
-
-
-
 
 theorem le_iff_not_gt {a b:Cut} : a ≤ b ↔ ¬ a > b := by
   simp [Cut.instLT, Cut.instLE, ← Set.ssub_iff_lt, ← Set.sub_iff_le]
@@ -119,14 +144,12 @@ theorem le_iff_not_gt {a b:Cut} : a ≤ b ↔ ¬ a > b := by
   exact a.lt_then_in hxa hxyb
   use x
 
-
 instance : Ordered Cut where
 
   lt_trans : ∀ a b c : Cut, a < b → b < c → a < c := by
     simp [Cut.instLT]
     intro a b c hab hbc
     exact Set.lt_trans hab hbc
-
 
   lt_trichotomy_complete : ∀ a b : Cut,
     (a < b ∧ ¬ a = b ∧ ¬ b < a) ∨
@@ -178,18 +201,28 @@ instance : Ordered Cut where
 theorem le_def {a b:Cut} : a ≤ b ↔ (∀ x, x ∈ a.carrier → x ∈ b.carrier) := by
   simp [Rudin.Real.instMembershipRatCut, instLE, ← Set.sub_iff_le, Set.sub_def]
 
-
 theorem lt_def {a b:Cut} : a < b ↔ (∀ x, x ∈ a.carrier → x ∈ b.carrier) ∧ ∃ x ∈ b.carrier, x ∉ a.carrier:= by
   simp [Rudin.Real.instMembershipRatCut, instLT, ← Set.ssub_iff_lt, Set.ssub_def]
 
-theorem ex_mul_mem_and_mul_not_mem {d x:ℚ} {α:Cut} (hx: x > 0) (hd: d > 0):
-  ∃ m n, m < n ∧ n - m < d ∧ m * x ∈ α ∧ n * x ∉ α := by
-    simp
-    sorry
-
+theorem ex_delta_between_lt_diff
+  (h: α < β) :
+  ∃ d:ℚ, d > 0 ∧ (∀ p, p ∈ β ∧ p ∉ α → ∀ q, q ∈ β ∧ q ∉ α → p - q < d) := by
+  rcases Cut.ex_not_mem (α := β) with ⟨ s, hs⟩
+  rcases Cut.ex_mem (α := α) with ⟨ r, hr ⟩
+  use s - r
+  constructor
+  simp [lt_def] at h
+  have hrb := h.left r (mem_iff_mem_carrier.mp hr)
+  have hrs := β.in_lt_not_in hrb hs
+  simp [hrs]
+  intro p hp
+  intro q hq
+  have hqr := α.in_lt_not_in hr hq.right
+  have hps := β.in_lt_not_in hp.left hs
+  have : r + p < q + s := by linarith
+  linarith
 
 end Cut
-
 
 end Real
 
@@ -200,6 +233,7 @@ abbrev RR := Real /-use RR instead of ℝ to avoid confilict with mathlib-/
 namespace Real
 
 instance : LeastUpperBoundProperty RR where
+
   subset_sup_exist : ∀ (E : Set RR), E ≠ ∅ ∧ BoundAbove E → ∃ a, Sup E a := by
     intro A hA
     simp only [BoundAbove] at hA
@@ -362,14 +396,11 @@ theorem add_def_ex_gt {α β:RR} {p:ℚ} (hp: p ∈ AddDef α β): ∃ r ∈ Add
   exact ha2
   exact hb2
 
-
 instance : Add RR where
   add a b := ⟨ AddDef a b, add_def_ne_empty, add_def_ne_univ, add_def_lt_then_in, add_def_ex_gt⟩
 
 theorem mem_add_def_iff {α β:RR} {x : ℚ}: x ∈ (α + β) ↔ ∃ r ∈ α, ∃ s ∈ β, x = r + s := by
   simp [Rudin.Real.instMembershipRatCut, HAdd.hAdd, instAddRR, AddDef]
-
-
 
 def OfRatDef (n:ℚ) := {x:ℚ | x < n}
 
@@ -392,7 +423,6 @@ theorem ofRat_def_ne_empty {n:ℚ} : OfRatDef n ≠ ∅ := by
 theorem ofRat_def_ne_univ {n:ℚ} : OfRatDef n ≠ Set.univ := by
   simp [OfRatDef, Set.ne_univ_iff_ex_not_in]
   use n
-
 
 theorem OfRat_lt_then_in {n p q:ℚ} (hp: p ∈ OfRatDef n) (hq: q < p): q ∈ OfRatDef n := by
   simp [OfRatDef] at *
@@ -419,7 +449,6 @@ theorem OfRat_def_ex_gt {n p:ℚ} (hp: p ∈ OfRatDef n): ∃ r ∈ OfRatDef n, 
   simp [hp]
   simp
 
-
 instance instOfNatRR (n : Nat) : OfNat RR n where
   ofNat := ⟨ OfRatDef n, ofRat_def_ne_empty, ofRat_def_ne_univ, OfRat_lt_then_in, OfRat_def_ex_gt⟩
 
@@ -432,7 +461,6 @@ instance : One RR where
 theorem zero_def : (0 : RR) = ⟨ OfRatDef 0, ofRat_def_ne_empty, ofRat_def_ne_univ, OfRat_lt_then_in, OfRat_def_ex_gt⟩ := rfl
 
 theorem one_def : (1 : RR) = ⟨ OfRatDef 1, ofRat_def_ne_empty, ofRat_def_ne_univ, OfRat_lt_then_in, OfRat_def_ex_gt⟩ := rfl
-
 
 def NegDef (α : RR) := {p:ℚ | ∃ r:ℚ, r > 0 ∧ - p - r ∉ α }
 
@@ -462,7 +490,6 @@ theorem neg_def_ne_univ {α: RR} : NegDef α ≠ Set.univ := by
     simp
     exact hx
   apply α.lt_then_in hr h
-
 
 theorem neg_def_lt_then_in {α: RR} {p q:ℚ} (hp: p ∈ NegDef α) (hq: q < p): q ∈ NegDef α := by
   simp [NegDef] at *
@@ -653,92 +680,47 @@ theorem add_neg {a:RR} : a + -a = 0 := by
   have hy : y > 0 := by
     simp [y]
     exact hx
-  have h : ∃ m n, m < n ∧ n - m < 1 ∧ m * y ∈ a ∧ n * y ∉ a := by
-    simp
-    rcases Cut.ex_mem (α := a) with ⟨ r, hr⟩
-    rcases Cut.ex_not_mem (α := a) with ⟨ s, hs⟩
-    use (r - 1) / y
-    use (s + 1) / y
-    have hynz : y ≠ 0 := ne_of_gt hy
-    have h: r < s := Cut.in_lt_not_in hr hs
-    constructor
-    rw [Rudin.lt_div_gtz_iff_mul_lt hy]
-    rw [Rudin.div_mul_cancel hynz]
-    linarith
-    rw [Rudin.div_mul_cancel hynz]
-    have hr1: r - 1 < r := by linarith
-    have hs1: s + 1 > s := by linarith
-    have h1:= a.lt_then_in hr hr1
-    constructor
-    exact h1
-    rw [Rudin.div_mul_cancel hynz]
-    intro hs2
-    exact hs (a.lt_then_in hs2 hs1)
-  rcases h with ⟨m, n, hmn, hm, hn⟩
-  use m * y - y
+  have hynz := ne_of_gt hy
+  rcases Cut.ex_mem (α := a) with ⟨ r, hr ⟩
+  rcases Cut.mem_then_ex_add_mem_and_add_delta_not_mem hr hy with ⟨n, hn⟩
+  use r +  ↑n * y
   constructor
-  apply a.lt_then_in hm
-  simp
-  exact hy
-  use x - m * y + y
+  exact hn.left
+  use x - (r +  ↑n * y)
   constructor
+  use -x - y
+  have : x = -2 * y := by
+    simp [y]
+  constructor
+  simp [y]
+  exact hx
+  simp [this]
+  ring_nf
+  ring_nf at hn
+  exact hn.right
+  have : Add.add (r + ↑n * y) (x - (r + ↑n * y)) = (r + ↑n * y) + (x - (r + ↑n * y)) := by rfl
+  simp [this]
+
+theorem lt_then_add_lt (a b c:RR) (hbc: b < c) : a + b < a + c:= by
+  have hbc1 := hbc
+  simp only [Cut.lt_def, HAdd.hAdd, instAddRR, AddDef, Set.mem_setOf] at hbc
+  simp only [Cut.lt_def, HAdd.hAdd, instAddRR, AddDef, Set.mem_setOf]
+  rcases hbc with ⟨ h, ⟨ x, hx⟩ ⟩
+  constructor
+  intro t ht
+  rcases ht with ⟨r, hr, s, hs, hrst⟩
+  use r
+  constructor
+  exact hr
+  use s
+  constructor
+  exact h s (Cut.mem_iff_mem_carrier.mp hs)
+  exact hrst
+  sorry
 
 
-  -- use m * y
-  -- constructor
-  -- exact hm
-  -- use x - m * y
-  -- constructor
-  -- use x + m * y - n * y
-  -- constructor
-  -- simp only [y]
-  -- ring_nf
-  -- rw (occs := .pos [1])[← Rat.mul_one x]
-  -- rw [Rat.mul_assoc (a:=x)]
-  -- rw [← Rat.mul_add (a:=x) (b:=1)]
-  -- rw [Rat.mul_assoc (a:=x)]
-  -- rw [← Rat.mul_add (a:=x)]
-  -- apply ltz_mul_ltz_gtz
-  -- exact hx
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+theorem add_lt_left_cancel {a b c:RR}: b < c ↔ a + b < a + c := by
+  sorry
 
 end Real
 
