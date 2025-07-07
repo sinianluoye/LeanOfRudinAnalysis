@@ -182,4 +182,19 @@ theorem le_total : ∀ a b : α, a ≤ b ∨ b ≤ a := by
   apply hne
   rfl
 
+theorem lt_iff_le_and_ne {a b:α} : a < b ↔ a ≤ b ∧ a ≠ b := by
+  constructor
+  <;>intro h
+  constructor
+  rw [le_iff_lt_or_eq]
+  left
+  exact h
+  apply lt_then_ne
+  exact h
+  rw [le_iff_lt_or_eq] at h
+  rcases h with ⟨ h1, h2⟩
+  rcases h1 with h1|h1
+  exact h1
+  exact (h2 h1).elim
+
 end Rudin

@@ -701,22 +701,38 @@ theorem add_neg {a:RR} : a + -a = 0 := by
   have : Add.add (r + ↑n * y) (x - (r + ↑n * y)) = (r + ↑n * y) + (x - (r + ↑n * y)) := by rfl
   simp [this]
 
-theorem lt_then_add_lt (a b c:RR) (hbc: b < c) : a + b < a + c:= by
-  have hbc1 := hbc
-  simp only [Cut.lt_def, HAdd.hAdd, instAddRR, AddDef, Set.mem_setOf] at hbc
-  simp only [Cut.lt_def, HAdd.hAdd, instAddRR, AddDef, Set.mem_setOf]
-  rcases hbc with ⟨ h, ⟨ x, hx⟩ ⟩
-  constructor
-  intro t ht
-  rcases ht with ⟨r, hr, s, hs, hrst⟩
+theorem le_then_add_le {a b c:RR} (hbc: b ≤ c) : a + b ≤ a + c:= by
+  simp only [Cut.le_def, HAdd.hAdd, instAddRR, AddDef, Set.mem_setOf] at hbc
+  simp only [Cut.le_def, HAdd.hAdd, instAddRR, AddDef, Set.mem_setOf]
+  intro x hx
+  rcases hx with ⟨ r, hr, s, hs, hrs⟩
   use r
   constructor
   exact hr
   use s
   constructor
-  exact h s (Cut.mem_iff_mem_carrier.mp hs)
-  exact hrst
-  sorry
+  exact hbc s (Cut.mem_iff_mem_carrier.mp hs)
+  exact hrs
+
+
+theorem lt_then_add_lt {a b c:RR} (hbc: b < c) : a + b < a + c:= by
+  rw [lt_iff_le_and_ne] at *
+  constructor
+  exact le_then_add_le hbc.left
+  intro h
+  apply hbc.right
+  have : a + b + -a = a + c + -a := by
+    rw [h]
+  rw [add_comm] at this
+  rw [← add_assoc] at this
+  rw [add_comm, add_comm (a:=-a), add_neg, add_comm, zero_add] at this
+  rw [add_comm, ← add_assoc, add_comm (a:=-a), add_neg, zero_add] at this
+  exact this
+
+
+
+
+
 
 
 theorem add_lt_left_cancel {a b c:RR}: b < c ↔ a + b < a + c := by
