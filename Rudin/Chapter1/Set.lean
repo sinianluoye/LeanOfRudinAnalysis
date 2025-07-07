@@ -1,5 +1,4 @@
-import Rudin.Tactic
-import Mathlib.Data.Set.Defs
+import Mathlib
 import Rudin.Chapter1.Ordered
 
 namespace Set
@@ -38,22 +37,26 @@ theorem ne_univ_iff_ex_not_in (S: Set α) : S ≠ Set.univ ↔ ∃ x, x ∉ S :=
   simp [ne_iff_ex_not_in, in_univ]
 
 
-/-
-LE has defined at Mathlib
-instance : LE (Set α) where
-  le a b := a ⊆ b
--/
+theorem ssub_iff_sub_and_ne  (A B : Set α) : A ⊂ B ↔ A ⊆ B ∧ A ≠ B := by
+  -- `A ⊂ B` is defined as `A ⊆ B ∧ ¬ B ⊆ A`; this is equivalent to
+  -- `A ⊆ B` together with the fact that the two sets are not equal.
+  constructor
+  · rintro ⟨hsub, hnot⟩
+    refine ⟨hsub, ?_⟩
+    intro h_eq
+    have hBsubA : B ⊆ A := by
+      intro x hx
+      simpa [h_eq] using hx
+    exact hnot hBsubA
+  · rintro ⟨hsub, hne⟩
+    refine ⟨hsub, ?_⟩
+    intro hBsubA
+    apply hne
+    apply subset_antisymm
+    · exact hsub
+    · exact hBsubA
 
-/-
-define LT first to keep same format (LE->Subset, LT->SSubset)
--/
-instance : LT (Set α) where
-  lt a b := a ≤ b ∧ a ≠ b
 
-instance : HasSSubset (Set α) where
-  SSubset a b := a < b
-
-theorem ssub_iff_sub_and_ne  (A B:Set α) : A ⊂ B ↔ A ⊆ B ∧ A ≠ B := by rfl
 
 theorem sub_def (A B:Set α): A ⊆ B ↔ ∀ a:α, a ∈ A → a ∈ B := by rfl
 
@@ -93,22 +96,22 @@ theorem ssub_iff_lt (A B:Set α): A ⊂ B ↔ A < B := by rfl
     exact ha.right ha3
 
 theorem le_iff_lt_or_eq {A B : Set α} : A ≤ B ↔ (A < B ∨ A = B) := by
-    simp [LT.lt]
-    by_cases h: A = B
-    <;>simp [h]
-    simp [Set.instLE]
-    rw [Set.Subset]
-    intro x
-    intro hx
-    exact hx
+  simp
+  constructor
+  <;>intro h
+  rw [ssub_iff_sub_and_ne]
+  simp [h]
+  tauto
+  simp [ssub_iff_sub_and_ne] at h
+  rcases h with h|h
+  exact h.left
+  simp [h]
 
-@[simp] theorem mem_setOf_eq {x : α} {p : α → Prop} : (x ∈ {y | p y}) = p x := rfl
 
-theorem eq_mem_setOf (p : α → Prop) : p = (· ∈ {a | p a}) := rfl
 
-theorem mem_setOf {a : α} {p : α → Prop} : a ∈ { x | p x } ↔ p a := Iff.rfl
 
-@[simp] theorem setOf_mem_eq {s : Set α} : { x | x ∈ s } = s := rfl
+theorem not_empty_iff_ex_mem {A : Set α} : A ≠ ∅ ↔ ∃ x, x ∈ A := by
+  simp [ne_iff_ex_not_in]
 
 
 end Set

@@ -1,6 +1,4 @@
-
-
-abbrev ℤ := Int
+import Mathlib
 
 
 theorem Int.lt_then_not_gt {a b:Int} (hab: a < b): ¬ a > b := by
@@ -53,7 +51,7 @@ theorem Int.sub_ltz_iff_lt {a b:Int}: a - b < 0 ↔ a < b := by
   constructor
   <;>intro h
   apply Int.lt_of_sub_lt_sub_right (c:=b)
-  simp
+  rw [Int.sub_self]
   exact h
   rw [Int.sub_lt_iff]
   simp

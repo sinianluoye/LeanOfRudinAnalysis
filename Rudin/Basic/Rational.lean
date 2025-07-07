@@ -1,11 +1,18 @@
+import Mathlib
 import Batteries.Data.Rat
 import Rudin.Basic.Integer
 
-abbrev ℚ := Rat
+/-
+Although some proofs use the properties of rings in mathlib,
+comments are still provided here to show how to prove the statements without using the properties of rings.
+-/
 
+namespace Rudin
 
 namespace Rat
 variable {a b c:ℚ}
+
+open _root_.Rat
 
 theorem add_comm: a + b = b + a := by
   rw [add_def']
@@ -15,11 +22,9 @@ theorem add_comm: a + b = b + a := by
 
 @[simp] theorem zero_add : 0 + a = a := by
   simp [add_def']
-  exact mkRat_self a
 
 @[simp] theorem add_zero : a + 0 = a := by
   simp [add_def']
-  exact mkRat_self a
 
 theorem den_zero_then_zero (h: a.den = 0) : a = 0 := by
   rw [← mkRat_self a]
@@ -82,14 +87,14 @@ theorem add_assoc: a + b + c = a + (b + c) := by
     exact hbc hb
   exact add_assoc_lemma_1 h1
 
-theorem add_neg : a + -a = 0 := by
-  rw [Rat.add_def']
-  simp [Rat.neg]
-  rw [← Int.add_mul]
-  rw [Int.add_neg_eq_sub]
-  rw [Int.sub_self]
-  rw [Int.zero_mul]
-  exact zero_mkRat (a.den * a.den)
+theorem add_neg : a + -a = 0 := by simp
+  -- rw [Rat.add_def']
+  -- simp [Rat.neg]
+  -- rw [← Int.add_mul]
+  -- rw [Int.add_neg_eq_sub]
+  -- rw [Int.sub_self]
+  -- rw [Int.zero_mul]
+  -- exact zero_mkRat (a.den * a.den)
 
 theorem neg_add :  -(a + b) = -a - b := by
   rw [Rat.sub_eq_add_neg]
@@ -193,36 +198,37 @@ theorem div_eq_mul_inv : a / b = a * (1 / b) := by
   rw [div_def]
   rw [Rat.one_mul]
 
-instance instPowNat : HPow Rat Nat (outParam Rat) where
-  hPow a n :=  ⟨a.num ^ n, a.den ^ n, by
-    simp [Nat.pow_eq_zero]
-    intro h
-    exact (a.den_nz h).elim
-  , by
-    rw [Int.natAbs_pow]
-    exact a.reduced.pow _ _
-  ⟩
+-- instance instPowNat : HPow Rat Nat (outParam Rat) where
+--   hPow a n :=  ⟨a.num ^ n, a.den ^ n, by
+--     simp [Nat.pow_eq_zero]
+--     -- intro h
+--     -- exact (a.den_nz h).elim
+--   , by
+--     rw [Int.natAbs_pow]
+--     exact a.reduced.pow _ _
+--   ⟩
 
 theorem pow_succ {n:Nat} : a ^ (n + 1) = a ^ n * a := by
-  simp [Rat.instPowNat]
-  rw [mk_eq_mkRat, mk_eq_mkRat]
-  rw (occs := .pos [5])[← mkRat_self a]
-  rw [mkRat_mul_mkRat]
-  rw [Int.pow_succ, Nat.pow_succ]
+  ring
+  -- simp [Rat.instPowNat]
+  -- rw [mk_eq_mkRat, mk_eq_mkRat]
+  -- rw (occs := .pos [5])[← mkRat_self a]
+  -- rw [mkRat_mul_mkRat]
+  -- rw [Int.pow_succ, Nat.pow_succ]
 
-@[simp] theorem pow_zero : a ^ 0 = 1 := by
-  simp [instPowNat]
-  norm_cast
+@[simp] theorem pow_zero : a ^ 0 = 1 := by simp
+  -- simp [instPowNat]
+  -- norm_cast
 
 @[simp] theorem zero_pow {n:Nat}: (0:ℚ) ^ n = if n = 0 then 1 else 0 := by
   by_cases hn : n = 0
   <;>simp [hn]
-  simp [Rat.instPowNat]
-  cases n with
-  | zero => exact (hn rfl).elim
-  | succ k =>
-    rw [Nat.add_one, Int.pow_succ', Int.zero_mul]
-    norm_cast
+  -- simp [Rat.instPowNat]
+  -- cases n with
+  -- | zero => exact (hn rfl).elim
+  -- | succ k =>
+  --   rw [Nat.add_one, Int.pow_succ', Int.zero_mul]
+  --   norm_cast
 
 theorem pow_nat_def {n:Nat} : a ^ n = if n = 0 then 1 else a ^ (n - 1) * a:= by
   by_cases hn : n = 0
@@ -242,12 +248,12 @@ theorem mkRat_pow {n:Int} {d:Nat} {m:Nat} : (mkRat n d) ^ m = mkRat (n^m) (d^m) 
   <;>simp [hm]
   rw [Rat.normalize_eq]
   simp
-  norm_cast
+  -- norm_cast
   induction m with
   | zero =>
     simp
-    rw [← mkRat_self 1]
-    rfl
+    -- rw [← mkRat_self 1]
+    -- rfl
   | succ k hi =>
     rw [pow_succ]
     rw [hi]
@@ -268,39 +274,41 @@ theorem mkRat_sub_mkRat {n1 n2:Int} {d1 d2: Nat}
 @[simp] theorem mkRat_num_ltz_iff_num_ltz {n:Int} {d:Nat} (hd: d ≠ 0): (mkRat n d).num < 0 ↔ n < 0 := by
   constructor
   <;>intro h
-  simp [mkRat, hd] at h
-  simp [normalize] at h
+  simp [Rat.mkRat_def, hd, Rat.normalize] at h
   rw [Int.ediv_lt_iff_lt_mul] at h
-  rw [Int.zero_mul] at h
+  simp at h
   exact h
-  have hnnz : n ≠ 0 := by
-    intro h1
-    rw [h1] at h
-    simp at h
   simp
   left
-  exact hnnz
-  simp [mkRat, hd]
-  simp [normalize]
+  intro h1
+  simp [h1] at h
+  simp [Rat.mkRat_def, hd, Rat.normalize]
   rw [Int.ediv_lt_iff_lt_mul]
-  rw [Int.zero_mul]
+  simp
   exact h
+  norm_cast
   simp
   left
-  exact Int.ne_of_lt h
+  intro h1
+  simp [h1] at h
 
 @[simp] theorem mkRat_ltz_iff_num_ltz {n:Int} {d:Nat}: mkRat n d < 0 ↔ (mkRat n d).num < 0 := by
   constructor
-  intro h
-  simp [Rat.instLT, Rat.blt] at h
-  rw [← and_assoc] at h
-  simp at h
-  exact h
-  intro h
-  simp [Rat.instLT, Rat.blt]
-  rw [← and_assoc]
+  <;>intro h
   simp
   exact h
+  simp at h
+  exact h
+  -- intro h
+  -- simp [Rat.instLT, Rat.blt] at h
+  -- rw [← and_assoc] at h
+  -- simp at h
+  -- exact h
+  -- intro h
+  -- simp [Rat.instLT, Rat.blt]
+  -- rw [← and_assoc]
+  -- simp
+  -- exact h
 
 @[simp] theorem mkRat_ez_iff_num_zero {n:Int} {d:Nat} (hd: d ≠ 0): mkRat n d = 0 ↔ n = 0 := by
   constructor
@@ -314,36 +322,61 @@ theorem mkRat_sub_mkRat {n1 n2:Int} {d1 d2: Nat}
   exact hd
 
 @[simp] theorem mkRat_gtz_iff_num_gtz {n:Int} {d:Nat}: mkRat n d > 0 ↔ (mkRat n d).num > 0 := by
-  simp [Rat.instLT, Rat.blt]
+  simp
+  -- simp [Rat.instLT, Rat.blt]
 
 
 @[simp] theorem mkRat_num_gtz_iff_num_gtz {n:Int} {d:Nat} (hd: d ≠ 0): (mkRat n d).num > 0 ↔ n > 0 := by
   constructor
   <;>intro h
-  simp [mkRat, hd] at h
-  simp [normalize] at h
+  simp [Rat.mkRat_def, hd, Rat.normalize] at h
   rw [Int.lt_ediv_iff_mul_lt] at h
-  rw [Int.zero_mul] at h
+  simp at h
   exact h
-  have hnnz : n ≠ 0 := by
-    intro h1
-    rw [h1] at h
-    simp at h
   simp
   left
-  exact hnnz
+  intro h1
+  simp [h1] at h
   rw [← Int.dvd_natAbs]
   exact Int.gcd_dvd_left (↑n.natAbs) d
-  simp [mkRat, hd]
-  simp [normalize]
+  simp [Rat.mkRat_def, hd, Rat.normalize]
   rw [Int.lt_ediv_iff_mul_lt]
-  rw [Int.zero_mul]
+  simp
   exact h
+  norm_cast
   simp
   left
-  exact Int.ne_of_gt h
+  intro h1
+  simp [h1] at h
   rw [← Int.dvd_natAbs]
   exact Int.gcd_dvd_left (↑n.natAbs) d
+
+
+
+  -- simp [mkRat, hd] at h
+  -- simp [Rat.normalize] at h
+  -- rw [Int.lt_ediv_iff_mul_lt] at h
+  -- rw [Int.zero_mul] at h
+  -- exact h
+  -- have hnnz : n ≠ 0 := by
+  --   intro h1
+  --   rw [h1] at h
+  --   simp at h
+  -- simp
+  -- left
+  -- exact hnnz
+  -- rw [← Int.dvd_natAbs]
+  -- exact Int.gcd_dvd_left (↑n.natAbs) d
+  -- simp [mkRat, hd]
+  -- simp [normalize]
+  -- rw [Int.lt_ediv_iff_mul_lt]
+  -- rw [Int.zero_mul]
+  -- exact h
+  -- simp
+  -- left
+  -- exact Int.ne_of_gt h
+  -- rw [← Int.dvd_natAbs]
+  -- exact Int.gcd_dvd_left (↑n.natAbs) d
 
 theorem den_gtz : a.den > 0 := by
   simp
@@ -365,128 +398,130 @@ theorem ez_iff_num_ez : a = 0 ↔ a.num = 0 := by
 
 
 
-theorem lt_iff_sub_ltz : a < b ↔ a - b < 0 := by
-  have hadnz := a.den_nz
-  have hbdnz := b.den_nz
-  have habdnz : a.den * b.den ≠ 0 := by
-    rw [Nat.mul_ne_zero_iff]
-    exact ⟨ hadnz, hbdnz⟩
-  have hadgtz := den_gtz (a:=a)
-  have hbdgtz := den_gtz (a:=b)
+theorem lt_iff_sub_ltz : a < b ↔ a - b < 0 := by simp
+  -- have hadnz := a.den_nz
+  -- have hbdnz := b.den_nz
+  -- have habdnz : a.den * b.den ≠ 0 := by
+  --   rw [Nat.mul_ne_zero_iff]
+  --   exact ⟨ hadnz, hbdnz⟩
+  -- have hadgtz := den_gtz (a:=a)
+  -- have hbdgtz := den_gtz (a:=b)
 
-  constructor
-  intro h
-  simp [Rat.instLT, Rat.blt]
-  simp [Rat.instLT, Rat.blt] at h
+  -- constructor
+  -- intro h
+  -- simp [Rat.instLT, Rat.blt]
+  -- simp [Rat.instLT, Rat.blt] at h
 
-  rw [← and_assoc]
-  simp
-  rw [← mkRat_self a, ← mkRat_self b]
-  rw [mkRat_sub_mkRat]
+  -- rw [← and_assoc]
+  -- simp
+  -- rw [← mkRat_self a, ← mkRat_self b]
+  -- rw [mkRat_sub_mkRat]
 
-  simp [hadnz, hbdnz, habdnz, Int.ne_and_le_iff_lt]
-  rcases h with h|h
-  have h2: a.num * ↑b.den < 0 := by
-    apply  Int.ltz_mul_gtz_then_ltz
-    exact h.left
-    norm_cast
-  have h3: ↑a.den * b.num ≥ 0:= by
-    rw [Int.mul_comm]
-    apply Int.gez_mul_gtz_then_gez
-    exact h.right
-    norm_cast
-  rcases Int.lt_trichotomy (a.num * ↑b.den - b.num * ↑a.den) 0 with h1|h1|h1
-  simp [h1]
-  simp [h1]
-  rw [Int.sub_eq_zero] at h1
-  rw [Int.mul_comm b.num] at h1
-  simp at h3
-  rw [Int.le_iff_eq_or_lt] at h3
-  rcases h3 with h3|h3
-  rw [h3] at h2
-  apply Int.ne_of_lt h2
-  exact h1
-  apply Int.ne_of_lt (Int.lt_trans h2 h3)
-  exact h1
-  exfalso
-  rw [← Int.not_le] at h1
-  apply h1
-  apply Int.sub_le_of_sub_le
-  simp
-  have h4: a.num * ↑b.den ≤ 0 := by
-    apply Int.le_of_lt
-    exact h2
-  rw [Int.mul_comm] at h3
-  exact Int.le_trans h4 h3
-  by_cases h1:a.num = 0
-  <;>simp [h1] at h
-  simp [h1]
-  apply Int.gtz_mul_gtz_then_gtz
-  exact h
-  norm_cast
-  apply Int.sub_lt_of_sub_lt
-  simp
-  exact h.right
-  exact hadnz
-  exact hbdnz
-  intro h
-  rw [← mkRat_self a, ← mkRat_self b] at h
-  rw [mkRat_sub_mkRat] at h
-  simp [habdnz] at h
-  simp [Rat.instLT, Rat.blt]
-  by_cases h1:a.num = 0
-  simp [h1]
-  simp [h1] at h
-  rw [← Int.mul_lt_mul_right (a:=a.den)]
-  simp
-  exact h
-  norm_cast
-  rw [Int.sub_ltz_iff_lt] at h
-  simp [Int.le_iff_eq_or_lt, h1, h]
-  rcases Int.lt_trichotomy a.num 0 with h2|h2|h2
-  simp [h2]
-  exfalso
-  exact h1 h2
-  right
-  right
-  have h3:a.num * b.den > 0 := by
-    apply Int.gtz_mul_gtz_then_gtz
-    exact h2
-    norm_cast
-  rw [Int.lt_iff_gt]
-  have : b.num * a.den > 0 := by
-    exact Int.lt_trans h3 h
-  apply Int.mul_gtz_gtz_then_gtz (b := ↑a.den)
-  norm_cast
-  exact this
-  exact hadnz
-  exact hbdnz
+  -- simp [hadnz, hbdnz, habdnz, Int.ne_and_le_iff_lt]
+  -- rcases h with h|h
+  -- have h2: a.num * ↑b.den < 0 := by
+  --   apply  Int.ltz_mul_gtz_then_ltz
+  --   exact h.left
+  --   norm_cast
+  -- have h3: ↑a.den * b.num ≥ 0:= by
+  --   rw [Int.mul_comm]
+  --   apply Int.gez_mul_gtz_then_gez
+  --   exact h.right
+  --   norm_cast
+  -- rcases Int.lt_trichotomy (a.num * ↑b.den - b.num * ↑a.den) 0 with h1|h1|h1
+  -- simp [h1]
+  -- simp [h1]
+  -- rw [Int.sub_eq_zero] at h1
+  -- rw [Int.mul_comm b.num] at h1
+  -- simp at h3
+  -- rw [Int.le_iff_eq_or_lt] at h3
+  -- rcases h3 with h3|h3
+  -- rw [h3] at h2
+  -- apply Int.ne_of_lt h2
+  -- exact h1
+  -- apply Int.ne_of_lt (Int.lt_trans h2 h3)
+  -- exact h1
+  -- exfalso
+  -- rw [← Int.not_le] at h1
+  -- apply h1
+  -- apply Int.sub_le_of_sub_le
+  -- simp
+  -- have h4: a.num * ↑b.den ≤ 0 := by
+  --   apply Int.le_of_lt
+  --   exact h2
+  -- rw [Int.mul_comm] at h3
+  -- exact Int.le_trans h4 h3
+  -- by_cases h1:a.num = 0
+  -- <;>simp [h1] at h
+  -- simp [h1]
+  -- apply Int.gtz_mul_gtz_then_gtz
+  -- exact h
+  -- norm_cast
+  -- apply Int.sub_lt_of_sub_lt
+  -- simp
+  -- exact h.right
+  -- exact hadnz
+  -- exact hbdnz
+  -- intro h
+  -- rw [← mkRat_self a, ← mkRat_self b] at h
+  -- rw [mkRat_sub_mkRat] at h
+  -- simp [habdnz] at h
+  -- simp [Rat.instLT, Rat.blt]
+  -- by_cases h1:a.num = 0
+  -- simp [h1]
+  -- simp [h1] at h
+  -- rw [← Int.mul_lt_mul_right (a:=a.den)]
+  -- simp
+  -- exact h
+  -- norm_cast
+  -- rw [Int.sub_ltz_iff_lt] at h
+  -- simp [Int.le_iff_eq_or_lt, h1, h]
+  -- rcases Int.lt_trichotomy a.num 0 with h2|h2|h2
+  -- simp [h2]
+  -- exfalso
+  -- exact h1 h2
+  -- right
+  -- right
+  -- have h3:a.num * b.den > 0 := by
+  --   apply Int.gtz_mul_gtz_then_gtz
+  --   exact h2
+  --   norm_cast
+  -- rw [Int.lt_iff_gt]
+  -- have : b.num * a.den > 0 := by
+  --   exact Int.lt_trans h3 h
+  -- apply Int.mul_gtz_gtz_then_gtz (b := ↑a.den)
+  -- norm_cast
+  -- exact this
+  -- exact hadnz
+  -- exact hbdnz
 
 theorem ltz_add_ltz_ltz (ha: a < 0) (hb: b < 0) : a + b < 0 := by
-  have hadnz := a.den_nz
-  have hbdnz := b.den_nz
-  have habdnz : a.den * b.den ≠ 0 := by
-    rw [Nat.mul_ne_zero_iff]
-    exact ⟨ hadnz, hbdnz⟩
-  have hadgtz := den_gtz (a:=a)
-  have hbdgtz := den_gtz (a:=b)
-  rw [← mkRat_self a, ← mkRat_self b]
-  rw [← mkRat_self a] at ha
-  rw [← mkRat_self b] at hb
-  rw [mkRat_add_mkRat]
-  simp [hadnz, hbdnz, habdnz]
-  simp [hadnz, hbdnz, habdnz] at ha
-  simp [hadnz, hbdnz, habdnz] at hb
-  rw [← Int.zero_add 0]
-  apply Int.add_lt_add
-  apply Int.ltz_mul_gtz_then_ltz
-  exact ha
-  norm_cast
-  apply Int.ltz_mul_gtz_then_ltz
-  exact hb
-  norm_cast
-  exact hadnz
-  exact hbdnz
+  linarith
+
+  -- have hadnz := a.den_nz
+  -- have hbdnz := b.den_nz
+  -- have habdnz : a.den * b.den ≠ 0 := by
+  --   rw [Nat.mul_ne_zero_iff]
+  --   exact ⟨ hadnz, hbdnz⟩
+  -- have hadgtz := den_gtz (a:=a)
+  -- have hbdgtz := den_gtz (a:=b)
+  -- rw [← mkRat_self a, ← mkRat_self b]
+  -- rw [← mkRat_self a] at ha
+  -- rw [← mkRat_self b] at hb
+  -- rw [mkRat_add_mkRat]
+  -- simp [hadnz, hbdnz, habdnz]
+  -- simp [hadnz, hbdnz, habdnz] at ha
+  -- simp [hadnz, hbdnz, habdnz] at hb
+  -- rw [← Int.zero_add 0]
+  -- apply Int.add_lt_add
+  -- apply Int.ltz_mul_gtz_then_ltz
+  -- exact ha
+  -- norm_cast
+  -- apply Int.ltz_mul_gtz_then_ltz
+  -- exact hb
+  -- norm_cast
+  -- exact hadnz
+  -- exact hbdnz
 
 
 theorem lt_trans (hab: a < b) (hbc: b < c) : a < c := by
@@ -515,26 +550,37 @@ theorem add_lt_add {a b c d:ℚ} (hab: a < b) (hcd: c < d): a + c < b + d := by
   exact h
 
 theorem lt_trichotomy : a < b ∨ a = b ∨ b < a := by
-  have hadnz := a.den_nz
-  have hbdnz := b.den_nz
-  have habdnz : a.den * b.den ≠ 0 := by
-    rw [Nat.mul_ne_zero_iff]
-    exact ⟨ hadnz, hbdnz⟩
-  have hbadnz : b.den * a.den ≠ 0 := by
-    rw [Nat.mul_comm]
-    exact habdnz
-  rw [lt_iff_sub_ltz, lt_iff_sub_ltz (a:=b), ← mkRat_self a, ← mkRat_self b]
-  rw [mkRat_sub_mkRat, mkRat_sub_mkRat]
-  simp [hadnz, hbdnz, habdnz, hbadnz]
-  rw [mkRat_eq_iff]
-  rw [Int.sub_ltz_iff_lt, Int.sub_ltz_iff_lt]
-  exact Int.lt_trichotomy (a.num * ↑b.den) (b.num * ↑a.den)
-  exact hadnz
-  exact hbdnz
-  exact hbdnz
-  exact hadnz
-  exact hadnz
-  exact hbdnz
+  by_cases h : a < b
+  <;>simp [h]
+  by_cases h1 : a = b
+  <;>simp [h1]
+  apply lt_of_not_ge
+  rw [le_iff_lt_or_eq]
+  intro h2
+  rcases h2 with h2 | h2
+  exact h h2
+  exact h1 h2
+
+  -- have hadnz := a.den_nz
+  -- have hbdnz := b.den_nz
+  -- have habdnz : a.den * b.den ≠ 0 := by
+  --   rw [Nat.mul_ne_zero_iff]
+  --   exact ⟨ hadnz, hbdnz⟩
+  -- have hbadnz : b.den * a.den ≠ 0 := by
+  --   rw [Nat.mul_comm]
+  --   exact habdnz
+  -- rw [lt_iff_sub_ltz, lt_iff_sub_ltz (a:=b), ← mkRat_self a, ← mkRat_self b]
+  -- rw [mkRat_sub_mkRat, mkRat_sub_mkRat]
+  -- simp [hadnz, hbdnz, habdnz, hbadnz]
+  -- rw [mkRat_eq_iff]
+  -- rw [Int.sub_ltz_iff_lt, Int.sub_ltz_iff_lt]
+  -- exact Int.lt_trichotomy (a.num * ↑b.den) (b.num * ↑a.den)
+  -- exact hadnz
+  -- exact hbdnz
+  -- exact hbdnz
+  -- exact hadnz
+  -- exact hadnz
+  -- exact hbdnz
 
 theorem ne_of_lt (hab: a < b) : a ≠ b := by
   intro h
@@ -565,17 +611,27 @@ theorem lt_trichotomy_complete :
     (¬ a < b ∧ ¬ a = b ∧ b < a) := by
   rcases lt_trichotomy (a:=a) (b:=b) with h|h|h
   <;>simp [h]
+  rw [le_iff_lt_or_eq]
+  simp [h]
+  apply ne_of_lt
+  exact h
+  simp [le_iff_lt_or_eq]
   constructor
-  intro h1
-  rw [h1] at h
-  exact lt_irrefl h
-  exact lt_asymm h
-  exact lt_irrefl
-  constructor
-  exact lt_asymm h
-  intro h1
-  rw [h1] at h
-  exact lt_irrefl h
+  left
+  exact h
+  apply ne_of_gt
+  exact h
+  -- constructor
+  -- intro h1
+  -- rw [h1] at h
+  -- exact lt_irrefl h
+  -- exact lt_asymm h
+  -- exact lt_irrefl
+  -- constructor
+  -- exact lt_asymm h
+  -- intro h1
+  -- rw [h1] at h
+  -- exact lt_irrefl h
 
 theorem lt_iff_not_le : a < b ↔ ¬ b ≤ a := by
   simp [Rat.instLT, Rat.instLE]
@@ -606,42 +662,43 @@ theorem eq_or_not_eq : a = b ∨ a ≠ b := by
   exact h
 
 theorem le_iff_lt_or_eq : a ≤ b ↔ a < b ∨ a = b := by
-  simp [Rat.instLE, Rat.instLT, Rat.blt]
-  simp [Int.le_iff_eq_or_lt]
-  have : 0 = b.num ↔ b.num = 0 := by
-    constructor
-    intro h
-    rw [h]
-    intro h
-    rw [h]
+  rw [_root_.le_iff_lt_or_eq]
+  -- simp [Rat.instLE, Rat.instLT, Rat.blt]
+  -- simp [Int.le_iff_eq_or_lt]
+  -- have : 0 = b.num ↔ b.num = 0 := by
+  --   constructor
+  --   intro h
+  --   rw [h]
+  --   intro h
+  --   rw [h]
 
-  simp [this, ← lt_iff_num_den, ← eq_iff_num_den, ← ez_iff_num_ez, ← ez_iff_num_ez, ← ltz_iff_num_ltz, ← gtz_iff_num_gtz]
-  rcases lt_trichotomy (a:=b) (b:=0) with hb|hb|hb
-  <;>simp [hb]
-  <;>rcases lt_trichotomy (a:=a) (b:=0) with ha|ha|ha
-  simp [ne_of_lt ha, ne_of_lt hb, lt_asymm ha, lt_asymm hb, lt_irrefl, ha, hb, or_comm]
-  simp [ne_of_lt hb, lt_asymm hb, lt_irrefl, ha, hb, or_comm]
-  intro h
-  rw [h] at hb
-  exact lt_irrefl hb
-  simp [ne_of_lt hb, lt_asymm hb, lt_irrefl, ha, hb, or_comm]
-  simp [ne_of_gt ha, ne_of_lt hb, lt_asymm ha, lt_asymm hb]
-  apply ne_of_gt
-  simp
-  exact lt_trans hb ha
-  simp [ne_of_lt ha,  hb, lt_asymm ha, lt_irrefl]
-  simp [lt_irrefl, ha, hb]
-  simp [ne_of_lt ha,  hb, lt_asymm ha, lt_irrefl]
-  simp [ne_of_lt ha, ne_of_gt hb, lt_asymm ha, lt_asymm hb, lt_trans ha hb]
-  simp [ha, ne_of_gt hb, lt_asymm hb, lt_irrefl]
-  simp [ne_of_gt ha, ne_of_gt hb, lt_asymm ha, lt_asymm hb, lt_irrefl, ha, hb]
-  rw [or_comm]
+  -- simp [this, ← lt_iff_num_den, ← eq_iff_num_den, ← ez_iff_num_ez, ← ez_iff_num_ez, ← ltz_iff_num_ltz, ← gtz_iff_num_gtz]
+  -- rcases lt_trichotomy (a:=b) (b:=0) with hb|hb|hb
+  -- <;>simp [hb]
+  -- <;>rcases lt_trichotomy (a:=a) (b:=0) with ha|ha|ha
+  -- simp [ne_of_lt ha, ne_of_lt hb, lt_asymm ha, lt_asymm hb, lt_irrefl, ha, hb, or_comm]
+  -- simp [ne_of_lt hb, lt_asymm hb, lt_irrefl, ha, hb, or_comm]
+  -- intro h
+  -- rw [h] at hb
+  -- exact lt_irrefl hb
+  -- simp [ne_of_lt hb, lt_asymm hb, lt_irrefl, ha, hb, or_comm]
+  -- simp [ne_of_gt ha, ne_of_lt hb, lt_asymm ha, lt_asymm hb]
+  -- apply ne_of_gt
+  -- simp
+  -- exact lt_trans hb ha
+  -- simp [ne_of_lt ha,  hb, lt_asymm ha, lt_irrefl]
+  -- simp [lt_irrefl, ha, hb]
+  -- simp [ne_of_lt ha,  hb, lt_asymm ha, lt_irrefl]
+  -- simp [ne_of_lt ha, ne_of_gt hb, lt_asymm ha, lt_asymm hb, lt_trans ha hb]
+  -- simp [ha, ne_of_gt hb, lt_asymm hb, lt_irrefl]
+  -- simp [ne_of_gt ha, ne_of_gt hb, lt_asymm ha, lt_asymm hb, lt_irrefl, ha, hb]
+  -- rw [or_comm]
 
 theorem nat_mul_def {n:Nat}: n * a = if n = 0 then 0 else ↑(n - 1) * a + a:= by
   by_cases h: n = 0
   <;>simp [h]
-  rw [← Rat.zero_mul (a:=a)]
-  rfl
+  -- rw [← Rat.zero_mul (a:=a)]
+  -- rfl
   have hn: n > 0 := Nat.pos_iff_ne_zero.mpr h
   have h1 := Nat.sub_one_add_one_eq_of_pos hn
   have h2 : (↑(n-1):Int) = n - 1 := by
@@ -654,7 +711,7 @@ theorem nat_mul_def {n:Nat}: n * a = if n = 0 then 0 else ↑(n - 1) * a + a:= b
   have h4 : (↑(n-1):ℚ) = n - 1 := by
     rw [h3, h2]
     simp [Rat.ofInt]
-    rfl
+    -- rfl
   rw [h4]
   rw (occs := .pos [3])[← Rat.one_mul a]
   rw [Rat.mul_comm (↑n - 1), Rat.mul_comm 1]
@@ -681,4 +738,7 @@ theorem gtz_mul_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a * b > 0 := by
   exact ⟨a.den_nz, b.den_nz⟩
 
 
+
 end Rat
+
+end Rudin

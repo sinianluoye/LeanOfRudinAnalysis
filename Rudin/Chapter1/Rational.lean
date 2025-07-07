@@ -1,8 +1,10 @@
+import Rudin.Command
 import Rudin.Basic.Rational
 import Rudin.Chapter1.Field
 import Rudin.Chapter1.Ordered
 import Rudin.Chapter1.OrderedField
 
+namespace Rudin
 
 namespace Rat
 variable {a b:ℚ}
@@ -47,3 +49,5 @@ instance : Rudin.OrderedField ℚ where
   gtz_mul_gtz_then_gtz := by apply Rat.gtz_mul_gtz_then_gtz
 
 end Rat
+
+end Rudin
