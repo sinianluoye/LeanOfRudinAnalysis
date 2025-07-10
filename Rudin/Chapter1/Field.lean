@@ -233,6 +233,7 @@ theorem mul_div_assoc {a b c : α} :
   simp [hb]
 
 /-1.15 a-/
+@[simp]
 theorem mul_eq_left_cancel {a b c : α} (ha : a ≠ 0) :
     (a * b = a * c) ↔ (b = c) := by
   constructor

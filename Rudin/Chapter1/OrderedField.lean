@@ -148,6 +148,36 @@ theorem neg_mul_lt_then_gt (ha: a < 0) (hbc: b < c) : a * b > a * c := by
     exact (lt_and_gt_then_false h this).elim
   . apply gtz_mul_lt_gtz_mul ha h
 
+@[simp] theorem gtz_mul_lt_right_cancel (ha: a > 0) : b * a < c * a ↔ b < c := by
+  rw [Rudin.mul_comm (a:=b) (b:=a)]
+  rw [Rudin.mul_comm (a:=c) (b:=a)]
+  exact gtz_mul_lt_left_cancel ha
+
+
+@[simp] theorem gtz_mul_le_left_cancel (ha: a > 0) : a * b ≤ a * c ↔ b ≤ c:= by
+  rw [Rudin.le_iff_lt_or_eq (a:=b) (b:=c), Rudin.le_iff_lt_or_eq (a:=a*b) (b:=a*c)]
+  have hanz := Rudin.gt_then_ne ha
+  constructor
+  <;>intro h
+  <;>rcases h with h|h
+  simp [ha] at h
+  left
+  exact h
+  simp [hanz] at h
+  right
+  exact h
+  simp [ha]
+  left
+  exact h
+  right
+  simp [hanz]
+  exact h
+
+@[simp] theorem gtz_mul_le_right_cancel (ha: a > 0) : b * a ≤ c * a ↔ b ≤ c:= by
+  rw [Rudin.mul_comm (a:=b) (b:=a)]
+  rw [Rudin.mul_comm (a:=c) (b:=a)]
+  exact gtz_mul_le_left_cancel ha
+
 /-1.18 d-/
 @[simp] theorem pow_two_gtz {a:α} (ha: a ≠ 0) : a ^ 2 > 0 := by
   by_cases h : a > 0
