@@ -197,4 +197,9 @@ theorem lt_iff_le_and_ne {a b:α} : a < b ↔ a ≤ b ∧ a ≠ b := by
   exact h1
   exact (h2 h1).elim
 
+theorem lt_then_not_gt {a b:α} (h: a < b) : ¬ a > b := by
+  simp
+  apply lt_then_le
+  exact h
+
 end Rudin

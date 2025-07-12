@@ -746,6 +746,7 @@ theorem add_lt_left_cancel {a b c:RR}: b < c ↔ a + b < a + c := by
   rw [← add_assoc, add_comm (a:=-a), add_neg, zero_add] at h1
   exact h1
 
+@[simp]
 theorem neg_ltz_iff_gtz {a:RR} : -a < 0 ↔ a > 0 := by
   rw [add_lt_left_cancel (a:=a)]
   rw [add_neg, add_comm, zero_add]
@@ -907,6 +908,7 @@ def GtzMul (α:RR) (β:RR) (h1: α > 0) (h2: β > 0) :=
     gtz_mul_def_ex_gt
   ⟩ : RR)
 
+
 noncomputable instance instMulRR : Mul RR where
   mul α β :=
     have h1 {x:RR} (hx:x<0): -x > 0 := by
@@ -974,19 +976,23 @@ theorem gtzMul_comm {a b:RR} (ha: a>0) (hb:b>0) : GtzMul a b ha hb = GtzMul b a 
   rw [mul_comm]
   exact hrs
 
-
-theorem gtzMul_pos {α β : RR} (hα : α > 0) (hβ : β > 0) :
+@[simp]
+theorem gtzMul_gtz {α β : RR} (hα : α > 0) (hβ : β > 0) :
     (0 : RR) < GtzMul α β hα hβ := by
   have h := gtz_mul_def_gtz_mul_gtz_then_gtz hα hβ
   simp [GtzMul, Cut.instLTRR]
   exact h
 
+@[simp]
+theorem neg_gtzMul_ltz {α β : RR} (hα : α > 0) (hβ : β > 0) :
+    -GtzMul α β hα hβ < 0 := by
+  simp
 
 /--  `GtzMul` 的结合律（只列出正数情形即可）。 -/
 theorem gtzMul_assoc
     {a b c : RR} (ha : a > 0) (hb : b > 0) (hc : c > 0) :
-    GtzMul (GtzMul a b ha hb) c (gtzMul_pos ha hb) hc =
-      GtzMul a (GtzMul b c hb hc) ha (gtzMul_pos hb hc) := by
+    GtzMul (GtzMul a b ha hb) c (gtzMul_gtz ha hb) hc =
+      GtzMul a (GtzMul b c hb hc) ha (gtzMul_gtz hb hc) := by
 
   simp [GtzMul, GtzMulDef]
   apply Set.ext
@@ -1076,24 +1082,100 @@ theorem mul_comm  {a b:RR} : a * b = b * a := by
     simp [h1, h4] at hx
     exact hx
 
+theorem mul_assoc {a b c:RR} : a * b * c = a * (b * c) := by
+  have h (x:RR) : if x < 0 then -x > 0 else if x > 0 then x > 0 else x = 0 := by
+    rw [← neg_ltz_iff_gtz]
+    simp
+    intro h1
+    intro h2
+    rcases lt_trichotomy (a:=x) (b:=0) with h|h|h
+    rw [← Rudin.not_le_iff_lt] at h
+    exact (h h1).elim
+    exact h
+    rw [← Rudin.not_le_iff_lt] at h
+    exact (h h2).elim
 
 
+  apply Cut.ext
+  simp [HMul.hMul, instMulRR]
+  apply Set.ext
+  intro x
+  rcases lt_trichotomy (a:=a) (b:=0) with ha|ha|ha
+  <;>have ha1 := h a
+  <;>simp [ha] at ha1
+  <;>simp [ha, ha1]
+  <;>rcases lt_trichotomy (a:=b) (b:=0) with hb|hb|hb
+  <;>have hb1 := h b
+  <;>simp [hb] at hb1
+  <;>simp [hb, hb1]
+  <;>rcases lt_trichotomy (a:=c) (b:=0) with hc|hc|hc
+  <;>have hc1 := h c
+  <;>simp [hc] at hc1
+  <;>simp [hc]
+  have hna := Rudin.lt_then_not_gt ha
+  have hnb := Rudin.lt_then_not_gt hb
+  have hnc := Rudin.lt_then_not_gt hc
+  simp [hna, hnb ,hnc, gtzMul_assoc]
+  have hna := Rudin.lt_then_not_gt ha
+  have hnb := Rudin.lt_then_not_gt hb
+  have hmul := Rudin.lt_then_not_gt (neg_gtzMul_ltz hb1 hc)
+  simp [hna, hnb, hmul, gtzMul_assoc]
+  have hna := Rudin.lt_then_not_gt ha
+  have hnc := Rudin.lt_then_not_gt hc
+  have hmul1 := Rudin.lt_then_not_gt (neg_gtzMul_ltz ha1 hb)
+  have hmul2 := Rudin.lt_then_not_gt (neg_gtzMul_ltz hb hc1)
+  simp [hna, hnc, hmul1, hmul2, gtzMul_assoc]
+  have hna := Rudin.lt_then_not_gt ha
+  have hmul1 := Rudin.lt_then_not_gt (neg_gtzMul_ltz ha1 hb)
+  simp [hna, hmul1, gtzMul_assoc]
+  have hna := Rudin.lt_then_not_gt hb
+  have hnc := Rudin.lt_then_not_gt hc
+  have hmul1 := Rudin.lt_then_not_gt (neg_gtzMul_ltz ha hb1)
+  simp [hna, hnc, hmul1, gtzMul_assoc]
+  have hna := Rudin.lt_then_not_gt hb
+  have hmul1 := Rudin.lt_then_not_gt (neg_gtzMul_ltz ha hb1)
+  have hmul2 := Rudin.lt_then_not_gt (neg_gtzMul_ltz hb1 hc)
+  simp [hna, hmul1, hmul2, gtzMul_assoc]
+  have hnc := Rudin.lt_then_not_gt hc
+  have hmul1 := Rudin.lt_then_not_gt (neg_gtzMul_ltz hb hc1)
+  simp [hnc, hmul1, gtzMul_assoc]
+  simp [gtzMul_assoc]
 
+theorem one_gz : (1:RR) > 0 := by
+  simp [zero_def, one_def, OfRatDef, Cut.instLTRR, Set.ssub_def]
+  constructor
+  intro a ha
+  have h1:0<1 := by linarith
+  linarith
+  use 0
+  simp
 
+theorem one_nz : (1:RR) ≠ (0:RR) := by
+  simp [zero_def, one_def, OfRatDef, Set.ext_iff]
+  use 0
+  simp
 
+/-
+one_mul   : ∀ a : α, 1 * a = a
+  mul_inv_when_nz   : ∀ a : α, a ≠ 0 → a * (1 / a) = 1
+  -- distributive law
+  mul_add   : ∀ a b c : α, a * (b + c) = a * b + a * c
+-/
 
-
-
-
-
-
-
-
-
-
-
-
-
+theorem one_mul {a:RR}: 1 * a = a := by
+  sorry
+  -- apply Cut.ext
+  -- simp [HMul.hMul, instMulRR, one_gz]
+  -- simp [one_def, OfRatDef]
+  -- rcases lt_trichotomy (a:=a) (b:=0) with ha|ha|ha
+  -- <;>simp [ha]
+  -- have hna := Rudin.lt_then_not_gt ha
+  -- simp [hna]
+  -- simp [GtzMul, GtzMulDef, Set.ext_iff]
+  -- intro x
+  -- constructor
+  -- intro hx
+  -- rcases hx with ⟨ r, hr, h⟩
 
 
 
