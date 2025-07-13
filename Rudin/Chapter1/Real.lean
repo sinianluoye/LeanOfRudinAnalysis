@@ -1049,6 +1049,84 @@ theorem gtzMul_assoc
     exact hr1
   linarith
 
+theorem one_gtzMul {α : RR} (ha : α > 0) : GtzMul 1 α one_gz ha = α := by
+  apply Cut.ext
+  simp [GtzMul, GtzMulDef, one_def, OfRatDef, Set.ext_iff]
+  intro x
+  constructor
+  intro h
+  rcases h with ⟨r, hr1, s, hs, hr2, hs2, hrs⟩
+  have hrs2 : r * s < s := by
+    rw (occs := .pos [2]) [← one_mul (a:=s)]
+    rw [gtz_mul_lt_right_cancel]
+    exact hr1
+    exact hs2
+  have hx2 : x < s := by linarith
+  apply α.lt_then_in (p:=s) (q:=x) hs hx2
+  intro hx
+  rcases Cut.lt_then_ex_not_in_carrier (a:=0) (b:=1) (one_gz) with ⟨ r', hr1', hr2'⟩
+  simp [zero_def, one_def, OfRatDef] at hr1' hr2'
+  rcases (1:RR).ex_gt hr1' with ⟨ r, hr1, hr2⟩
+  simp [one_def, OfRatDef] at hr1
+  rcases lt_trichotomy (a:=x) (b:=0) with hx1|hx1|hx1
+  use r
+  simp [hr1, hr2, hr2']
+  rcases Cut.lt_then_ex_not_in_carrier ha with ⟨ s', hs1', hs2'⟩
+  simp [zero_def, OfRatDef] at hs2'
+  rcases α.ex_gt hs1' with ⟨s, hs1, hs2⟩
+  use s
+  simp [hs1, hs2]
+  constructor
+  linarith
+  constructor
+  linarith
+  have : 0 < r * s := by
+    apply Rudin.gtz_mul_gtz_then_gtz
+    repeat linarith
+  linarith
+  use r
+  simp [hr1, hr2, hr2']
+  rcases Cut.lt_then_ex_not_in_carrier ha with ⟨ s', hs1', hs2'⟩
+  simp [zero_def, OfRatDef] at hs2'
+  rcases α.ex_gt hs1' with ⟨s, hs1, hs2⟩
+  use s
+  simp [hs1, hs2]
+  constructor
+  linarith
+  constructor
+  linarith
+  have : 0 < r * s := by
+    apply Rudin.gtz_mul_gtz_then_gtz
+    repeat linarith
+  linarith
+  rcases α.ex_gt hx with ⟨ y, hy1, hy2⟩
+  use x / y
+  constructor
+  rw [div_lt_iff₀]
+  simp
+  exact hy2
+  linarith
+  use y
+  constructor
+  exact hy1
+  constructor
+  rw [Rudin.div_eq_mul_inv]
+  apply gtz_mul_gtz_then_gtz
+  linarith
+  apply Rudin.gtz_then_inv_gtz
+  linarith
+  constructor
+  linarith
+  rw [Rudin.div_mul_cancel]
+  linarith
+
+
+
+
+
+
+
+
 
 theorem mul_comm  {a b:RR} : a * b = b * a := by
   have h {x:RR} (hx:x<0): -x > 0 := by
@@ -1141,6 +1219,7 @@ theorem mul_assoc {a b c:RR} : a * b * c = a * (b * c) := by
   simp [hnc, hmul1, gtzMul_assoc]
   simp [gtzMul_assoc]
 
+@[simp]
 theorem one_gz : (1:RR) > 0 := by
   simp [zero_def, one_def, OfRatDef, Cut.instLTRR, Set.ssub_def]
   constructor
@@ -1163,20 +1242,21 @@ one_mul   : ∀ a : α, 1 * a = a
 -/
 
 theorem one_mul {a:RR}: 1 * a = a := by
-  sorry
-  -- apply Cut.ext
-  -- simp [HMul.hMul, instMulRR, one_gz]
-  -- simp [one_def, OfRatDef]
-  -- rcases lt_trichotomy (a:=a) (b:=0) with ha|ha|ha
-  -- <;>simp [ha]
-  -- have hna := Rudin.lt_then_not_gt ha
-  -- simp [hna]
-  -- simp [GtzMul, GtzMulDef, Set.ext_iff]
-  -- intro x
-  -- constructor
-  -- intro hx
-  -- rcases hx with ⟨ r, hr, h⟩
+  simp [HMul.hMul, instMulRR]
+  rcases lt_trichotomy (a:=a) (b:=0) with ha|ha|ha
+  <;>simp [ha]
+  have hna := Rudin.lt_then_not_gt ha
+  simp [hna]
+  rw [one_gtzMul]
+  simp
+  simp [one_gtzMul]
 
+def GtzInvDef (α:RR) := {q | ∃ r : ℚ, r ∉ α ∧ 0 < r ∧ q * r < 1}
+
+
+
+noncomputable instance instDivRR : Div RR where
+  div α β := sorry
 
 
 end Real
