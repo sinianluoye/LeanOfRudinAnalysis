@@ -112,6 +112,11 @@ theorem ex_mem_and_add_not_mem {d:ℚ}(hd: d > 0) : ∃ x, x ∈ α ∧ x + d �
   simp [add_mul, ← add_assoc] at hn
   exact hn
 
+theorem not_mem_then_gt_not_mem {α:Cut} {p q: ℚ} (hp: p ∉ α) (hpq: p < q) : q ∉ α := by
+  by_contra hq
+  have h1 := α.lt_then_in hq hpq
+  exact hp h1
+
 instance instLTRR : LT Cut where
   lt a b := a.carrier < b.carrier
 
@@ -451,8 +456,21 @@ theorem OfRat_def_ex_gt {n p:ℚ} (hp: p ∈ OfRatDef n): ∃ r ∈ OfRatDef n, 
   simp [hp]
   simp
 
+def OfRat (q:ℚ) : RR := ⟨
+    OfRatDef q,
+    ofRat_def_ne_empty,
+    ofRat_def_ne_univ,
+    OfRat_lt_then_in,
+    OfRat_def_ex_gt
+  ⟩
+
+instance instCoeRatRR : Coe Rat RR where
+  coe q := OfRat q
+
+
 instance instOfNatRR (n : Nat) : OfNat RR n where
-  ofNat := ⟨ OfRatDef n, ofRat_def_ne_empty, ofRat_def_ne_univ, OfRat_lt_then_in, OfRat_def_ex_gt⟩
+  ofNat := OfRat n
+
 
 instance : Zero RR where
   zero := (instOfNatRR 0).ofNat
@@ -460,9 +478,21 @@ instance : Zero RR where
 instance : One RR where
   one := (instOfNatRR 1).ofNat
 
-theorem zero_def : (0 : RR) = ⟨ OfRatDef 0, ofRat_def_ne_empty, ofRat_def_ne_univ, OfRat_lt_then_in, OfRat_def_ex_gt⟩ := rfl
+theorem zero_def : (0 : RR) = OfRat 0 := by rfl
 
-theorem one_def : (1 : RR) = ⟨ OfRatDef 1, ofRat_def_ne_empty, ofRat_def_ne_univ, OfRat_lt_then_in, OfRat_def_ex_gt⟩ := rfl
+theorem one_def : (1 : RR) = OfRat 1 := by rfl
+
+
+theorem Cut.gt_ofRat_ex_mem_gt {α : RR} {q:ℚ} (h: α > OfRat q) :
+  ∃ x ∈ α , x > q := by
+  rcases Cut.lt_then_ex_not_in_carrier h with ⟨ r, hr1, hr2⟩
+  simp [OfRat, OfRatDef] at hr2
+  rcases α.ex_gt hr1 with ⟨ s, hs1, hs2⟩
+  use s
+  constructor
+  assumption
+  linarith
+
 
 def NegDef (α : RR) := {p:ℚ | ∃ r:ℚ, r > 0 ∧ - p - r ∉ α }
 
@@ -630,7 +660,7 @@ theorem add_assoc {a b c: RR} : (a + b) + c = a + (b + c) := by
 
 theorem zero_add {a:RR} : 0 + a = a := by
   apply Cut.ext
-  simp [zero_def, OfRatDef]
+  simp [zero_def, OfRatDef, OfRat]
   simp [HAdd.hAdd, instAddRR, AddDef]
   apply Set.ext
   intro x
@@ -660,7 +690,7 @@ theorem zero_add {a:RR} : 0 + a = a := by
 
 theorem add_neg {a:RR} : a + -a = 0 := by
   simp [neg_def, zero_def]
-  simp [HAdd.hAdd, instAddRR, AddDef, OfRatDef, NegDef]
+  simp [HAdd.hAdd, instAddRR, AddDef, OfRatDef, OfRat, NegDef]
   apply Set.ext
   intro x
   simp
@@ -765,7 +795,7 @@ theorem neg_ltz_iff_gtz {a:RR} : -a < 0 ↔ a > 0 := by
 def GtzMulDef (α:RR) (β:RR)  := { p : ℚ | ∃ r s : ℚ, r ∈ α ∧ s ∈ β ∧ 0 < r ∧ 0 < s ∧ p ≤ r * s }
 
 theorem gtz_then_ex_mem_gtz {α:RR} (h: α > 0) : ∃ x ∈ α, x > 0 := by
-  simp [zero_def, OfRatDef, Cut.lt_def] at h
+  simp [zero_def, OfRatDef, OfRat, Cut.lt_def] at h
   simp [Cut.lt_def]
   rcases h with ⟨ h, ⟨ x, hx1, hx2⟩⟩
   rcases α.ex_gt hx1  with ⟨ y, hy⟩
@@ -853,7 +883,7 @@ theorem gtz_mul_def_ex_gt {p:ℚ} {α β:RR}
 
 
 theorem gtz_mul_def_gtz_mul_gtz_then_gtz {α β:RR} (h1: α > 0) (h2: β > 0) : GtzMulDef α β > (0:RR).carrier := by
-  simp only [gt_iff_lt, zero_def, OfRatDef, GtzMulDef, Cut.lt_def, Set.lt_iff_ssubset, Set.ssub_def]
+  simp only [gt_iff_lt, zero_def, OfRatDef, OfRat, GtzMulDef, Cut.lt_def, Set.lt_iff_ssubset, Set.ssub_def]
   simp
   constructor
   intro x hx
@@ -1051,7 +1081,7 @@ theorem gtzMul_assoc
 
 theorem one_gtzMul {α : RR} (ha : α > 0) : GtzMul 1 α one_gz ha = α := by
   apply Cut.ext
-  simp [GtzMul, GtzMulDef, one_def, OfRatDef, Set.ext_iff]
+  simp [GtzMul, GtzMulDef, one_def, OfRatDef, OfRat, Set.ext_iff]
   intro x
   constructor
   intro h
@@ -1065,14 +1095,14 @@ theorem one_gtzMul {α : RR} (ha : α > 0) : GtzMul 1 α one_gz ha = α := by
   apply α.lt_then_in (p:=s) (q:=x) hs hx2
   intro hx
   rcases Cut.lt_then_ex_not_in_carrier (a:=0) (b:=1) (one_gz) with ⟨ r', hr1', hr2'⟩
-  simp [zero_def, one_def, OfRatDef] at hr1' hr2'
+  simp [zero_def, one_def, OfRatDef, OfRat] at hr1' hr2'
   rcases (1:RR).ex_gt hr1' with ⟨ r, hr1, hr2⟩
-  simp [one_def, OfRatDef] at hr1
+  simp [one_def, OfRatDef, OfRat] at hr1
   rcases lt_trichotomy (a:=x) (b:=0) with hx1|hx1|hx1
   use r
   simp [hr1, hr2, hr2']
   rcases Cut.lt_then_ex_not_in_carrier ha with ⟨ s', hs1', hs2'⟩
-  simp [zero_def, OfRatDef] at hs2'
+  simp [zero_def, OfRatDef, OfRat] at hs2'
   rcases α.ex_gt hs1' with ⟨s, hs1, hs2⟩
   use s
   simp [hs1, hs2]
@@ -1087,7 +1117,7 @@ theorem one_gtzMul {α : RR} (ha : α > 0) : GtzMul 1 α one_gz ha = α := by
   use r
   simp [hr1, hr2, hr2']
   rcases Cut.lt_then_ex_not_in_carrier ha with ⟨ s', hs1', hs2'⟩
-  simp [zero_def, OfRatDef] at hs2'
+  simp [zero_def, OfRatDef, OfRat] at hs2'
   rcases α.ex_gt hs1' with ⟨s, hs1, hs2⟩
   use s
   simp [hs1, hs2]
@@ -1221,7 +1251,7 @@ theorem mul_assoc {a b c:RR} : a * b * c = a * (b * c) := by
 
 @[simp]
 theorem one_gz : (1:RR) > 0 := by
-  simp [zero_def, one_def, OfRatDef, Cut.instLTRR, Set.ssub_def]
+  simp [zero_def, one_def, OfRatDef, OfRat, Cut.instLTRR, Set.ssub_def]
   constructor
   intro a ha
   have h1:0<1 := by linarith
@@ -1230,7 +1260,7 @@ theorem one_gz : (1:RR) > 0 := by
   simp
 
 theorem one_nz : (1:RR) ≠ (0:RR) := by
-  simp [zero_def, one_def, OfRatDef, Set.ext_iff]
+  simp [zero_def, one_def, OfRatDef, OfRat, Set.ext_iff]
   use 0
   simp
 
@@ -1252,6 +1282,90 @@ theorem one_mul {a:RR}: 1 * a = a := by
   simp [one_gtzMul]
 
 def GtzInvDef (α:RR) := {q | ∃ r : ℚ, r ∉ α ∧ 0 < r ∧ q * r < 1}
+
+  -- ne_nempty : carrier ≠ ∅
+  -- ne_univ : carrier ≠ Set.univ
+  -- lt_then_in {p q:ℚ} (hp: p ∈ carrier) (hq: q < p): q ∈ carrier
+  -- ex_gt {p:ℚ} (hp: p ∈ carrier): ∃ r ∈ carrier, p < r
+
+theorem gtzInv_ne_empty {α:RR} (ha: α > 0): GtzInvDef α ≠ ∅ := by
+  simp [GtzInvDef, Set.not_empty_iff_ex_mem]
+  rcases Cut.gt_ofRat_ex_mem_gt ha with ⟨ r, hr1, hr2⟩
+  rcases α.ex_not_mem with ⟨ s, hs⟩
+  use 0
+  use s
+  constructor
+  exact hs
+  have hrs := α.in_lt_not_in hr1 hs
+  constructor
+  linarith
+  simp
+
+theorem gtzInv_ne_univ {α:RR} (ha: α > 0): GtzInvDef α ≠ Set.univ := by
+  simp [GtzInvDef, Set.ne_univ_iff_ex_not_in]
+  rcases Cut.gt_ofRat_ex_mem_gt ha with ⟨ r, hr1, hr2⟩
+  rcases α.ex_not_mem with ⟨ s, hs⟩
+  use 1/r
+  intro x hx1 hx2
+  rw [Rudin.mul_comm]
+  apply Rudin.lt_then_le
+  rw [← div_eq_mul_inv]
+  rw [Rudin.lt_div_gtz_iff_mul_lt (a:=1) (b:=x) (c:=r)]
+  simp
+  have hrx := α.in_lt_not_in hr1 hx1
+  exact hrx
+  exact hr2
+
+theorem gtzInv_lt_then_in {α:RR} {p q:ℚ}
+   (hp: p ∈ GtzInvDef α ) (hq: q < p): q ∈ GtzInvDef α := by
+  simp [GtzInvDef] at *
+  rcases hp with ⟨ r, hr1, hr2, hpr⟩
+  rcases lt_trichotomy (a:=q) (b:=0) with hq1|hq1|hq1
+  . use r
+    constructor
+    assumption
+    constructor
+    assumption
+    have : q * r < 0 := by
+      rw [Rudin.mul_ltz_iff_opp_sign]
+      simp [OppSign, hq1, hr2]
+    linarith
+  . use r
+    constructor
+    assumption
+    constructor
+    assumption
+    have : q * r = 0 := by
+      rw [hq1]
+      simp
+    linarith
+  . use p * r / q
+    constructor
+    have : p * r / q > r:= by
+      rw [gt_iff_lt]
+      rw [Rudin.lt_div_gtz_iff_mul_lt (a:=r) (b:=p*r) (c:=q)]
+      rw [Rudin.mul_comm]
+      rw [gtz_mul_lt_right_cancel]
+      exact hq
+      exact hr2
+      exact hq1
+    apply Cut.not_mem_then_gt_not_mem hr1 this
+    constructor
+    rw [Rudin.lt_div_gtz_iff_mul_lt]
+    simp
+    apply Rudin.gtz_mul_gtz_then_gtz
+    linarith
+    assumption
+    assumption
+    rw [Rudin.mul_div_cancel_left']
+    exact hpr
+    linarith
+
+theorem gtzInv_ex_gt {α:RR} {p:ℚ} (hp: p ∈ GtzInvDef α): ∃ r ∈ GtzInvDef α, p < r := by
+  simp [GtzInvDef] at *
+  rcases hp with ⟨ r, hr1, hr2, hpr⟩
+
+
 
 
 
