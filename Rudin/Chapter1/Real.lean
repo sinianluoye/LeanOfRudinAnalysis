@@ -1364,6 +1364,43 @@ theorem gtzInv_lt_then_in {α:RR} {p q:ℚ}
 theorem gtzInv_ex_gt {α:RR} {p:ℚ} (hp: p ∈ GtzInvDef α): ∃ r ∈ GtzInvDef α, p < r := by
   simp [GtzInvDef] at *
   rcases hp with ⟨ r, hr1, hr2, hpr⟩
+  have p_lt_inv : p < 1 / r := by
+    rw [Rudin.lt_div_gtz_iff_mul_lt]
+    exact hpr
+    exact hr2
+  let q : ℚ := (p + 1 / r) / 2
+  have two_gtz : (0 : ℚ) < 2 := by norm_num
+  have p_lt_q : p < q := by
+    simp only [q]
+    rw [Rudin.lt_div_gtz_iff_mul_lt two_gtz]
+    rw [Rudin.mul_comm]
+    have := Rat.nat_mul_def (a:=p) (n:=2)
+    have two_ne_zero: ¬ (2 = 0) := by norm_num
+    norm_num at this
+    rw [this]
+    rw [Rudin.add_lt_left_cancel]
+    exact p_lt_inv
+  have q_lt_inv : q < 1 / r := by
+    simp only [q]
+    simp only [Rudin.gt_div_gtz_iff_mul_gt, two_gtz]
+    have := Rat.nat_mul_def (a:=1/r) (n:=2)
+    have two_ne_zero: ¬ (2 = 0) := by norm_num
+    norm_num at this
+    simp
+    rw [Rudin.mul_comm, this]
+    simp
+    simp at p_lt_inv
+    exact p_lt_inv
+  have q_mul_lt_one : q * r < 1 := by
+    rw [Rudin.lt_div_gtz_iff_mul_lt] at q_lt_inv
+    exact q_lt_inv
+    exact hr2
+  use q
+  constructor
+  use r
+  exact p_lt_q
+
+
 
 
 

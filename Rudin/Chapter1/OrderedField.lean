@@ -451,5 +451,28 @@ theorem lt_div_ltz_iff_mul_gt (h: c < 0) : a < b / c ↔ a * c > b := by
   exact lt_then_ne h
   exact h
 
+theorem gt_div_gtz_iff_mul_gt (h: c > 0) : a > b / c ↔ a * c > b := by
+  have : 1/c > 0 := gtz_then_inv_gtz h
+  have h1 := gtz_mul_lt_left_cancel (a:=1/c) (b:=b) (c:=a*c) this
+  rw [Rudin.mul_comm] at h1
+  rw [← div_eq_mul_inv] at h1
+  rw [mul_comm, ← div_eq_mul_inv, mul_div_cancel] at h1
+  exact h1
+  apply gt_then_ne
+  exact h
+
+
+theorem gt_div_ltz_iff_mul_lt (h: c < 0) : a > b / c ↔ a * c < b := by
+  have h1 := gt_div_gtz_iff_mul_gt (a:=a) (b:=-b) (c:=-c) (neg_gtz_iff_ltz.mpr h)
+  rw [Rudin.div_eq_mul_inv] at h1
+  rw [Rudin.neg_inv] at h1
+  simp [Rudin.mul_neg, Rudin.neg_mul] at h1
+  rw [← Rudin.div_eq_mul_inv] at h1
+  rw [gt_iff_lt]
+  exact h1
+  apply lt_then_ne
+  exact h
+
+
 
 end Rudin
