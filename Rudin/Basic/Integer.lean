@@ -1,6 +1,3 @@
-import Mathlib
-
-
 theorem Int.lt_then_not_gt {a b:Int} (hab: a < b): ¬ a > b := by
   rw [Int.not_lt]
   rw [Int.le_iff_eq_or_lt]
