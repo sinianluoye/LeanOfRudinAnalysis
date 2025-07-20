@@ -513,6 +513,10 @@ theorem ge_div_ltz_iff_mul_le (h: c < 0) : a ≥ b / c ↔ a * c ≤ b := by
   apply lt_then_ne
   exact h
 
-
+theorem gtz_add_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a + b > 0 := by
+  simp at *
+  rw [← add_lt_left_cancel (a:=a)] at hb
+  simp at hb
+  exact lt_trans ha hb
 
 end Rudin

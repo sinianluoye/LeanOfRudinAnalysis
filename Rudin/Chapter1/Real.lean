@@ -1671,7 +1671,160 @@ theorem mul_inv_when_nz {a:RR} (ha: a ≠ 0) : a * (1 / a) = 1 := by
   simp [instInvRR, ha1] at h
   exact h
 
+private theorem gtz_add_gtz_then_gtz {a b:RR} (ha: a > 0) (hb: b > 0) : a + b > 0 := by
+  simp [HAdd.hAdd, instAddRR, AddDef, Cut.lt_def, zero_def, OfRat, OfRatDef] at *
+  rcases ha with ⟨ ha, x, hx1, hx2⟩
+  rcases hb with ⟨ hb, y, hy1, hy2⟩
+  constructor
+  intro z hz1
+  rcases (OfRat 0).ex_gt hz1 with ⟨ r, hr1, hr2⟩
+  simp [OfRat, OfRatDef] at hr1
+  use r
+  constructor
+  apply ha
+  exact hr1
+  use z - r
+  constructor
+  apply hb
+  linarith
+  have :  Add.add r (z - r) = r + (z - r) := by rfl
+  simp [this]
+  use x + y
+  constructor
+  use x
+  constructor
+  assumption
+  use y
+  constructor
+  assumption
+  rfl
+  linarith
 
+
+
+
+
+private theorem gtzMul_mul_add {a b c : RR} (ha: a > 0) (hb: b > 0) (hc: c > 0) :
+  GtzMul a (b + c) (ha) (gtz_add_gtz_then_gtz hb hc) = GtzMul a b ha hb + GtzMul a c ha hc := by
+  simp [ha, hb, hc, GtzMul, GtzMulDef, Cut.ext_iff, Set.ext_iff, HAdd.hAdd, AddDef, instAddRR]
+  intro x
+  constructor
+  intro hx
+  rcases hx with ⟨ r , hr1, ⟨y, ⟨s, hs, t, ht, hst⟩, hr2, hy, hry ⟩ ⟩
+  have hst : y = s + t := by assumption
+  rw [hst, mul_add] at hry
+  use r * s
+  constructor
+  . use r
+    repeat
+      constructor
+      assumption
+    by_cases hs1: s > 0
+    use s
+    simp at hs1
+    rcases b.gt_ofRat_ex_mem_gt hb with ⟨ u, hu1, hu2⟩
+    use u
+    repeat
+      constructor
+      assumption
+    rw [Rudin.gtz_mul_le_left_cancel hr2]
+    linarith
+  use x - r * s
+  constructor
+  . use r
+    repeat
+      constructor
+      assumption
+    by_cases ht1 : t > 0
+    use t
+    repeat
+      constructor
+      assumption
+    simp at ht1
+    simp
+    linarith
+    rcases c.gt_ofRat_ex_mem_gt hc with ⟨ v, hv1, hv2⟩
+    use v
+    repeat
+      constructor
+      assumption
+    have hrv : r*t ≤ r*v := by
+      rw [Rudin.gtz_mul_le_left_cancel hr2]
+      simp at ht1
+      linarith
+    have : x - r * s ≤ r * t := by
+      simp
+      linarith
+    linarith
+  have : Add.add (r * s) (x - r * s) = r * s + (x-r*s) := by rfl
+  simp [this]
+  intro hx
+  rcases hx with ⟨rs, hx⟩
+  rcases hx with ⟨ hx1, rt, hx3⟩
+  rcases hx1 with ⟨ r, hr, s, hs, hr1, hs1, hrs⟩
+  rcases hx3 with ⟨hx3, hx⟩
+  rcases hx3 with ⟨ r', hr', t ,ht, hr1', ht1, hrt'⟩
+  by_cases hrr' : r > r'
+  use r
+  constructor
+  assumption
+  use s + t
+  constructor
+  use s
+  constructor
+  assumption
+  use t
+  constructor
+  assumption
+  rfl
+  constructor
+  linarith
+  constructor
+  linarith
+  rw [hx]
+  rw [mul_add]
+  have : Add.add rs rt = rs + rt := by rfl
+  simp [this]
+  have : r'*t < r * t:= by
+    rw [Rudin.gtz_mul_lt_right_cancel]
+    exact hrr'
+    assumption
+  calc
+    rs + rt ≤ r * s + rt := by linarith
+    _ ≤ r * s + r' * t := by linarith
+    _ ≤ r * s + r * t := by linarith
+  use r'
+  constructor
+  assumption
+  use s + t
+  constructor
+  use s
+  constructor
+  assumption
+  use t
+  constructor
+  assumption
+  rfl
+  constructor
+  linarith
+  constructor
+  linarith
+  rw [hx]
+  rw [mul_add]
+  have : Add.add rs rt = rs + rt := by rfl
+  simp [this]
+  have : r * s ≤ r' * s:= by
+    rw [Rudin.gtz_mul_le_right_cancel]
+    simp at hrr'
+    linarith
+    assumption
+  calc
+    rs + rt ≤ r' * s + rt := by linarith
+    _ ≤ r' * s + r' * t := by linarith
+
+
+theorem mul_add {a b c : RR}: a * (b + c) = a * b + a * c := by
+  sorry
 
 end Real
 
