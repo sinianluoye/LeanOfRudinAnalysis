@@ -425,7 +425,7 @@ theorem add_def_ex_gt {α β:RR} {p:ℚ} (hp: p ∈ AddDef α β): ∃ r ∈ Add
   exact ha2
   exact hb2
 
-instance : Add RR where
+instance instAddRR: Add RR where
   add a b := ⟨ AddDef a b, add_def_ne_empty, add_def_ne_univ, add_def_lt_then_in, add_def_ex_gt⟩
 
 theorem mem_add_def_iff {α β:RR} {x : ℚ}: x ∈ (α + β) ↔ ∃ r ∈ α, ∃ s ∈ β, x = r + s := by
@@ -485,7 +485,6 @@ instance instCoeRatRR : Coe Rat RR where
 instance instOfNatRR (n : Nat) : OfNat RR n where
   ofNat := OfRat n
 
-
 instance : Zero RR where
   zero := (instOfNatRR 0).ofNat
 
@@ -495,6 +494,9 @@ instance : One RR where
 theorem zero_def : (0 : RR) = OfRat 0 := by rfl
 
 theorem one_def : (1 : RR) = OfRat 1 := by rfl
+
+@[simp]
+theorem ofRat_eq_rat {a:Rat} : OfRat a = (a:RR) := by rfl
 
 
 theorem Cut.gt_ofRat_ex_mem_gt {α : RR} {q:ℚ} (h: α > OfRat q) :
@@ -724,7 +726,7 @@ theorem add_neg {a:RR} : a + -a = 0 := by
   let y := -x/2
   have hy : y > 0 := by
     simp [y]
-    exact hx
+    linarith
   have hynz := ne_of_gt hy
   rcases Cut.ex_mem (α := a) with ⟨ r, hr ⟩
   rcases Cut.mem_then_ex_add_mem_and_add_delta_not_mem hr hy with ⟨n, hn⟩
@@ -738,7 +740,7 @@ theorem add_neg {a:RR} : a + -a = 0 := by
     simp [y]
   constructor
   simp [y]
-  exact hx
+  linarith
   simp [this]
   ring_nf
   ring_nf at hn
@@ -1822,9 +1824,306 @@ private theorem gtzMul_mul_add {a b c : RR} (ha: a > 0) (hb: b > 0) (hc: c > 0) 
     rs + rt ≤ r' * s + rt := by linarith
     _ ≤ r' * s + r' * t := by linarith
 
+@[simp]
+theorem neg_zero_eq_zero : (-0:RR) = 0 := by
+  simp [zero_def, neg_def, NegDef, OfRat, OfRatDef, Cut.ext_iff, Set.ext_iff]
+  intro x
+  constructor
+  <;>intro hx
+  rcases hx with ⟨ r, hr1, hr2⟩
+  have : -x > 0 := by linarith
+  linarith
+  use -x
+  constructor
+  linarith
+  linarith
+
+@[simp]
+theorem mul_neg {a b:RR} : a * -b = - (a * b) := by
+  simp [HMul.hMul, instMulRR]
+  rcases Rudin.lt_trichotomy (a:=a) (b:=0) with ha|ha|ha
+  have ha1: -a > 0 := by
+    rw [← neg_ltz_iff_gtz]
+    simp
+    assumption
+  have ha2: ¬ a > 0 := by
+    simp
+    apply lt_then_le
+    exact ha
+  simp [ha, ha1, ha2]
+  rcases Rudin.lt_trichotomy (a:=b) (b:=0) with hb|hb|hb
+  have hb1: -b > 0 := by
+    rw [← neg_ltz_iff_gtz]
+    simp
+    assumption
+  have hb2: ¬ b > 0 := by
+    simp
+    apply lt_then_le
+    exact hb
+  simp [hb, hb1, hb2]
+  have hb2: ¬ b > 0 := by
+    simp
+    apply eq_then_le
+    exact hb
+  simp [hb]
+  have : ¬ -b > 0 := by
+    rw [← neg_ltz_iff_gtz]
+    rw [neg_neg]
+    simp
+    apply lt_then_le
+    exact hb
+  simp [this, hb]
+  have ha2: ¬ a > 0 := by
+    simp
+    apply eq_then_le
+    exact ha
+  simp [ha2, ha]
+  simp [ha]
+  rcases Rudin.lt_trichotomy (a:=b) (b:=0) with hb|hb|hb
+  have hb1: -b > 0 := by
+    rw [← neg_ltz_iff_gtz]
+    simp
+    assumption
+  have hb2: ¬ b > 0 := by
+    simp
+    apply lt_then_le
+    exact hb
+  simp [hb, hb1, hb2]
+  have hb2: ¬ b > 0 := by
+    simp
+    apply eq_then_le
+    exact hb
+  simp [hb, hb2]
+  have : ¬ -b > 0 := by
+    rw [← neg_ltz_iff_gtz]
+    rw [neg_neg]
+    simp
+    apply lt_then_le
+    exact hb
+  simp [hb, this]
+
+theorem neg_add_eq {a b:RR} : -(a+b) = -a + -b := by
+  rw [← add_left_cancel (a:=a+b)]
+  rw [add_neg]
+  rw [← add_assoc, add_comm, add_comm (a:=a), add_assoc, add_neg, ← add_assoc, add_comm, zero_add, add_comm, add_neg]
+
+@[simp]
+theorem zero_mul {a:RR} : 0 * a = 0 := by simp [HMul.hMul, instMulRR]
+
+private theorem mul_add_lemma_1  {a b c : RR} (ha: a > 0) (hb: b > 0) (hc: c > 0):
+   a * (b + c) = a * b + a * c := by
+   simp [HMul.hMul, instMulRR, ha, hb, hc, gtz_add_gtz_then_gtz, gtzMul_mul_add]
+
+private theorem mul_add_lemma_2  {a b c : RR} (ha: a < 0) (hb: b > 0) (hc: c > 0):
+  a * (b + c) = a * b + a * c := by
+  have ha1:-a > 0 := by
+    rw [← neg_ltz_iff_gtz]
+    simp
+    exact ha
+  rw (occs := .pos [1]) [← neg_neg (a:=a)]
+  rw [mul_comm]
+  rw [mul_neg]
+  rw [mul_comm]
+  rw [mul_add_lemma_1 ha1 hb hc]
+  rw [neg_add_eq]
+  rw [mul_comm, mul_neg, neg_neg]
+  rw [mul_comm (a:=-a), mul_neg, neg_neg, mul_comm, mul_comm (a:=c)]
+
+
+
+private theorem mul_add_lemma_3 {a b c: RR} (hb: b > 0) (hc: c > 0) : a * (b + c) = a * b + a * c := by
+  rcases lt_trichotomy (a:=a) (b:=0) with ha|ha|ha
+  exact mul_add_lemma_2 ha hb hc
+  rw [ha]
+  simp [zero_mul, zero_add]
+  exact mul_add_lemma_1 ha hb hc
+
+private theorem mul_add_lemma_4  {a b c : RR} (hc: b < 0) (hbc: b + c > 0):
+    a * (b + c) = a * b + a * c := by
+  have hb1 : c = b + c + (-b):= by
+    rw [add_comm]
+    rw [← add_assoc]
+    rw [add_comm (a:=-b)]
+    rw [add_neg]
+    rw [zero_add]
+  have hb2: -b > 0 := by
+    rw [← neg_ltz_iff_gtz]
+    simp
+    assumption
+  rw (occs := .pos [2]) [hb1]
+  rw [mul_add_lemma_3 hbc hb2]
+  simp
+  rw [← add_assoc]
+  rw [add_comm (a:=a*b)]
+  rw [add_assoc, add_neg, add_comm (b:=0), zero_add]
+
+private theorem mul_add_lemma_5 {a b c : RR} (hb: b > 0) (hbc: b + c > 0):
+    a * (b + c) = a * b + a * c := by
+  rcases lt_trichotomy (a:=c) (b:=0) with hc|hc|hc
+  rw [add_comm (b:=c), add_comm (a:=a*b)]
+  rw [add_comm (b:=c)] at hbc
+  exact mul_add_lemma_4 hc hbc
+  simp [hc, add_comm (b:=0), zero_add, mul_comm (b:=0)]
+  rw [add_comm (b:=c), add_comm (a:=a*b)]
+  rw [add_comm (b:=c)] at hbc
+  apply mul_add_lemma_3
+  repeat assumption
+
+private theorem mul_add_lemma_6 {a b c : RR} (hbc: b + c > 0): a * (b + c) = a * b + a * c := by
+  rcases lt_trichotomy (a:=b) (b:=0) with hb|hb|hb
+  apply mul_add_lemma_4
+  repeat assumption
+  rw [hb, zero_add, mul_comm (b:=0), zero_mul, zero_add]
+  apply mul_add_lemma_5
+  repeat assumption
+
+private theorem mul_add_lemma_7  {a b c : RR} (hbc: b + c < 0):
+  a * (b + c) = a * b + a * c := by
+  have hbc1: -(b+c) > 0 := by
+    rw [← neg_ltz_iff_gtz]
+    simp
+    assumption
+  have : b + c = -(-b + -c) := by rw [neg_add_eq, neg_neg, neg_neg]
+  rw [this]
+  rw [mul_neg]
+  rw [add_comm]
+  rw [neg_add_eq, add_comm] at hbc1
+  rw [mul_add_lemma_6]
+  simp [neg_add_eq, add_comm]
+  assumption
 
 theorem mul_add {a b c : RR}: a * (b + c) = a * b + a * c := by
-  sorry
+  rcases lt_trichotomy (a:=b + c) (b:=0) with h|h|h
+  apply mul_add_lemma_7
+  assumption
+  simp [h, mul_comm (b:=0)]
+  rw [← add_neg (a:=b)] at h
+  rw [add_left_cancel] at h
+  rw [h]
+  rw [mul_neg]
+  rw [add_neg]
+  apply mul_add_lemma_6
+  assumption
+
+/-
+  sub_eq_add_neg : ∀ a b : α, a - b = a + -b
+  div_eq_mul_inv : ∀ a b : α, a / b = a * (1 / b)
+  pow_nat_def : ∀ a : α, ∀ n : Nat, a ^ n = if n = 0 then 1 else a ^ (n - 1) * a
+  nat_mul_def : ∀ a : α, ∀ n : Nat, n * a = if n = 0 then 0 else (n - 1) * a + a
+-/
+
+instance instSubRR : Sub RR where
+  sub a b := ⟨ AddDef a (-b), add_def_ne_empty, add_def_ne_univ, add_def_lt_then_in, add_def_ex_gt⟩
+
+theorem sub_eq_add_neg {a b:RR} : a - b = a + -b := by rfl
+
+theorem div_eq_mul_inv {a b:RR} : a / b = a * (1 / b) := by
+  simp [HDiv.hDiv, instDivRR]
+  rw [← mul_assoc, mul_comm (b:=1), one_mul]
+
+private noncomputable def powRRNat (a : RR) (n:ℕ) :=
+  if n = 0
+  then (1:RR)
+  else a * powRRNat a (n-1)
+
+noncomputable instance instPowRRNat : Pow RR Nat where
+  pow a n := powRRNat a n
+
+theorem pow_nat_def {a:RR} {n:ℕ} :  a ^ n = if n = 0 then 1 else a ^ (n - 1) * a := by
+  simp [HPow.hPow, instPowRRNat]
+  by_cases hn : n = 0
+  rw [powRRNat]
+  simp [hn]
+  rw [powRRNat]
+  simp [hn]
+  rw [mul_comm]
+
+noncomputable instance instHMulRRNat : HMul Nat RR RR where
+  hMul n a := OfRat n * a
+
+
+theorem ofRat_add_ofRat_eq_OfRat_add {a b:Rat}: OfRat a + OfRat b = OfRat (a + b)  := by
+  simp [HAdd.hAdd, instAddRR, AddDef, OfRat, OfRatDef, Cut.ext_iff, Set.ext_iff]
+  intro x
+  constructor
+  intro hx
+  rcases hx with ⟨ r, hr, s, hs, hrs⟩
+  rw [hrs]
+  have {u v:Rat}: Add.add u v = u + v := by rfl
+  simp [this]
+  linarith
+  intro h
+  have {u v:Rat}: Add.add u v = u + v := by rfl
+  simp [this] at h
+  simp [this]
+  use (x - b + a) / (1 + 1)
+  constructor
+  rw [← gt_iff_lt, gt_div_gtz_iff_mul_gt]
+  rw [Rudin.mul_add]
+  simp
+  linarith
+  linarith
+  use (x + b - a) / (1 + 1)
+  constructor
+  rw [← gt_iff_lt, gt_div_gtz_iff_mul_gt]
+  rw [Rudin.mul_add]
+  simp
+  linarith
+  linarith
+  ring_nf
+
+
+theorem nat_mul_def {a:RR} {n:ℕ} : n * a = if n = 0 then 0 else (n - 1) * a + a := by
+  simp [HMul.hMul]
+  by_cases hn:n = 0
+  <;>simp [hn]
+  have : OfRat 0 = 0 := by rfl
+  simp [this]
+  have : Mul.mul 0 a = 0 * a := rfl
+  rw [this]
+  rw [zero_mul]
+  rw (occs := .pos [3]) [← one_mul (a:=a)]
+  repeat rw [mul_comm (b:=a)]
+  have :  Mul.mul (OfRat ↑n) a = (OfRat ↑n) * a := by rfl
+  simp [this]
+  have : Mul.mul (OfRat ↑(n - 1)) a = OfRat ↑(n - 1) * a := by rfl
+  simp [this]
+  rw [mul_comm (a:=OfRat ↑(n - 1)) (b:=a)]
+  rw [← mul_add]
+  have : (↑(n - 1):Rat) = ↑n - 1 := by
+    refine Nat.cast_pred ?_
+    exact Nat.zero_lt_of_ne_zero hn
+  rw [this]
+  have : OfRat (↑n - 1) + 1 = OfRat n := by
+    rw [one_def]
+    rw [ofRat_add_ofRat_eq_OfRat_add]
+    rw [sub_add_cancel]
+  rw [this]
+  rw [mul_comm]
+
+noncomputable instance instRudinField : Rudin.Field RR where
+  -- add axioms
+  add_comm  := by apply add_comm
+  add_assoc := by apply add_assoc
+  zero_add  := by apply zero_add
+  add_neg   := by apply add_neg
+  -- mul axioms
+  mul_comm  := by apply mul_comm
+  mul_assoc := by apply mul_assoc
+  one_nz := by apply one_nz
+  one_mul   := by apply one_mul
+  mul_inv_when_nz   := by apply mul_inv_when_nz
+  -- distributive law
+  mul_add   := by apply mul_add
+
+  -- remarks
+  sub_eq_add_neg := by apply sub_eq_add_neg
+  div_eq_mul_inv := by apply div_eq_mul_inv
+  pow_nat_def := by apply pow_nat_def
+  nat_mul_def := by apply nat_mul_def
+
+
+
 
 end Real
 
