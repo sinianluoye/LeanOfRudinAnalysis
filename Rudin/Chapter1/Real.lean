@@ -1650,8 +1650,6 @@ private theorem gtzMul_gtzInv_eq_OfRat_one {a:RR} (ha: a > 0) : GtzMulDef a a⁻
   have : x < d := by linarith
   linarith
 
-
-
 theorem mul_inv_when_nz {a:RR} (ha: a ≠ 0) : a * (1 / a) = 1 := by
   simp [HDiv.hDiv, instDivRR, one_mul]
   simp [instInvRR]
@@ -2041,8 +2039,8 @@ theorem pow_nat_def {a:RR} {n:ℕ} :  a ^ n = if n = 0 then 1 else a ^ (n - 1) *
 noncomputable instance instHMulRRNat : HMul Nat RR RR where
   hMul n a := OfRat n * a
 
-
-theorem ofRat_add_ofRat_eq_OfRat_add {a b:Rat}: OfRat a + OfRat b = OfRat (a + b)  := by
+-- Rudin chapter1 appendix step8 (a)
+theorem ofRat_add_ofRat_eq {a b:Rat}: OfRat a + OfRat b = OfRat (a + b)  := by
   simp [HAdd.hAdd, instAddRR, AddDef, OfRat, OfRatDef, Cut.ext_iff, Set.ext_iff]
   intro x
   constructor
@@ -2096,12 +2094,12 @@ theorem nat_mul_def {a:RR} {n:ℕ} : n * a = if n = 0 then 0 else (n - 1) * a + 
   rw [this]
   have : OfRat (↑n - 1) + 1 = OfRat n := by
     rw [one_def]
-    rw [ofRat_add_ofRat_eq_OfRat_add]
+    rw [ofRat_add_ofRat_eq]
     rw [sub_add_cancel]
   rw [this]
   rw [mul_comm]
 
-noncomputable instance instRudinField : Rudin.Field RR where
+noncomputable instance instRudinFieldRR : Rudin.Field RR where
   -- add axioms
   add_comm  := by apply add_comm
   add_assoc := by apply add_assoc
@@ -2122,6 +2120,166 @@ noncomputable instance instRudinField : Rudin.Field RR where
   pow_nat_def := by apply pow_nat_def
   nat_mul_def := by apply nat_mul_def
 
+theorem gtz_mul_gtz_then_gtz {a b :RR} (ha: a > 0) (hb: b > 0) : a * b > 0 := by
+  simp [HMul.hMul, instMulRR, ha, hb]
+
+
+noncomputable instance instRudinOrderedFieldRR :Rudin.OrderedField RR where
+  add_lt_left_cancel := add_lt_left_cancel.mpr
+  gtz_mul_gtz_then_gtz := gtz_mul_gtz_then_gtz
+
+-- Rudin chapter1 appendix step8 (c)
+theorem ofRat_lt_ofRat_iff_lt {a b:Rat} : OfRat a < OfRat b ↔ a < b:= by
+  simp [Cut.lt_def]
+  simp [OfRat, OfRatDef]
+  constructor
+  intro h
+  rcases h with ⟨ h1, x, hx1, hx2⟩
+  linarith
+  intro h
+  constructor
+  intro x hx
+  linarith
+  use a
+
+
+theorem neg_ofRat_eq {a:Rat} : -OfRat a = OfRat (-a) := by
+  simp [OfRat, neg_def, NegDef, OfRatDef, Set.ext_iff]
+  intro x
+  constructor
+  <;>intro hx
+  rcases hx with ⟨ r,hr1, hr2⟩
+  linarith
+  use -a - x
+  constructor
+  linarith
+  linarith
+
+private theorem ofRat_mul_ofRat_eq_lemma_1 {a b:Rat} (ha: a > 0) (hb: b > 0): OfRat a * OfRat b = OfRat (a * b) := by
+  have h_simp: Mul.mul a b = a * b := by rfl
+  have ha1: OfRat a > 0 := by
+    rw [zero_def, gt_iff_lt]
+    rw [ofRat_lt_ofRat_iff_lt]
+    linarith
+  have hb1: OfRat b > 0 := by
+    rw [zero_def, gt_iff_lt]
+    rw [ofRat_lt_ofRat_iff_lt]
+    linarith
+  simp [HMul.hMul, instMulRR, ha, hb, ha1, hb1]
+  simp [GtzMul, GtzMulDef, OfRat, OfRatDef, Cut.ext_iff, Set.ext_iff]
+  intro x
+  constructor
+  intro hx
+  rcases hx with ⟨ r,hr, s,hs, hr1, hs1, hrs⟩
+  simp [h_simp]
+  have h: r*s < a * b := by
+    exact mul_lt_mul_of_pos' hr hs hs1 ha
+  linarith
+  intro hx
+  simp [h_simp] at hx
+  by_cases hx1 : x > 0
+  set d := a * b - x
+  have hd: d > 0 := by linarith
+  let r := a - d / (2 * b)
+  have hr1: r < a := by
+    simp [r, d]
+    rw [lt_div_gtz_iff_mul_lt]
+    simp
+    linarith
+    linarith
+
+  have hr2 : r > 0 := by
+    simp [r, d]
+    rw [← gt_iff_lt]
+    rw [gt_div_gtz_iff_mul_gt]
+    linarith
+    linarith
+  let s := x / r
+  have hs1: s < b := by
+    simp [s, r]
+    rw [← gt_iff_lt]
+    rw [gt_div_gtz_iff_mul_gt]
+    rw [Rudin.mul_sub]
+    have : b * (d / (2 * b)) < d := by
+      rw [Rudin.mul_div_assoc]
+      rw [← gt_iff_lt]
+      rw [gt_div_gtz_iff_mul_gt]
+      rw [Rudin.mul_comm]
+      simp [hd]
+      linarith
+      linarith
+    linarith
+    simp
+    rw [← gt_iff_lt]
+    rw [gt_div_gtz_iff_mul_gt]
+    simp [d]
+    linarith
+    linarith
+  have hs2 : s > 0 := by
+    simp [s, r]
+    rw [lt_div_gtz_iff_mul_lt]
+    simp
+    linarith
+    simp
+    rw [← gt_iff_lt]
+    rw [gt_div_gtz_iff_mul_gt]
+    linarith
+    linarith
+  use r
+  constructor
+  assumption
+  use s
+  repeat
+    constructor
+    assumption
+  simp [s]
+  rw [mul_div_cancel_left']
+  linarith
+  use a/2
+  constructor
+  linarith
+  use b/2
+  repeat
+    constructor
+    linarith
+  linarith
+
+private theorem ofRat_mul_ofRat_eq_lemma_2 {a b:Rat} (ha: a < 0) (hb: b > 0): OfRat a * OfRat b = OfRat (a * b) := by
+  have ha2: -a > 0 := by
+    simp
+    assumption
+  rw [← neg_neg (a:=a)]
+  rw [neg_ofRat_eq]
+  rw [mul_comm, mul_neg]
+  rw [ofRat_mul_ofRat_eq_lemma_1 hb ha2]
+  rw [neg_ofRat_eq, Rudin.mul_neg, Rudin.neg_neg, Rudin.mul_comm]
+
+private theorem ofRat_mul_ofRat_eq_lemma_3 {a b:Rat} (hb: b > 0): OfRat a * OfRat b = OfRat (a * b) := by
+  rcases lt_trichotomy (a:=a) (b:=0) with ha|ha|ha
+  exact ofRat_mul_ofRat_eq_lemma_2 ha hb
+  rw [ha]
+  have : OfRat 0 = 0 := by rfl
+  simp [this]
+  exact ofRat_mul_ofRat_eq_lemma_1 ha hb
+
+private theorem ofRat_mul_ofRat_eq_lemma_4 {a b:Rat} (hb: b < 0): OfRat a * OfRat b = OfRat (a * b) := by
+  have hb2: -b > 0 := by
+    simp
+    assumption
+  rw [← neg_neg (a:=b)]
+  rw [neg_ofRat_eq]
+  rw [mul_neg]
+  rw [ofRat_mul_ofRat_eq_lemma_3 hb2]
+  rw [neg_ofRat_eq, Rudin.mul_neg, Rudin.neg_neg, Rudin.mul_comm]
+
+
+theorem ofRat_mul_ofRat_eq {a b:Rat}: OfRat a * OfRat b = OfRat (a * b) := by
+  rcases lt_trichotomy (a:=b) (b:=0) with hb|hb|hb
+  exact ofRat_mul_ofRat_eq_lemma_4 hb
+  rw [hb]
+  have : OfRat 0 = 0 := by rfl
+  simp [this]
+  exact ofRat_mul_ofRat_eq_lemma_3 hb
 
 
 
