@@ -519,4 +519,8 @@ theorem gtz_add_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a + b > 0 := by
   simp at hb
   exact lt_trans ha hb
 
+/- support mathlib -/
+--  [IsStrictOrderedRing R]
+
+
 end Rudin

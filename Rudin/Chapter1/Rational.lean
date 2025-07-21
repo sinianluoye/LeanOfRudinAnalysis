@@ -72,11 +72,15 @@ theorem Rat.gtz_pow_ge_one_add_exp_mul_base_sub_one {a : ℚ} {n:ℕ} (ha: a > 0
   induction n with
   | zero =>
     rw [pow_zero]
-    ring_nf
-    linarith
+    have : @Nat.cast ℚ instNatCast 0 = (0:Rat) := by rfl
+    rw [this]
+    simp
   | succ n h =>
-    push_cast
-    rw [pow_succ, add_mul, ← add_assoc]
+    rw [pow_succ]
+    have : @Nat.cast ℚ instNatCast (n + 1) = n + 1 := by
+      exact Mathlib.Tactic.Ring.inv_add rfl rfl
+    rw [this]
+    rw [add_mul, ← add_assoc]
     have h1: a ≥ a - 1 := by simp
     rw [ge_iff_le] at *
     rw [← Rudin.gtz_mul_le_right_cancel (a:=a)] at h
@@ -92,17 +96,18 @@ theorem Rat.gtz_pow_ge_one_add_exp_mul_base_sub_one {a : ℚ} {n:ℕ} (ha: a > 0
       rw [Rudin.add_sub_cancel]
       rw [mul_assoc, ← pow_two]
       apply Rudin.Rat.gez_mul_gez_then_gez
-      linarith
+      exact Nat.cast_nonneg n
       by_cases h3: a ≠ 1
       rw [Rudin.ge_iff_gt_or_eq]
       left
       apply Rudin.pow_two_gtz (a:=a-1)
       intro h4
       apply h3
-      linarith
+      rw [← Rudin.add_eq_left_cancel (a:=-1), Rudin.neg_add, add_comm, Rudin.add_neg_eq_sub]
+      exact h4
       simp at h3
       rw [h3]
       ring_nf
-      linarith
+      exact rfl
     linarith
     exact ha

@@ -626,13 +626,13 @@ instance : NonUnitalCommRing α where
 
 instance : CommRing α where
 
-instance : Nontrivial α where
-  exists_pair_ne := by
-    use 0
-    use 1
-    apply Rudin.one_nz.symm
+-- instance : Nontrivial α where
+--   exists_pair_ne := by
+--     use 0
+--     use 1
+--     apply Rudin.one_nz.symm
 
-instance : IsDomain α where
+-- instance : IsDomain α where
 
 
 end Rudin

@@ -1,4 +1,7 @@
+import Mathlib
+
 namespace Rudin
+
 
 class Ordered (α: Type u) extends LT α, LE α where
   lt_trans : ∀ a b c : α, a < b → b < c → a < c
@@ -204,5 +207,58 @@ theorem lt_then_not_gt {a b:α} (h: a < b) : ¬ a > b := by
   simp
   apply lt_then_le
   exact h
+
+theorem le_antisymm {a b:α} (hab : a ≤ b) (hba : b ≤ a) : a = b := by
+  rcases lt_trichotomy (a:=a) (b:=b) with h|h|h
+  exfalso
+  rw [← Rudin.not_le_iff_lt] at h
+  exact h hba
+  exact h
+  exfalso
+  rw [← Rudin.not_le_iff_lt] at h
+  exact h hab
+
+/- support mathlib -/
+-- [LinearOrder R]
+
+-- PartialOrder α, Min α, Max α, Ord α
+instance : Preorder α where
+  le_refl := by simp
+  le_trans := by apply le_trans
+  lt a b := a < b
+  lt_iff_le_not_ge := by
+    intro a b
+    have h1:= Rudin.not_le_iff_lt (a:=a) (b:=b)
+    rw [Rudin.le_iff_lt_or_eq]
+    simp
+    intro h
+    left
+    exact h
+
+instance : PartialOrder α where
+  le_antisymm := by
+    intro a b hab hba
+    exact le_antisymm hab hba
+
+open Classical
+
+noncomputable instance : Min α where
+  min a b := by
+    classical
+    exact if a < b then a else b
+
+noncomputable instance : Max α where
+  max a b := by
+    classical
+    exact if a > b then a else b
+
+noncomputable instance : Ord α where
+  compare a b := by
+    classical
+    if a < b then Ordering.lt
+    else if a > b then Ordering.gt
+    else Ordering.eq
+
+noncomputable instance : LinearOrder α where
 
 end Rudin
