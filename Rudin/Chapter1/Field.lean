@@ -1,12 +1,13 @@
-
+import Mathlib
 import Batteries.Tactic.Init
+
 
 namespace Rudin
 
 universe u
 
 class Field (α : Type u) extends
-  Add α, Mul α, Sub α, Neg α, Div α, Zero α, One α, Pow α Nat, HMul Nat α α where
+  Add α, Mul α, Sub α, Neg α, Div α, Zero α, One α, Pow α Nat, HMul Nat α α, Inv α where
   -- add axioms
   add_comm  : ∀ a b : α, a + b = b + a
   add_assoc : ∀ a b c : α, (a + b) + c = a + (b + c)
@@ -17,13 +18,14 @@ class Field (α : Type u) extends
   mul_assoc : ∀ a b c : α, (a * b) * c = a * (b * c)
   one_nz : (1 : α) ≠ (0 : α)
   one_mul   : ∀ a : α, 1 * a = a
-  mul_inv_when_nz   : ∀ a : α, a ≠ 0 → a * (1 / a) = 1
+  mul_inv_when_nz   : ∀ a : α, a ≠ 0 → a * a⁻¹ = 1
   -- distributive law
   mul_add   : ∀ a b c : α, a * (b + c) = a * b + a * c
 
   -- remarks
   sub_eq_add_neg : ∀ a b : α, a - b = a + -b
-  div_eq_mul_inv : ∀ a b : α, a / b = a * (1 / b)
+  div_eq_mul_inv : ∀ a b : α, a / b = a * b⁻¹
+  inv_eq_one_div : ∀ a : α, a⁻¹ = 1 / a
   pow_nat_def : ∀ a : α, ∀ n : Nat, a ^ n = if n = 0 then 1 else a ^ (n - 1) * a
   nat_mul_def : ∀ a : α, ∀ n : Nat, n * a = if n = 0 then 0 else (n - 1) * a + a
 
@@ -59,11 +61,15 @@ theorem mul_assoc {a b c : α} : (a * b) * c = a * (b * c) := by
 @[simp] theorem one_mul {a : α} : 1 * a = a := by
   apply Field.one_mul
 
-@[simp] theorem mul_inv {a : α} (ha : a ≠ 0) : a * (1 / a) = 1 := by
+@[simp] theorem mul_inv {a : α} (ha : a ≠ 0) : a * a⁻¹ = 1 := by
   apply Field.mul_inv_when_nz
   exact ha
 
-@[simp] theorem inv_mul {a : α} (ha : a ≠ 0) : (1 / a) * a = 1 := by
+
+theorem inv_eq_one_div {a : α} : a⁻¹ = 1 / a := by
+  apply Field.inv_eq_one_div
+
+@[simp] theorem inv_mul {a : α} (ha : a ≠ 0) : a⁻¹ * a = 1 := by
   rw [mul_comm]
   simp [ha]
 
@@ -83,7 +89,7 @@ theorem sub_eq_add_neg {a b : α} : a - b = a + -b := by
 
 @[simp] theorem add_neg_eq_sub {a b: α} : a + -b = a - b := sub_eq_add_neg.symm
 
-theorem div_eq_mul_inv {a b : α} : a / b = a * (1 / b) := by
+theorem div_eq_mul_inv {a b : α} : a / b = a * b⁻¹ := by
   apply Field.div_eq_mul_inv
 
 theorem pow_nat_def {a : α} {n : Nat} : a ^ n = if n = 0 then 1 else a ^ (n - 1) * a := Field.pow_nat_def a n
@@ -260,7 +266,7 @@ theorem mul_eq_left_cancel {a b c : α} (ha : a ≠ 0) :
 
 /-1.15 c-/
 @[simp] theorem mul_eq_left_cancel_inv {a b : α} (ha : a ≠ 0) :
-    (a * b = 1) ↔ (b = 1 / a) := by
+    (a * b = 1) ↔ (b = a⁻¹) := by
   constructor
   <;> intro h
   rw [← mul_inv ha] at h
@@ -281,21 +287,20 @@ theorem mul_eq_left_cancel {a b c : α} (ha : a ≠ 0) :
   rw [mul_comm]
   simp [zero_mul]
 
-theorem inv_nz {a : α} (ha:a ≠ 0): 1 / a ≠ 0 := by
+theorem inv_nz {a : α} (ha:a ≠ 0): a⁻¹ ≠ 0 := by
   intro h
   have := mul_inv ha
   rw [h, mul_comm] at this
-  rw []
   simp at this
   exact Field.one_nz this.symm
 
 
 
 /-1.15 d-/
-@[simp] theorem inv_inv {a : α} (ha : a ≠ 0) : (1 / (1 / a)) = a := by
+@[simp] theorem inv_inv {a : α} (ha : a ≠ 0) : (a⁻¹⁻¹) = a := by
   have h := mul_inv ha
   rw [mul_comm] at h
-  rw [mul_eq_left_cancel_inv (a:=1/a) (b:=a)] at h
+  rw [mul_eq_left_cancel_inv (a:=a⁻¹) (b:=a)] at h
   exact h.symm
   exact inv_nz ha
 
@@ -406,7 +411,8 @@ theorem div_eq_iff_eq_mul {a b c:α} (hbnz: b ≠ 0) : a / b = c ↔ a = b * c :
   rw [mul_neg]
   rw [mul_comm, mul_neg, mul_comm (a:=1)]
 
-@[simp] theorem neg_inv {a:α} (ha: a ≠ 0) : 1 / -a = -(1/a) := by
+@[simp] theorem neg_inv {a:α} (ha: a ≠ 0) : (-a)⁻¹ = -a⁻¹ := by
+  rw [inv_eq_one_div]
   have : 1 / -a = -1 / a := by
     rw [div_eq_div_iff_mul_eq_mul]
     simp
@@ -418,9 +424,215 @@ theorem div_eq_iff_eq_mul {a b c:α} (hbnz: b ≠ 0) : a / b = c ↔ a = b * c :
 
 @[simp] theorem neg_div {a b:α} : (-a) / b = - (a / b) := by
   rw (occs := .pos [1]) [div_eq_mul_inv]
+  rw [inv_eq_one_div]
   rw (occs := .pos [2]) [div_eq_mul_inv]
   rw [neg_mul]
+  rw [← inv_eq_one_div]
 
+theorem mul_eq_zero_iff_eq_zero_or_eq_zero {a b:α} : a * b = 0 ↔ a = 0 ∨ b = 0 := by
+  constructor
+  intro h
+  by_contra! hab
+  rw [← Rudin.mul_eq_left_cancel (a:=a⁻¹)] at h
+  rw [Rudin.mul_zero, ← Rudin.mul_assoc, inv_mul, one_mul] at h
+  exact hab.right h
+  exact hab.left
+  apply Rudin.inv_nz
+  exact hab.left
+  intro h
+  rcases h with h|h
+  <;>simp [h]
+
+/- ----------------------------------match mathlib for tactic support---------------------------------- -/
+-- [CommRing R] [LinearOrder R] [IsStrictOrderedRing R]
+
+instance : AddSemigroup α where
+  add_assoc := by apply Rudin.add_assoc
+
+instance : AddZeroClass α where
+  zero_add := by simp
+  add_zero := by simp
+
+instance : Semigroup α where
+  mul_assoc := by apply Rudin.mul_assoc
+
+instance : CommMagma α where
+  mul_comm := by apply Rudin.mul_comm
+
+instance : AddCommMagma α where
+  add_comm := by apply Rudin.add_comm
+
+instance : CommSemigroup α where
+
+instance : AddCommSemigroup α where
+
+instance : AddLeftCancelSemigroup α where
+  add_left_cancel := by simp
+
+instance : AddRightCancelSemigroup α where
+  add_right_cancel := by
+    intro a b c
+    repeat rw [Rudin.add_comm (b:=b)]
+    simp
+
+instance : MulOneClass α where
+  one_mul := by simp
+  mul_one := by simp
+
+instance : AddMonoid α where
+  nsmul n x := n * x
+  nsmul_zero := by simp [nat_mul_def]
+  nsmul_succ := by
+    intro n x
+    rw [nat_mul_def]
+    have : n + 1 ≠ 0 := by exact Ne.symm (Nat.zero_ne_add_one n)
+    simp [this]
+
+instance : Monoid α where
+  npow n x := x ^ n
+  npow_zero := by simp [pow_nat_def]
+  npow_succ := by
+    intro n x
+    rw [pow_nat_def]
+    have : n + 1 ≠ 0 := by exact Ne.symm (Nat.zero_ne_add_one n)
+    simp [this]
+
+instance : CommMonoid α where
+
+instance : AddCommMonoid α where
+
+instance : AddLeftCancelMonoid α where
+
+instance : AddRightCancelMonoid α where
+
+instance : AddCancelMonoid α where
+
+instance : AddCancelCommMonoid α where
+
+instance : DivInvMonoid α where
+  div a b := a / b
+  div_eq_mul_inv := by
+    intro a b
+    have h:= Rudin.div_eq_mul_inv (a:=a) (b:=b)
+    exact h
+
+instance : SubNegMonoid α where
+  sub a b := a - b
+  sub_eq_add_neg := by simp
+  zsmul n a :=
+    if n > 0 then (n.toNat) * a
+    else if n = 0 then 0
+    else - ((-n).toNat * a)
+  zsmul_zero' := by simp
+  zsmul_succ' := by
+    intro n a
+    have hn: (↑n.succ:Int) > 0 := by exact Int.ofNat_succ_pos n
+    have : (↑n.succ:Int).toNat > 0 := by exact Int.pos_iff_toNat_pos.mp hn
+    simp [this]
+    rw [nat_mul_def]
+    have hn1: n + 1 ≠ 0 := by simp
+    simp [hn1]
+    intro hn2
+    simp [hn2]
+    simp [nat_mul_def]
+  zsmul_neg' := by
+    intro n a
+    have hn1 : ¬ Int.negSucc n > 0 := by simp
+    have hn2 : Int.negSucc n ≠  0 := by simp
+    simp [hn1, hn2]
+    have : (-Int.negSucc n).toNat = n + 1 := by exact rfl
+    rw [this]
+
+instance : AddGroup α where
+  neg_add_cancel := by simp
+
+instance : AddCommGroup α where
+
+instance : AddGroupWithOne α where
+
+instance : MulZeroClass α where
+  zero_mul := by simp
+  mul_zero := by simp
+
+instance : IsLeftCancelMulZero α where
+  mul_left_cancel_of_ne_zero := by
+    intro a b c ha h
+    rw [Rudin.mul_eq_left_cancel] at h
+    repeat assumption
+
+instance : IsRightCancelMulZero α where
+  mul_right_cancel_of_ne_zero := by
+    intro a b c hb h
+    repeat rw [Rudin.mul_comm (b:=b)] at h
+    rw [Rudin.mul_eq_left_cancel] at h
+    repeat assumption
+
+instance : IsCancelMulZero α where
+
+instance : NoZeroDivisors α where
+  eq_zero_or_eq_zero_of_mul_eq_zero := by
+    intro a b hab
+    rw [mul_eq_zero_iff_eq_zero_or_eq_zero] at hab
+    exact hab
+
+instance : SemigroupWithZero α where
+
+instance : MulZeroOneClass α where
+
+instance : MonoidWithZero α where
+
+instance : CancelMonoidWithZero α where
+
+instance : CommMonoidWithZero α where
+
+instance : CancelCommMonoidWithZero α where
+
+instance : MulDivCancelClass α where
+  mul_div_cancel := by exact fun a b a_1 ↦ mul_div_cancel a_1
+
+instance : Distrib α where
+  left_distrib := by apply mul_add
+  right_distrib := by apply add_mul
+
+instance : NonUnitalNonAssocSemiring α where
+
+instance : NonUnitalSemiring α where
+
+instance : NonAssocSemiring α where
+
+instance : NonUnitalNonAssocRing α where
+
+instance : NonUnitalRing α where
+
+instance : NonAssocRing α where
+
+instance : Semiring α where
+
+instance : Ring α where
+
+instance : NonUnitalNonAssocCommSemiring α where
+
+instance : NonUnitalCommSemiring α where
+
+instance : CommSemiring α where
+
+instance : HasDistribNeg α where
+  neg_mul := by simp
+  mul_neg := by simp
+
+instance : NonUnitalNonAssocCommRing α where
+
+instance : NonUnitalCommRing α where
+
+instance : CommRing α where
+
+instance : Nontrivial α where
+  exists_pair_ne := by
+    use 0
+    use 1
+    apply Rudin.one_nz.symm
+
+instance : IsDomain α where
 
 
 end Rudin

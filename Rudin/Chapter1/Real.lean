@@ -1324,6 +1324,7 @@ theorem gtzInv_ne_univ {α:RR} (ha: α > 0): GtzInvDef α ≠ Set.univ := by
   intro x hx1 hx2
   rw [Rudin.mul_comm]
   apply Rudin.lt_then_le
+  simp
   rw [← div_eq_mul_inv]
   rw [Rudin.lt_div_gtz_iff_mul_lt (a:=1) (b:=x) (c:=r)]
   simp
@@ -1599,6 +1600,7 @@ private theorem gtzMul_gtzInv_eq_OfRat_one {a:RR} (ha: a > 0) : GtzMulDef a a⁻
       simp
       repeat assumption
     rcases Cut.ex_mem_gtz_and_gto_mul_not_mem (a := a) (n := 1/y) ha hy3 with ⟨ u, hu1, hu2, hu3⟩
+    ring_nf at hu3
     rw [Rudin.mul_comm, ← div_eq_mul_inv] at hu3
     rcases a.ex_gt hu1 with ⟨ r, hr1, hr2⟩
     use r
@@ -1649,6 +1651,10 @@ private theorem gtzMul_gtzInv_eq_OfRat_one {a:RR} (ha: a > 0) : GtzMulDef a a⁻
     assumption
   have : x < d := by linarith
   linarith
+
+theorem inv_eq_one_div {a:RR} : a⁻¹ = 1 / a := by
+  simp [HDiv.hDiv, instDivRR]
+  rw [one_mul]
 
 theorem mul_inv_when_nz {a:RR} (ha: a ≠ 0) : a * (1 / a) = 1 := by
   simp [HDiv.hDiv, instDivRR, one_mul]
@@ -2110,13 +2116,21 @@ noncomputable instance instRudinFieldRR : Rudin.Field RR where
   mul_assoc := by apply mul_assoc
   one_nz := by apply one_nz
   one_mul   := by apply one_mul
-  mul_inv_when_nz   := by apply mul_inv_when_nz
+  mul_inv_when_nz := by
+    intro a ha
+    rw [inv_eq_one_div]
+    apply mul_inv_when_nz
+    exact ha
   -- distributive law
   mul_add   := by apply mul_add
 
   -- remarks
   sub_eq_add_neg := by apply sub_eq_add_neg
-  div_eq_mul_inv := by apply div_eq_mul_inv
+  div_eq_mul_inv := by
+    intro a b
+    rw [inv_eq_one_div]
+    apply div_eq_mul_inv
+  inv_eq_one_div := by apply inv_eq_one_div
   pow_nat_def := by apply pow_nat_def
   nat_mul_def := by apply nat_mul_def
 
@@ -2281,6 +2295,8 @@ theorem ofRat_mul_ofRat_eq {a b:Rat}: OfRat a * OfRat b = OfRat (a * b) := by
   simp [this]
   exact ofRat_mul_ofRat_eq_lemma_3 hb
 
+
+/- ---------------------------------------------------------------------------- -/
 
 
 end Real

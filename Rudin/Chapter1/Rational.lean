@@ -29,10 +29,24 @@ instance : Rudin.Field ℚ where
   mul_assoc     := by apply Rat.mul_assoc
   one_nz := by apply Rat.one_nz
   one_mul       := by apply Rat.one_mul
-  mul_inv_when_nz := by apply Rat.mul_inv_when_nz
+  mul_inv_when_nz := by
+    intro a ha
+    simp [Rat.instInv_mathlib]
+    rw [← Rat.div_def]
+    rw [Rat.div_eq_mul_inv]
+    rw [Rat.mul_inv_when_nz]
+    assumption
   mul_add       := by apply Rat.mul_add
   sub_eq_add_neg := Rat.sub_eq_add_neg
-  div_eq_mul_inv := by apply Rat.div_eq_mul_inv
+  div_eq_mul_inv := by
+    intro a b
+    simp [Rat.instInv_mathlib, Rat.div_def]
+
+  inv_eq_one_div := by
+    intro a
+    simp only [Rat.instInv_mathlib]
+    rw [Rat.div_def]
+    simp
   pow := (fun a n => a ^ n)
   pow_nat_def    := by apply Rat.pow_nat_def
   hMul := (fun n a => n * a)
