@@ -233,6 +233,7 @@ theorem mul_div_assoc {a b c : α} :
   simp [hb]
 
 /-1.15 a-/
+@[simp]
 theorem mul_eq_left_cancel {a b c : α} (ha : a ≠ 0) :
     (a * b = a * c) ↔ (b = c) := by
   constructor
@@ -388,6 +389,18 @@ theorem div_eq_div_iff_mul_eq_mul {a b c d:α} (hbnz: b ≠ 0) (hdnz: d ≠ 0) :
     rw [h]
     rw [← mul_div_assoc, mul_div_cancel_left (a:=b) (b:=c/d) hbnz]
 
+@[simp]
+theorem div_one {a:α} : a / 1 = a := by
+  rw [← one_mul (a:=a)]
+  rw [mul_div_cancel_left]
+  simp
+  exact one_nz
+
+theorem div_eq_iff_eq_mul {a b c:α} (hbnz: b ≠ 0) : a / b = c ↔ a = b * c := by
+  have := div_eq_div_iff_mul_eq_mul (a:=a) (b:=b) (c:=c) (d:=1) hbnz one_nz
+  simp at this
+  exact this
+
 @[simp] theorem neg_one_mul {a:α} : -1 * a = -a := by
   rw [← one_mul (a:=-a)]
   rw [mul_neg]
@@ -402,6 +415,12 @@ theorem div_eq_div_iff_mul_eq_mul {a b c d:α} (hbnz: b ≠ 0) (hdnz: d ≠ 0) :
   rw [div_eq_mul_inv (a:=-1)] at this
   rw [this]
   simp
+
+@[simp] theorem neg_div {a b:α} : (-a) / b = - (a / b) := by
+  rw (occs := .pos [1]) [div_eq_mul_inv]
+  rw (occs := .pos [2]) [div_eq_mul_inv]
+  rw [neg_mul]
+
 
 
 end Rudin

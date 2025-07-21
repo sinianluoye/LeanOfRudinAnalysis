@@ -24,6 +24,10 @@ theorem add_lt_left_cancel : a + b < a + c ↔ b < c := by
   rw [add_assoc (a:=-a)] at h
   exact OrderedField.add_lt_left_cancel h
 
+theorem add_le_left_cancel : a + b ≤ a + c ↔ b ≤ c := by
+  repeat rw [le_iff_lt_or_eq]
+  rw [add_lt_left_cancel]
+  simp
 
 theorem gtz_mul_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a * b > 0 := by
   apply OrderedField.gtz_mul_gtz_then_gtz ha hb
@@ -147,6 +151,36 @@ theorem neg_mul_lt_then_gt (ha: a < 0) (hbc: b < c) : a * b > a * c := by
     rw [← gt_iff_lt] at this
     exact (lt_and_gt_then_false h this).elim
   . apply gtz_mul_lt_gtz_mul ha h
+
+@[simp] theorem gtz_mul_lt_right_cancel (ha: a > 0) : b * a < c * a ↔ b < c := by
+  rw [Rudin.mul_comm (a:=b) (b:=a)]
+  rw [Rudin.mul_comm (a:=c) (b:=a)]
+  exact gtz_mul_lt_left_cancel ha
+
+
+@[simp] theorem gtz_mul_le_left_cancel (ha: a > 0) : a * b ≤ a * c ↔ b ≤ c:= by
+  rw [Rudin.le_iff_lt_or_eq (a:=b) (b:=c), Rudin.le_iff_lt_or_eq (a:=a*b) (b:=a*c)]
+  have hanz := Rudin.gt_then_ne ha
+  constructor
+  <;>intro h
+  <;>rcases h with h|h
+  simp [ha] at h
+  left
+  exact h
+  simp [hanz] at h
+  right
+  exact h
+  simp [ha]
+  left
+  exact h
+  right
+  simp [hanz]
+  exact h
+
+@[simp] theorem gtz_mul_le_right_cancel (ha: a > 0) : b * a ≤ c * a ↔ b ≤ c:= by
+  rw [Rudin.mul_comm (a:=b) (b:=a)]
+  rw [Rudin.mul_comm (a:=c) (b:=a)]
+  exact gtz_mul_le_left_cancel ha
 
 /-1.18 d-/
 @[simp] theorem pow_two_gtz {a:α} (ha: a ≠ 0) : a ^ 2 > 0 := by
@@ -421,5 +455,68 @@ theorem lt_div_ltz_iff_mul_gt (h: c < 0) : a < b / c ↔ a * c > b := by
   exact lt_then_ne h
   exact h
 
+theorem gt_div_gtz_iff_mul_gt (h: c > 0) : a > b / c ↔ a * c > b := by
+  have : 1/c > 0 := gtz_then_inv_gtz h
+  have h1 := gtz_mul_lt_left_cancel (a:=1/c) (b:=b) (c:=a*c) this
+  rw [Rudin.mul_comm] at h1
+  rw [← div_eq_mul_inv] at h1
+  rw [mul_comm, ← div_eq_mul_inv, mul_div_cancel] at h1
+  exact h1
+  apply gt_then_ne
+  exact h
+
+
+theorem gt_div_ltz_iff_mul_lt (h: c < 0) : a > b / c ↔ a * c < b := by
+  have h1 := gt_div_gtz_iff_mul_gt (a:=a) (b:=-b) (c:=-c) (neg_gtz_iff_ltz.mpr h)
+  rw [Rudin.div_eq_mul_inv] at h1
+  rw [Rudin.neg_inv] at h1
+  simp [Rudin.mul_neg, Rudin.neg_mul] at h1
+  rw [← Rudin.div_eq_mul_inv] at h1
+  rw [gt_iff_lt]
+  exact h1
+  apply lt_then_ne
+  exact h
+
+theorem le_div_gtz_iff_mul_le (h: c > 0) : a ≤ b / c ↔ a * c ≤ b := by
+  repeat rw [Rudin.le_iff_lt_or_eq]
+  simp [lt_div_gtz_iff_mul_lt h]
+  have : a = b / c ↔ a * c = b := by
+    rw [eq_comm]
+    rw [Rudin.div_eq_iff_eq_mul]
+    rw [eq_comm]
+    rw [Rudin.mul_comm]
+    apply Rudin.gt_then_ne h
+  rw [this]
+
+theorem ge_div_gtz_iff_mul_ge (h: c > 0) : a ≥ b / c ↔ a * c ≥ b := by
+  repeat rw [Rudin.ge_iff_gt_or_eq]
+  rw [gt_div_gtz_iff_mul_gt]
+  rw [eq_comm, Rudin.div_eq_iff_eq_mul, eq_comm]
+  rw [Rudin.mul_comm]
+  apply gt_then_ne
+  exact h
+  exact h
+
+theorem le_div_ltz_iff_mul_ge (h: c < 0) : a ≤ b / c ↔ a * c ≥ b := by
+  repeat rw [Rudin.le_iff_lt_or_eq, Rudin.ge_iff_gt_or_eq]
+  simp [lt_div_ltz_iff_mul_gt h]
+  rw [eq_comm, Rudin.div_eq_iff_eq_mul, eq_comm]
+  rw [Rudin.mul_comm]
+  apply lt_then_ne
+  exact h
+
+theorem ge_div_ltz_iff_mul_le (h: c < 0) : a ≥ b / c ↔ a * c ≤ b := by
+  repeat rw [Rudin.ge_iff_gt_or_eq, Rudin.le_iff_lt_or_eq]
+  simp [gt_div_ltz_iff_mul_lt h]
+  rw [eq_comm, Rudin.div_eq_iff_eq_mul, eq_comm]
+  rw [Rudin.mul_comm]
+  apply lt_then_ne
+  exact h
+
+theorem gtz_add_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a + b > 0 := by
+  simp at *
+  rw [← add_lt_left_cancel (a:=a)] at hb
+  simp at hb
+  exact lt_trans ha hb
 
 end Rudin

@@ -2,6 +2,7 @@ import Mathlib
 import Batteries.Data.Rat
 import Rudin.Basic.Integer
 
+
 /-
 Although some proofs use the properties of rings in mathlib,
 comments are still provided here to show how to prove the statements without using the properties of rings.
@@ -736,6 +737,23 @@ theorem gtz_mul_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a * b > 0 := by
   exact Int.gtz_mul_gtz_then_gtz ha hb
   rw [Nat.mul_ne_zero_iff]
   exact ⟨a.den_nz, b.den_nz⟩
+
+theorem gez_mul_gez_then_gez (ha: a ≥ 0) (hb: b ≥ 0) : a * b ≥ 0 := by
+  rw [ge_iff_le, le_iff_lt_or_eq] at *
+  rcases ha with ha|ha
+  rcases hb with hb|hb
+  left
+  exact gtz_mul_gtz_then_gtz ha hb
+  right
+  simp
+  right
+  symm
+  assumption
+  right
+  simp
+  left
+  symm
+  exact ha
 
 
 

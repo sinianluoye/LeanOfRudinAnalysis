@@ -31,6 +31,9 @@ theorem lt_trans {a b c:α} (hab: a < b) (hbc: b < c): a < c := by
 theorem le_iff_lt_or_eq {a b:α} : a ≤ b ↔ (a < b ∨ a = b) := by
   apply Ordered.le_iff_lt_or_eq
 
+theorem ge_iff_gt_or_eq {a b:α} : a ≥ b ↔ (a > b ∨ a = b) := by
+  simp [le_iff_lt_or_eq, eq_comm]
+
 @[simp] theorem le_refl { a : α } : a ≤ a := by
   apply le_iff_lt_or_eq.mpr
   right
@@ -196,5 +199,10 @@ theorem lt_iff_le_and_ne {a b:α} : a < b ↔ a ≤ b ∧ a ≠ b := by
   rcases h1 with h1|h1
   exact h1
   exact (h2 h1).elim
+
+theorem lt_then_not_gt {a b:α} (h: a < b) : ¬ a > b := by
+  simp
+  apply lt_then_le
+  exact h
 
 end Rudin
