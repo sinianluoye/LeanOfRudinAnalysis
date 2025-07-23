@@ -2298,6 +2298,7 @@ theorem ofRat_mul_ofRat_eq {a b:Rat}: OfRat a * OfRat b = OfRat (a * b) := by
 
 /- ---------------------------------------------------------------------------- -/
 
+-- 1.20 (a)
 theorem gtz_then_ex_nat_mul_gt {x y:RR} (hx: x > 0) : ∃ n:Nat, n * x > y := by
   rcases lt_trichotomy (a:=y) (b:=0) with hy|hy|hy
   use 0
@@ -2319,8 +2320,52 @@ theorem gtz_then_ex_nat_mul_gt {x y:RR} (hx: x > 0) : ∃ n:Nat, n * x > y := by
     have := h n
     rw [← hn] at this
     exact this
-  have h_exist_sup := L subset_sup_exist
+  have h_exist_sup := instLeastUpperBoundPropertyRR.subset_sup_exist A
+  have h_a_not_empy : A ≠ ∅ := by
+    simp [Set.not_empty_iff_ex_mem]
+    use x
+    simp [A]
+    use 1
+    simp
+  have h_bound_above_A : BoundAbove A := by
+    simp [BoundAbove]
+    use y
+  have h_tmp := And.intro h_a_not_empy h_bound_above_A
+  have h_exist_sup := h_exist_sup h_tmp
+  rcases h_exist_sup with ⟨ s, hs⟩
+  let t := s - x
+  have h_t_not_ub: ¬ UpperBound A t := by
+    simp [Sup] at hs
+    have : t < s := by linarith
+    exact hs.right t this
+  simp [UpperBound, t, A] at h_t_not_ub
+  rcases h_t_not_ub with ⟨ m, hm⟩
+  have h_t_lt_m_1_x : s < (m + 1) * x := by
+    linarith
+  have h_m_1_x_in_A : (m + 1) * x ∈ A := by
+    simp [A]
+    use m + 1
+    left
+    push_cast
+    linarith
+  have h_s_ge_m_1_x : s ≥ (m+1) * x := by
+    simp [Sup, UpperBound] at hs
+    apply hs.left
+    assumption
+  rw [← Rudin.not_le_iff_lt] at h_t_lt_m_1_x
+  exact h_t_lt_m_1_x h_s_ge_m_1_x
 
+-- 1.20 (b)
+theorem lt_then_ex_between {x y:RR} (hxy: x < y) : ∃ p, x < p ∧ p < y := by
+  use (x+y)/(1+1)
+  have : ((1:RR) + 1) > 0 := by
+    simp
+  constructor
+  rw [Rudin.lt_div_gtz_iff_mul_lt this]
+  linarith
+  rw [← gt_iff_lt]
+  rw [Rudin.gt_div_gtz_iff_mul_gt this]
+  linarith
 
 end Real
 
