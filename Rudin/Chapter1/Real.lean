@@ -227,7 +227,7 @@ instance : Ordered Cut where
     exact h1.mpr (Or.inr this)
 
 theorem le_def {a b:Cut} : a ≤ b ↔ (∀ x, x ∈ a.carrier → x ∈ b.carrier) := by
-  simp [Rudin.Real.instMemRR, instLERR, ← Set.sub_iff_le, Set.sub_def]
+  simp only [Rudin.Real.instMemRR, instLERR, ← Set.sub_iff_le, Set.sub_def]
 
 theorem lt_def {a b:Cut} : a < b ↔ (∀ x, x ∈ a.carrier → x ∈ b.carrier) ∧ ∃ x ∈ b.carrier, x ∉ a.carrier:= by
   simp [Rudin.Real.instMemRR, instLTRR, ← Set.ssub_iff_lt, Set.ssub_def]
@@ -261,7 +261,7 @@ abbrev RR := Real /-use RR instead of ℝ to avoid confilict with mathlib-/
 namespace Real
 
 
-instance : LeastUpperBoundProperty RR where
+instance instLeastUpperBoundPropertyRR : LeastUpperBoundProperty RR where
 
   subset_sup_exist : ∀ (E : Set RR), E ≠ ∅ ∧ BoundAbove E → ∃ a, Sup E a := by
     intro A hA
@@ -1324,6 +1324,7 @@ theorem gtzInv_ne_univ {α:RR} (ha: α > 0): GtzInvDef α ≠ Set.univ := by
   intro x hx1 hx2
   rw [Rudin.mul_comm]
   apply Rudin.lt_then_le
+  simp
   rw [← div_eq_mul_inv]
   rw [Rudin.lt_div_gtz_iff_mul_lt (a:=1) (b:=x) (c:=r)]
   simp
@@ -1599,6 +1600,7 @@ private theorem gtzMul_gtzInv_eq_OfRat_one {a:RR} (ha: a > 0) : GtzMulDef a a⁻
       simp
       repeat assumption
     rcases Cut.ex_mem_gtz_and_gto_mul_not_mem (a := a) (n := 1/y) ha hy3 with ⟨ u, hu1, hu2, hu3⟩
+    ring_nf at hu3
     rw [Rudin.mul_comm, ← div_eq_mul_inv] at hu3
     rcases a.ex_gt hu1 with ⟨ r, hr1, hr2⟩
     use r
@@ -1649,6 +1651,10 @@ private theorem gtzMul_gtzInv_eq_OfRat_one {a:RR} (ha: a > 0) : GtzMulDef a a⁻
     assumption
   have : x < d := by linarith
   linarith
+
+theorem inv_eq_one_div {a:RR} : a⁻¹ = 1 / a := by
+  simp [HDiv.hDiv, instDivRR]
+  rw [one_mul]
 
 theorem mul_inv_when_nz {a:RR} (ha: a ≠ 0) : a * (1 / a) = 1 := by
   simp [HDiv.hDiv, instDivRR, one_mul]
@@ -2110,13 +2116,21 @@ noncomputable instance instRudinFieldRR : Rudin.Field RR where
   mul_assoc := by apply mul_assoc
   one_nz := by apply one_nz
   one_mul   := by apply one_mul
-  mul_inv_when_nz   := by apply mul_inv_when_nz
+  mul_inv_when_nz := by
+    intro a ha
+    rw [inv_eq_one_div]
+    apply mul_inv_when_nz
+    exact ha
   -- distributive law
   mul_add   := by apply mul_add
 
   -- remarks
   sub_eq_add_neg := by apply sub_eq_add_neg
-  div_eq_mul_inv := by apply div_eq_mul_inv
+  div_eq_mul_inv := by
+    intro a b
+    rw [inv_eq_one_div]
+    apply div_eq_mul_inv
+  inv_eq_one_div := by apply inv_eq_one_div
   pow_nat_def := by apply pow_nat_def
   nat_mul_def := by apply nat_mul_def
 
@@ -2281,6 +2295,31 @@ theorem ofRat_mul_ofRat_eq {a b:Rat}: OfRat a * OfRat b = OfRat (a * b) := by
   simp [this]
   exact ofRat_mul_ofRat_eq_lemma_3 hb
 
+
+/- ---------------------------------------------------------------------------- -/
+
+theorem gtz_then_ex_nat_mul_gt {x y:RR} (hx: x > 0) : ∃ n:Nat, n * x > y := by
+  rcases lt_trichotomy (a:=y) (b:=0) with hy|hy|hy
+  use 0
+  simp
+  linarith
+  rw [hy]
+  use 1
+  simp
+  linarith
+  simp at hx
+  let A := {t | ∃ n:ℕ, t = n * x}
+  by_contra h
+  simp at h
+  have h_up_y : UpperBound A y := by
+    simp [UpperBound]
+    intro r hr
+    simp [A] at hr
+    rcases  hr with ⟨n, hn⟩
+    have := h n
+    rw [← hn] at this
+    exact this
+  have h_exist_sup := L subset_sup_exist
 
 
 end Real

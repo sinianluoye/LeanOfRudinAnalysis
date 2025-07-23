@@ -29,10 +29,24 @@ instance : Rudin.Field ℚ where
   mul_assoc     := by apply Rat.mul_assoc
   one_nz := by apply Rat.one_nz
   one_mul       := by apply Rat.one_mul
-  mul_inv_when_nz := by apply Rat.mul_inv_when_nz
+  mul_inv_when_nz := by
+    intro a ha
+    simp [Rat.instInv_mathlib]
+    rw [← Rat.div_def]
+    rw [Rat.div_eq_mul_inv]
+    rw [Rat.mul_inv_when_nz]
+    assumption
   mul_add       := by apply Rat.mul_add
   sub_eq_add_neg := Rat.sub_eq_add_neg
-  div_eq_mul_inv := by apply Rat.div_eq_mul_inv
+  div_eq_mul_inv := by
+    intro a b
+    simp [Rat.instInv_mathlib, Rat.div_def]
+
+  inv_eq_one_div := by
+    intro a
+    simp only [Rat.instInv_mathlib]
+    rw [Rat.div_def]
+    simp
   pow := (fun a n => a ^ n)
   pow_nat_def    := by apply Rat.pow_nat_def
   hMul := (fun n a => n * a)
@@ -58,11 +72,15 @@ theorem Rat.gtz_pow_ge_one_add_exp_mul_base_sub_one {a : ℚ} {n:ℕ} (ha: a > 0
   induction n with
   | zero =>
     rw [pow_zero]
-    ring_nf
-    linarith
+    have : @Nat.cast ℚ instNatCast 0 = (0:Rat) := by rfl
+    rw [this]
+    simp
   | succ n h =>
-    push_cast
-    rw [pow_succ, add_mul, ← add_assoc]
+    rw [pow_succ]
+    have : @Nat.cast ℚ instNatCast (n + 1) = n + 1 := by
+      exact Mathlib.Tactic.Ring.inv_add rfl rfl
+    rw [this]
+    rw [add_mul, ← add_assoc]
     have h1: a ≥ a - 1 := by simp
     rw [ge_iff_le] at *
     rw [← Rudin.gtz_mul_le_right_cancel (a:=a)] at h
@@ -78,17 +96,20 @@ theorem Rat.gtz_pow_ge_one_add_exp_mul_base_sub_one {a : ℚ} {n:ℕ} (ha: a > 0
       rw [Rudin.add_sub_cancel]
       rw [mul_assoc, ← pow_two]
       apply Rudin.Rat.gez_mul_gez_then_gez
-      linarith
+      exact Nat.cast_nonneg n
       by_cases h3: a ≠ 1
       rw [Rudin.ge_iff_gt_or_eq]
       left
       apply Rudin.pow_two_gtz (a:=a-1)
       intro h4
       apply h3
-      linarith
+      rw [← Rudin.add_eq_left_cancel (a:=-1), Rudin.neg_add, add_comm, Rudin.add_neg_eq_sub]
+      exact h4
       simp at h3
       rw [h3]
       ring_nf
-      linarith
+      exact rfl
     linarith
     exact ha
+
+#check Rat.instPartialOrder

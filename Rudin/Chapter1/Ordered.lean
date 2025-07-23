@@ -1,4 +1,7 @@
+import Mathlib
+
 namespace Rudin
+
 
 class Ordered (α: Type u) extends LT α, LE α where
   lt_trans : ∀ a b c : α, a < b → b < c → a < c
@@ -24,6 +27,7 @@ theorem lt_trichotomy {a b:α} : a < b ∨ a = b ∨ b < a := by
   right
   right
   exact h
+
 
 theorem lt_trans {a b c:α} (hab: a < b) (hbc: b < c): a < c := by
   exact Ordered.lt_trans a b c hab hbc
@@ -91,13 +95,21 @@ theorem le_trans {a b c : α} (hab: a ≤ b) (hbc: b ≤ c): a ≤ c := by
 @[simp] theorem not_lt_iff_le {a b:α} : ¬ b < a ↔ a ≤ b := by
   constructor
   <;>intro h
-  . have htri := lt_trichotomy (a:=a) (b:=b)
-    simp [h] at htri
-    rw [← le_iff_lt_or_eq] at htri
-    exact htri
-  . intro h1
-    rw [← not_le_iff_lt] at h1
-    exact h1 h
+  have htri := lt_trichotomy (a:=a) (b:=b)
+  simp [h] at htri
+  rw [le_iff_lt_or_eq]
+  exact htri
+  contrapose! h
+  simp
+  exact h
+
+
+
+@[simp] theorem gt_iff_lt {a b : α} : a > b ↔ b < a := by
+  rfl
+
+@[simp] theorem ge_iff_le {a b : α} : a ≥ b ↔ b ≤ a := by
+  rfl
 
 -- @[simp] theorem gt_iff_lt {a b:α} : a > b ↔ b < a := by
 --   simp
@@ -204,5 +216,62 @@ theorem lt_then_not_gt {a b:α} (h: a < b) : ¬ a > b := by
   simp
   apply lt_then_le
   exact h
+
+theorem le_antisymm {a b:α} (hab : a ≤ b) (hba : b ≤ a) : a = b := by
+  rcases lt_trichotomy (a:=a) (b:=b) with h|h|h
+  exfalso
+  rw [← Rudin.not_le_iff_lt] at h
+  exact h hba
+  exact h
+  exfalso
+  rw [← Rudin.not_le_iff_lt] at h
+  exact h hab
+
+/- ----------------------------support mathlib ----------------------------- -/
+
+instance (priority := default-1) : Preorder α where
+  le_refl := by simp
+  le_trans := by apply le_trans
+  lt a b := a < b
+  lt_iff_le_not_ge := by
+    intro a b
+    have h1:= Rudin.not_le_iff_lt (a:=a) (b:=b)
+    rw [Rudin.le_iff_lt_or_eq]
+    simp
+    intro h
+    left
+    exact h
+
+instance (priority := default-1) : PartialOrder α where
+  le_antisymm := by
+    intro a b hab hba
+    exact le_antisymm hab hba
+
+noncomputable instance (priority := default-1) : Min α where
+  min a b := by
+    classical
+    exact if h : a ≤ b then a else b
+
+noncomputable instance (priority := default-1) : Max α where
+  max a b := by
+    classical
+    exact if a ≤ b then b else a
+
+noncomputable instance (priority := default-1) : Ord α where
+  compare a b := by
+    classical
+    exact if a < b then Ordering.lt else if a > b then Ordering.gt else Ordering.eq
+
+noncomputable instance (priority := default-1) : LinearOrder α where
+  le_total := Rudin.le_total
+  toDecidableLE a := by
+    classical
+    exact fun b ↦ Classical.propDecidable (a ≤ b)
+  compare_eq_compareOfLessAndEq := by
+    intro a b
+    simp [compare]
+    simp [compareOfLessAndEq]
+    rcases lt_trichotomy (a:=a) (b:=b) with h|h|h
+    <;>simp [h]
 
 end Rudin

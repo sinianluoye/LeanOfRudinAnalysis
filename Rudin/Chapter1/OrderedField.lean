@@ -234,36 +234,33 @@ theorem neg_mul_lt_then_gt (ha: a < 0) (hbc: b < c) : a * b > a * c := by
 
 /-1.18 e-/
 
-theorem gtz_then_inv_gtz (ha: a > 0): (1/a) > 0 := by
-  have : a * (1/a) > 0 := by
+theorem gtz_then_inv_gtz (ha: a > 0): a⁻¹ > 0 := by
+  have : a * a⁻¹ > 0 := by
     rw [mul_inv]
     simp
     simp [ha]
-  rcases lt_trichotomy (a:=1/a) (b:=0) with h1|h1|h1
-  have hn: a * (1/a) < 0 := gtz_mul_ltz_ltz ha h1
+  rcases lt_trichotomy (a:=a⁻¹) (b:=0) with h1|h1|h1
+  have hn: a * a⁻¹ < 0 := gtz_mul_ltz_ltz ha h1
   exfalso
   exact lt_and_gt_then_false hn this
-  have hn: a * (1/a) = 0 := by
+  have hn: a * a⁻¹ = 0 := by
     rw [h1]
     exact mul_zero
   exfalso
-  exact gt_and_eq_then_false (a:=a * (1/a)) (b:=0) this hn
+  exact gt_and_eq_then_false (a:=a * a⁻¹) (b:=0) this hn
   rw [gt_iff_lt]
   exact h1
 
-theorem ltz_then_inv_ltz (ha: a < 0) : (1/a) < 0 := by
+theorem ltz_then_inv_ltz (ha: a < 0) : a⁻¹ < 0 := by
   have hneg: -a > 0 := by simp [ha]
-  have hneg_inv: 1/(-a) > 0 := by
+  have hneg_inv: (-a)⁻¹ > 0 := by
     exact gtz_then_inv_gtz hneg
-  have hinv_neg: - (1 / a) > 0 := by
+  have hinv_neg: - a⁻¹ > 0 := by
     rw [← neg_inv (a:=a)]
     exact hneg_inv
     exact lt_then_ne ha
-  rw [neg_gtz_iff_ltz (a:=1/a)] at hinv_neg
+  rw [neg_gtz_iff_ltz (a:=a⁻¹)] at hinv_neg
   exact hinv_neg
-
-
-
 
 
 /-some another prove-/
@@ -382,7 +379,7 @@ theorem same_sign_then_nz_and_nz (h: SameSign a b) : a ≠ 0 ∧ b ≠ 0 := by
   <;>constructor
   <;>simp [h1]
 
-theorem lt_iff_inv_gt_when_same_sign (h: SameSign a b) : a < b ↔ (1/a) > (1/b) := by
+theorem lt_iff_inv_gt_when_same_sign (h: SameSign a b) : a < b ↔ a⁻¹ > b⁻¹ := by
   have hanz := (same_sign_then_nz_and_nz h).left
   have hbnz := (same_sign_then_nz_and_nz h).right
   have hab := mul_gtz_iff_same_sign.mpr h
@@ -456,8 +453,8 @@ theorem lt_div_ltz_iff_mul_gt (h: c < 0) : a < b / c ↔ a * c > b := by
   exact h
 
 theorem gt_div_gtz_iff_mul_gt (h: c > 0) : a > b / c ↔ a * c > b := by
-  have : 1/c > 0 := gtz_then_inv_gtz h
-  have h1 := gtz_mul_lt_left_cancel (a:=1/c) (b:=b) (c:=a*c) this
+  have : c⁻¹ > 0 := gtz_then_inv_gtz h
+  have h1 := gtz_mul_lt_left_cancel (a:=c⁻¹) (b:=b) (c:=a*c) this
   rw [Rudin.mul_comm] at h1
   rw [← div_eq_mul_inv] at h1
   rw [mul_comm, ← div_eq_mul_inv, mul_div_cancel] at h1
@@ -518,5 +515,31 @@ theorem gtz_add_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a + b > 0 := by
   rw [← add_lt_left_cancel (a:=a)] at hb
   simp at hb
   exact lt_trans ha hb
+
+/- support mathlib -/
+--  [IsStrictOrderedRing R]
+-- IsOrderedCancelAddMonoid R, ZeroLEOneClass R
+
+instance (priority := default-1) : IsOrderedAddMonoid α where
+  add_le_add_left := by
+    intro a b h c
+    exact add_le_left_cancel.mpr h
+
+instance (priority := default-1) : IsOrderedCancelAddMonoid α where
+  le_of_add_le_add_left := by
+    intro a b c h
+    exact add_le_left_cancel.mp h
+
+instance (priority := default-1) : ZeroLEOneClass α where
+  zero_le_one := by
+    rw [Rudin.le_iff_lt_or_eq]
+    left
+    exact one_gtz
+
+instance (priority := default-1) : IsStrictOrderedRing α where
+  mul_lt_mul_of_pos_left := fun a b c a_2 a_3 ↦ gtz_mul_lt_gtz_mul a_3 a_2
+  mul_lt_mul_of_pos_right := by
+    intro a b c hab hc
+    exact (gtz_mul_lt_right_cancel hc).mpr hab
 
 end Rudin
