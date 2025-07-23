@@ -444,42 +444,42 @@ theorem mul_eq_zero_iff_eq_zero_or_eq_zero {a b:α} : a * b = 0 ↔ a = 0 ∨ b 
   <;>simp [h]
 
 /- ----------------------------------match mathlib for tactic support---------------------------------- -/
--- [CommRing R] [LinearOrder R] [IsStrictOrderedRing R]
+-- [CommRing R]
 
-instance : AddSemigroup α where
+instance (priority := default-1) : AddSemigroup α where
   add_assoc := by apply Rudin.add_assoc
 
-instance : AddZeroClass α where
+instance (priority := default-1) : AddZeroClass α where
   zero_add := by simp
   add_zero := by simp
 
-instance : Semigroup α where
+instance (priority := default-1) : Semigroup α where
   mul_assoc := by apply Rudin.mul_assoc
 
-instance : CommMagma α where
+instance (priority := default-1) : CommMagma α where
   mul_comm := by apply Rudin.mul_comm
 
-instance : AddCommMagma α where
+instance (priority := default-1) : AddCommMagma α where
   add_comm := by apply Rudin.add_comm
 
-instance : CommSemigroup α where
+instance (priority := default-1) : CommSemigroup α where
 
-instance : AddCommSemigroup α where
+instance (priority := default-1) : AddCommSemigroup α where
 
-instance : AddLeftCancelSemigroup α where
+instance (priority := default-1) : AddLeftCancelSemigroup α where
   add_left_cancel := by simp
 
-instance : AddRightCancelSemigroup α where
+instance (priority := default-1) : AddRightCancelSemigroup α where
   add_right_cancel := by
     intro a b c
     repeat rw [Rudin.add_comm (b:=b)]
     simp
 
-instance : MulOneClass α where
+instance (priority := default-1) : MulOneClass α where
   one_mul := by simp
   mul_one := by simp
 
-instance : AddMonoid α where
+instance (priority := default-1) : AddMonoid α where
   nsmul n x := n * x
   nsmul_zero := by simp [nat_mul_def]
   nsmul_succ := by
@@ -488,7 +488,7 @@ instance : AddMonoid α where
     have : n + 1 ≠ 0 := by exact Ne.symm (Nat.zero_ne_add_one n)
     simp [this]
 
-instance : Monoid α where
+instance (priority := default-1) : Monoid α where
   npow n x := x ^ n
   npow_zero := by simp [pow_nat_def]
   npow_succ := by
@@ -497,26 +497,26 @@ instance : Monoid α where
     have : n + 1 ≠ 0 := by exact Ne.symm (Nat.zero_ne_add_one n)
     simp [this]
 
-instance : CommMonoid α where
+instance (priority := default-1) : CommMonoid α where
 
-instance : AddCommMonoid α where
+instance (priority := default-1) : AddCommMonoid α where
 
-instance : AddLeftCancelMonoid α where
+instance (priority := default-1) : AddLeftCancelMonoid α where
 
-instance : AddRightCancelMonoid α where
+instance (priority := default-1) : AddRightCancelMonoid α where
 
-instance : AddCancelMonoid α where
+instance (priority := default-1) : AddCancelMonoid α where
 
-instance : AddCancelCommMonoid α where
+instance (priority := default-1) : AddCancelCommMonoid α where
 
-instance : DivInvMonoid α where
+instance (priority := default-1) : DivInvMonoid α where
   div a b := a / b
   div_eq_mul_inv := by
     intro a b
     have h:= Rudin.div_eq_mul_inv (a:=a) (b:=b)
     exact h
 
-instance : SubNegMonoid α where
+instance (priority := default-1) : SubNegMonoid α where
   sub a b := a - b
   sub_eq_add_neg := by simp
   zsmul n a :=
@@ -543,96 +543,96 @@ instance : SubNegMonoid α where
     have : (-Int.negSucc n).toNat = n + 1 := by exact rfl
     rw [this]
 
-instance : AddGroup α where
+instance (priority := default-1) : AddGroup α where
   neg_add_cancel := by simp
 
-instance : AddCommGroup α where
+instance (priority := default-1) : AddCommGroup α where
 
-instance : AddGroupWithOne α where
+instance (priority := default-1) : AddGroupWithOne α where
 
-instance : MulZeroClass α where
+instance (priority := default-1) : MulZeroClass α where
   zero_mul := by simp
   mul_zero := by simp
 
-instance : IsLeftCancelMulZero α where
+instance (priority := default-1) : IsLeftCancelMulZero α where
   mul_left_cancel_of_ne_zero := by
     intro a b c ha h
     rw [Rudin.mul_eq_left_cancel] at h
     repeat assumption
 
-instance : IsRightCancelMulZero α where
+instance (priority := default-1) : IsRightCancelMulZero α where
   mul_right_cancel_of_ne_zero := by
     intro a b c hb h
     repeat rw [Rudin.mul_comm (b:=b)] at h
     rw [Rudin.mul_eq_left_cancel] at h
     repeat assumption
 
-instance : IsCancelMulZero α where
+instance (priority := default-1) : IsCancelMulZero α where
 
-instance : NoZeroDivisors α where
+instance (priority := default-1) : NoZeroDivisors α where
   eq_zero_or_eq_zero_of_mul_eq_zero := by
     intro a b hab
     rw [mul_eq_zero_iff_eq_zero_or_eq_zero] at hab
     exact hab
 
-instance : SemigroupWithZero α where
+instance (priority := default-1) : SemigroupWithZero α where
 
-instance : MulZeroOneClass α where
+instance (priority := default-1) : MulZeroOneClass α where
 
-instance : MonoidWithZero α where
+instance (priority := default-1) : MonoidWithZero α where
 
-instance : CancelMonoidWithZero α where
+instance (priority := default-1) : CancelMonoidWithZero α where
 
-instance : CommMonoidWithZero α where
+instance (priority := default-1) : CommMonoidWithZero α where
 
-instance : CancelCommMonoidWithZero α where
+instance (priority := default-1) : CancelCommMonoidWithZero α where
 
-instance : MulDivCancelClass α where
+instance (priority := default-1) : MulDivCancelClass α where
   mul_div_cancel := by exact fun a b a_1 ↦ mul_div_cancel a_1
 
-instance : Distrib α where
+instance (priority := default-1) : Distrib α where
   left_distrib := by apply mul_add
   right_distrib := by apply add_mul
 
-instance : NonUnitalNonAssocSemiring α where
+instance (priority := default-1) : NonUnitalNonAssocSemiring α where
 
-instance : NonUnitalSemiring α where
+instance (priority := default-1) : NonUnitalSemiring α where
 
-instance : NonAssocSemiring α where
+instance (priority := default-1) : NonAssocSemiring α where
 
-instance : NonUnitalNonAssocRing α where
+instance (priority := default-1) : NonUnitalNonAssocRing α where
 
-instance : NonUnitalRing α where
+instance (priority := default-1) : NonUnitalRing α where
 
-instance : NonAssocRing α where
+instance (priority := default-1) : NonAssocRing α where
 
-instance : Semiring α where
+instance (priority := default-1) : Semiring α where
 
-instance : Ring α where
+instance (priority := default-1) : Ring α where
 
-instance : NonUnitalNonAssocCommSemiring α where
+instance (priority := default-1) : NonUnitalNonAssocCommSemiring α where
 
-instance : NonUnitalCommSemiring α where
+instance (priority := default-1) : NonUnitalCommSemiring α where
 
-instance : CommSemiring α where
+instance (priority := default-1) : CommSemiring α where
 
-instance : HasDistribNeg α where
+instance (priority := default-1) : HasDistribNeg α where
   neg_mul := by simp
   mul_neg := by simp
 
-instance : NonUnitalNonAssocCommRing α where
+instance (priority := default-1) : NonUnitalNonAssocCommRing α where
 
-instance : NonUnitalCommRing α where
+instance (priority := default-1) : NonUnitalCommRing α where
 
-instance : CommRing α where
+instance (priority := default-1) : CommRing α where
 
--- instance : Nontrivial α where
---   exists_pair_ne := by
---     use 0
---     use 1
---     apply Rudin.one_nz.symm
+instance (priority := default-1) : Nontrivial α where
+  exists_pair_ne := by
+    use 0
+    use 1
+    apply Rudin.one_nz.symm
 
--- instance : IsDomain α where
+instance (priority := default-1) : IsDomain α where
 
 
 end Rudin

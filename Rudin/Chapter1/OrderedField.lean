@@ -263,9 +263,6 @@ theorem ltz_then_inv_ltz (ha: a < 0) : a⁻¹ < 0 := by
   exact hinv_neg
 
 
-
-
-
 /-some another prove-/
 def SameSign (a:α) (b:α) := (a > 0 ∧ b > 0) ∨ (a < 0 ∧ b < 0)
 
@@ -521,6 +518,28 @@ theorem gtz_add_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a + b > 0 := by
 
 /- support mathlib -/
 --  [IsStrictOrderedRing R]
+-- IsOrderedCancelAddMonoid R, ZeroLEOneClass R
 
+instance (priority := default-1) : IsOrderedAddMonoid α where
+  add_le_add_left := by
+    intro a b h c
+    exact add_le_left_cancel.mpr h
+
+instance (priority := default-1) : IsOrderedCancelAddMonoid α where
+  le_of_add_le_add_left := by
+    intro a b c h
+    exact add_le_left_cancel.mp h
+
+instance (priority := default-1) : ZeroLEOneClass α where
+  zero_le_one := by
+    rw [Rudin.le_iff_lt_or_eq]
+    left
+    exact one_gtz
+
+instance (priority := default-1) : IsStrictOrderedRing α where
+  mul_lt_mul_of_pos_left := fun a b c a_2 a_3 ↦ gtz_mul_lt_gtz_mul a_3 a_2
+  mul_lt_mul_of_pos_right := by
+    intro a b c hab hc
+    exact (gtz_mul_lt_right_cancel hc).mpr hab
 
 end Rudin

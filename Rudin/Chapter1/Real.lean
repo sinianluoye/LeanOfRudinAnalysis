@@ -227,7 +227,7 @@ instance : Ordered Cut where
     exact h1.mpr (Or.inr this)
 
 theorem le_def {a b:Cut} : a ≤ b ↔ (∀ x, x ∈ a.carrier → x ∈ b.carrier) := by
-  simp [Rudin.Real.instMemRR, instLERR, ← Set.sub_iff_le, Set.sub_def]
+  simp only [Rudin.Real.instMemRR, instLERR, ← Set.sub_iff_le, Set.sub_def]
 
 theorem lt_def {a b:Cut} : a < b ↔ (∀ x, x ∈ a.carrier → x ∈ b.carrier) ∧ ∃ x ∈ b.carrier, x ∉ a.carrier:= by
   simp [Rudin.Real.instMemRR, instLTRR, ← Set.ssub_iff_lt, Set.ssub_def]
@@ -261,7 +261,7 @@ abbrev RR := Real /-use RR instead of ℝ to avoid confilict with mathlib-/
 namespace Real
 
 
-instance : LeastUpperBoundProperty RR where
+instance instLeastUpperBoundPropertyRR : LeastUpperBoundProperty RR where
 
   subset_sup_exist : ∀ (E : Set RR), E ≠ ∅ ∧ BoundAbove E → ∃ a, Sup E a := by
     intro A hA
@@ -2297,6 +2297,29 @@ theorem ofRat_mul_ofRat_eq {a b:Rat}: OfRat a * OfRat b = OfRat (a * b) := by
 
 
 /- ---------------------------------------------------------------------------- -/
+
+theorem gtz_then_ex_nat_mul_gt {x y:RR} (hx: x > 0) : ∃ n:Nat, n * x > y := by
+  rcases lt_trichotomy (a:=y) (b:=0) with hy|hy|hy
+  use 0
+  simp
+  linarith
+  rw [hy]
+  use 1
+  simp
+  linarith
+  simp at hx
+  let A := {t | ∃ n:ℕ, t = n * x}
+  by_contra h
+  simp at h
+  have h_up_y : UpperBound A y := by
+    simp [UpperBound]
+    intro r hr
+    simp [A] at hr
+    rcases  hr with ⟨n, hn⟩
+    have := h n
+    rw [← hn] at this
+    exact this
+  have h_exist_sup := L subset_sup_exist
 
 
 end Real

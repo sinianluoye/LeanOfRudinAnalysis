@@ -111,3 +111,5 @@ theorem Rat.gtz_pow_ge_one_add_exp_mul_base_sub_one {a : ℚ} {n:ℕ} (ha: a > 0
       exact rfl
     linarith
     exact ha
+
+#check Rat.instPartialOrder
