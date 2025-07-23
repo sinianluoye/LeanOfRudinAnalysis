@@ -263,7 +263,7 @@ namespace Real
 
 instance instLeastUpperBoundPropertyRR : LeastUpperBoundProperty RR where
 
-  subset_sup_exist : ∀ (E : Set RR), E ≠ ∅ ∧ BoundAbove E → ∃ a, Sup E a := by
+  subset_sup_exist : ∀ (E : Set RR), E ≠ ∅ ∧ BoundAbove E → ∃ a, ExistsSup E a := by
     intro A hA
     simp only [BoundAbove] at hA
     rcases hA with ⟨ hA1, ⟨ β  ,  hA2 ⟩⟩
@@ -319,13 +319,13 @@ instance instLeastUpperBoundPropertyRR : LeastUpperBoundProperty RR where
 
     let γ:RR := ⟨carr, carr_ne_empty, carr_ne_univ,  carr_lt_then_in, carr_ex_gt⟩
     use γ
-    by_cases h: ∃ δ, δ < γ ∧ Sup A δ
+    by_cases h: ∃ δ, δ < γ ∧ ExistsSup A δ
     rcases h with ⟨ δ, h1, h2 ⟩
     have h3:= Real.Cut.lt_then_ex_not_in_carrier h1
     rcases h3 with ⟨ s, hs1, hs2⟩
     simp [Real.instMemRR] at hs1
     rw [Set.mem_setOf] at hs1
-    simp [Sup, UpperBound] at h2
+    simp [ExistsSup, UpperBound] at h2
     rcases h2 with ⟨ h3, h4⟩
     rcases hs1 with ⟨ α , ha1, ha2⟩
     have h5 := h3 α ha1
@@ -1480,7 +1480,6 @@ theorem gtzInv_gtz {a:RR} (ha:a > 0) : GtzInv a ha > 0 := by
   pow_nat_def : ∀ a : α, ∀ n : Nat, a ^ n = if n = 0 then 1 else a ^ (n - 1) * a
   nat_mul_def : ∀ a : α, ∀ n : Nat, n * a = if n = 0 then 0 else (n - 1) * a + a
 -/
-
 theorem Cut.ex_mem_gtz_and_gto_mul_not_mem {a:RR} {n:ℚ}
   (ha: a > 0)  (hn: n > 1) :
   ∃ p, p ∈ a ∧ p > 0 ∧ n * p ∉ a := by
@@ -1509,7 +1508,7 @@ theorem Cut.ex_mem_gtz_and_gto_mul_not_mem {a:RR} {n:ℚ}
     intro q
     have hngz : n > 0 := by linarith
     rcases exists_nat_gt ((q/r-1)/(n - 1)) with ⟨ m, hm⟩
-    have h1 := Rat.gtz_pow_ge_one_add_exp_mul_base_sub_one (n:=m) hngz
+    have h1 := gtz_pow_ge_one_add_exp_mul_base_sub_one (n:=m) hngz
     have h2 := pow_in m
     have hn1 : n - 1 > 0 := by linarith
     have h3 : (1 + m * (n - 1)) * r > q := by
@@ -1525,7 +1524,16 @@ theorem Cut.ex_mem_gtz_and_gto_mul_not_mem {a:RR} {n:ℚ}
       repeat assumption
     have h4 : n ^ m > q/r := by
       rw [← Rudin.gt_div_gtz_iff_mul_gt] at h3
-      linarith
+            -- 先把两条不等式里的 `Nat.cast` 统一，
+      -- 并保证方向与 `gtz_pow_ge_one_add_exp_mul_base_sub_one` 相同
+      have h1' : (1 : ℚ) + (m : ℚ) * (n - 1) ≤ n ^ m := by
+        simpa using h1                     -- ≤ 方向
+
+      have h3' : (1 : ℚ) + (m : ℚ) * (n - 1) > q / r := by
+        simpa using h3                     -- 同时统一 `Nat.cast`
+
+      -- `linarith` 现在可以直接使用
+      linarith [h1', h3']
       assumption
     have h5 : n ^ m * r > q := by
       rw [← Rudin.gt_div_gtz_iff_mul_gt]
@@ -2335,7 +2343,7 @@ theorem gtz_then_ex_nat_mul_gt {x y:RR} (hx: x > 0) : ∃ n:Nat, n * x > y := by
   rcases h_exist_sup with ⟨ s, hs⟩
   let t := s - x
   have h_t_not_ub: ¬ UpperBound A t := by
-    simp [Sup] at hs
+    simp [ExistsSup] at hs
     have : t < s := by linarith
     exact hs.right t this
   simp [UpperBound, t, A] at h_t_not_ub
@@ -2349,7 +2357,7 @@ theorem gtz_then_ex_nat_mul_gt {x y:RR} (hx: x > 0) : ∃ n:Nat, n * x > y := by
     push_cast
     linarith
   have h_s_ge_m_1_x : s ≥ (m+1) * x := by
-    simp [Sup, UpperBound] at hs
+    simp [ExistsSup, UpperBound] at hs
     apply hs.left
     assumption
   rw [← Rudin.not_le_iff_lt] at h_t_lt_m_1_x
@@ -2366,6 +2374,34 @@ theorem lt_then_ex_between {x y:RR} (hxy: x < y) : ∃ p, x < p ∧ p < y := by
   rw [← gt_iff_lt]
   rw [Rudin.gt_div_gtz_iff_mul_gt this]
   linarith
+
+-- 1.21
+
+
+theorem gtz_then_ex_gtz_natRoot {x:RR} {n:Nat} (hx: x > 0) (hn:n > 0) : ∃ y, y ^ n = x := by
+  let E := {t:RR | t ^ n < x}
+  have hnnz : n ≠ 0 := by linarith
+  have h_non_empty : E ≠ ∅ := by
+    simp [Set.not_empty_iff_ex_mem]
+    use 0
+    simp [E]
+    rw [pow_nat_def]
+    simp [hnnz]
+    linarith
+  have h_upper_bound : BoundAbove E := by
+    simp [BoundAbove, UpperBound]
+    simp [E]
+    use 1+x+1
+    intro a ha
+    have : a ^ n ≥ a := by
+      rw [pow_nat_def]
+
+
+
+-- instance instHPowRRRat : Pow RR Rat where
+--   pow a n :=
+--     let
+
 
 end Real
 
