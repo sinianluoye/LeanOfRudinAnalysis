@@ -7,7 +7,7 @@ namespace Rudin
 universe u
 
 class Field (α : Type u) extends
-  Add α, Mul α, Sub α, Neg α, Div α, Zero α, One α, Pow α Nat, HMul Nat α α, Inv α where
+  Add α, SMul Nat α, Mul α, Sub α, Neg α, Div α, Zero α, One α, Pow α Nat, Inv α where
   -- add axioms
   add_comm  : ∀ a b : α, a + b = b + a
   add_assoc : ∀ a b c : α, (a + b) + c = a + (b + c)
@@ -27,9 +27,11 @@ class Field (α : Type u) extends
   div_eq_mul_inv : ∀ a b : α, a / b = a * b⁻¹
   inv_eq_one_div : ∀ a : α, a⁻¹ = 1 / a
   pow_nat_def : ∀ a : α, ∀ n : Nat, a ^ n = if n = 0 then 1 else a ^ (n - 1) * a
-  nat_mul_def : ∀ a : α, ∀ n : Nat, n * a = if n = 0 then 0 else (n - 1) * a + a
+  nat_mul_def : ∀ a : α, ∀ n : Nat, n • a = if n = 0 then 0 else (n - 1) • a + a
 
 variable {α: Type u} [Field α]
+
+
 
 -- add axioms
 theorem add_comm {a b : α} : a + b = b + a := by
@@ -94,7 +96,7 @@ theorem div_eq_mul_inv {a b : α} : a / b = a * b⁻¹ := by
 
 theorem pow_nat_def {a : α} {n : Nat} : a ^ n = if n = 0 then 1 else a ^ (n - 1) * a := Field.pow_nat_def a n
 
-theorem nat_mul_def {a : α} {n : Nat} : n * a = if n = 0 then 0 else (n - 1) * a + a := Field.nat_mul_def a n
+theorem nat_mul_def {a : α} {n : Nat} : n • a = if n = 0 then 0 else (n - 1) • a + a := Field.nat_mul_def a n
 
 /- other helpful theorems -/
 @[simp] theorem sub_eq_zero {a : α} : a - a = 0 := by
@@ -480,7 +482,7 @@ instance (priority := default-1) : MulOneClass α where
   mul_one := by simp
 
 instance (priority := default-1) : AddMonoid α where
-  nsmul n x := n * x
+  nsmul n x := n • x
   nsmul_zero := by simp [nat_mul_def]
   nsmul_succ := by
     intro n x
@@ -520,9 +522,9 @@ instance (priority := default-1) : SubNegMonoid α where
   sub a b := a - b
   sub_eq_add_neg := by simp
   zsmul n a :=
-    if n > 0 then (n.toNat) * a
+    if n > 0 then (n.toNat) • a
     else if n = 0 then 0
-    else - ((-n).toNat * a)
+    else - ((-n).toNat • a)
   zsmul_zero' := by simp
   zsmul_succ' := by
     intro n a
@@ -534,7 +536,6 @@ instance (priority := default-1) : SubNegMonoid α where
     simp [hn1]
     intro hn2
     simp [hn2]
-    simp [nat_mul_def]
   zsmul_neg' := by
     intro n a
     have hn1 : ¬ Int.negSucc n > 0 := by simp
@@ -548,7 +549,9 @@ instance (priority := default-1) : AddGroup α where
 
 instance (priority := default-1) : AddCommGroup α where
 
-instance (priority := default-1) : AddGroupWithOne α where
+
+instance (priority := low) : AddGroupWithOne α where
+
 
 instance (priority := default-1) : MulZeroClass α where
   zero_mul := by simp
@@ -605,6 +608,7 @@ instance (priority := default-1) : NonUnitalNonAssocRing α where
 instance (priority := default-1) : NonUnitalRing α where
 
 instance (priority := default-1) : NonAssocRing α where
+
 
 instance (priority := default-1) : Semiring α where
 

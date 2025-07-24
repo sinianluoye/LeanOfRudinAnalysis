@@ -542,10 +542,9 @@ instance (priority := default-1) : IsStrictOrderedRing α where
     intro a b c hab hc
     exact (gtz_mul_lt_right_cancel hc).mpr hab
 
-
 -- refer to one_add_mul_sub_le_pow, just proof for a > 0
 theorem gtz_pow_ge_one_add_exp_mul_base_sub_one {a : α} {n:ℕ} (ha: a > 0) :
-  a ^ n ≥ 1 + n * (a - 1) := by
+  a ^ n ≥ 1 +  n • (a - 1) := by
   induction n with
   | zero =>
     rw [Rudin.pow_zero]
@@ -560,7 +559,7 @@ theorem gtz_pow_ge_one_add_exp_mul_base_sub_one {a : α} {n:ℕ} (ha: a > 0) :
     have h2: a = 1 + (a - 1) := by simp
     rw (occs := .pos [2])[h2] at h
     rw [mul_add, mul_one] at h
-    have : 1 + ↑n * (a - 1) + (1 + ↑n * (a - 1)) * (a - 1) ≥ 1 + ↑n * (a - 1) + 1 * (a - 1) := by
+    have : 1 + n • (a - 1) + (1 + n • (a - 1)) * (a - 1) ≥ 1 + n • (a - 1) + 1 • (a - 1) := by
       simp
       rw [← Rudin.add_le_left_cancel (a:=-a), Rudin.neg_add, add_comm, Rudin.add_neg_eq_sub]
       rw [add_sub_assoc, ← neg_neg (a:=(1-a)), neg_sub, Rudin.add_neg_eq_sub]
