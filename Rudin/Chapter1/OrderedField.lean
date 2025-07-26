@@ -198,7 +198,12 @@ theorem neg_mul_lt_then_gt (ha: a < 0) (hbc: b < c) : a * b > a * c := by
   apply ltz_mul_ltz_gtz
   <;> exact this
 
-
+@[simp] theorem pow_two_gez {a:α} : a ^ 2 ≥ 0 := by
+  by_cases ha: a = 0
+  rw [ha]
+  simp
+  apply lt_then_le
+  exact pow_two_gtz ha
 
 @[simp] theorem one_gtz : (1:α) > 0 := by
   have h1 : (1:α) ^ 2 > 0 := by
@@ -516,62 +521,96 @@ theorem gtz_add_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a + b > 0 := by
   simp at hb
   exact lt_trans ha hb
 
+theorem gez_then_smul_gez {n:Nat} {a:α} (ha : a ≥ 0) : n • a ≥ 0 := by
+  induction n with
+  | zero => simp
+  | succ n hn =>
+    simp
+    simp at hn
+    rw [le_iff_lt_or_eq] at hn
+    rcases hn with hn|hn
+    apply lt_then_le
+    simp at ha
+    rw [le_iff_lt_or_eq] at ha
+    rcases ha with ha|ha
+    exact gtz_add_gtz_then_gtz hn ha
+    rw [← ha]
+    simp
+    rw [← ha] at hn
+    exact hn
+    rw [← hn]
+    simp
+    exact ha
+
+
+
+
 /- support mathlib -/
 --  [IsStrictOrderedRing R]
 -- IsOrderedCancelAddMonoid R, ZeroLEOneClass R
 
-instance (priority := default-1) : IsOrderedAddMonoid α where
-  add_le_add_left := by
-    intro a b h c
-    exact add_le_left_cancel.mpr h
+-- instance (priority := default-1) : IsOrderedAddMonoid α where
+--   add_le_add_left := by
+--     intro a b h c
+--     exact add_le_left_cancel.mpr h
 
-instance (priority := default-1) : IsOrderedCancelAddMonoid α where
-  le_of_add_le_add_left := by
-    intro a b c h
-    exact add_le_left_cancel.mp h
+-- instance (priority := default-1) : IsOrderedCancelAddMonoid α where
+--   le_of_add_le_add_left := by
+--     intro a b c h
+--     exact add_le_left_cancel.mp h
 
-instance (priority := default-1) : ZeroLEOneClass α where
-  zero_le_one := by
-    rw [Rudin.le_iff_lt_or_eq]
-    left
-    exact one_gtz
+-- instance (priority := default-1) : ZeroLEOneClass α where
+--   zero_le_one := by
+--     rw [Rudin.le_iff_lt_or_eq]
+--     left
+--     simp [OfNat.ofNat]
+--     rw [← one_eq_field_one, ← zero_eq_field_zero]
+--     simp
 
-instance (priority := default-1) : IsStrictOrderedRing α where
-  mul_lt_mul_of_pos_left := fun a b c a_2 a_3 ↦ gtz_mul_lt_gtz_mul a_3 a_2
-  mul_lt_mul_of_pos_right := by
-    intro a b c hab hc
-    exact (gtz_mul_lt_right_cancel hc).mpr hab
+
+-- instance (priority := default-1) : IsStrictOrderedRing α where
+--   mul_lt_mul_of_pos_left := fun a b c a_2 a_3 ↦ gtz_mul_lt_gtz_mul a_3 a_2
+--   mul_lt_mul_of_pos_right := by
+--     intro a b c hab hc
+--     exact (gtz_mul_lt_right_cancel hc).mpr hab
 
 -- refer to one_add_mul_sub_le_pow, just proof for a > 0
+
+
+
 theorem gtz_pow_ge_one_add_exp_mul_base_sub_one {a : α} {n:ℕ} (ha: a > 0) :
-  a ^ n ≥ 1 +  n • (a - 1) := by
+  a ^ n ≥ 1 + n • (a - 1) := by
   induction n with
   | zero =>
     rw [Rudin.pow_zero]
     simp
   | succ n h =>
-    rw [pow_succ]
     simp
-    rw [add_mul, ← add_assoc]
-    have h1: a ≥ a - 1 := by simp
-    rw [ge_iff_le] at *
-    rw [← Rudin.gtz_mul_le_right_cancel (a:=a)] at h
-    have h2: a = 1 + (a - 1) := by simp
-    rw (occs := .pos [2])[h2] at h
-    rw [mul_add, mul_one] at h
-    have : 1 + n • (a - 1) + (1 + n • (a - 1)) * (a - 1) ≥ 1 + n • (a - 1) + 1 • (a - 1) := by
+    simp at h
+    rw [← Rudin.gtz_mul_le_right_cancel (a:=a) ha] at h
+    simp [add_mul] at h
+    rw [← Rudin.add_assoc]
+    rw [Rudin.add_comm, ← Rudin.add_assoc]
+    rw [Rudin.sub_eq_add_neg]
+    rw [Rudin.add_assoc (a:=a)]
+    simp
+    have : n • (a - 1) ≤  n • (a - 1) * a := by
+      rw [← Rudin.add_le_left_cancel (a:=- (n • (a - 1)))]
       simp
-      rw [← Rudin.add_le_left_cancel (a:=-a), Rudin.neg_add, add_comm, Rudin.add_neg_eq_sub]
-      rw [add_sub_assoc, ← neg_neg (a:=(1-a)), neg_sub, Rudin.add_neg_eq_sub]
-      rw (occs := .pos [3])[← one_mul (a:=(a-1))]
-      rw [← Rudin.sub_mul]
-      rw [Rudin.add_sub_cancel]
-      rw [mul_assoc, ← pow_two]
-      refine mul_nonneg ?_ ?_
-      exact Nat.cast_nonneg n
-      exact sq_nonneg (a - 1)
-    linarith
-    exact ha
+      rw [Rudin.add_comm]
+      rw [← Rudin.sub_eq_add_neg]
+      rw (occs := .pos [2]) [← mul_one (a:=n • (a - 1))]
+      rw [← Rudin.mul_sub (a:=n • (a - 1)) (b:=a) (c:=1)]
+      rw [smul_mul_assoc]
+      have : (a-1) * (a-1) = (a-1) ^ 2 := by
+        simp
+      rw [this]
+      apply gez_then_smul_gez
+      exact Rudin.pow_two_gez
+    have h1:a + n • (a - 1) ≤ a + n • (a - 1) * a := by
+      rw [add_le_left_cancel]
+      exact this
+    exact Rudin.le_trans h1 h
 
 
 

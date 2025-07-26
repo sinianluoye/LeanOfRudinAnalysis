@@ -35,7 +35,9 @@ instance : Rudin.Field ℚ where
     rw [← Rat.div_def]
     rw [Rat.div_eq_mul_inv]
     rw [Rat.mul_inv_when_nz]
-    assumption
+    exact rfl
+    exact ha
+
   mul_add       := by apply Rat.mul_add
   sub_eq_add_neg := Rat.sub_eq_add_neg
   div_eq_mul_inv := by
@@ -46,11 +48,20 @@ instance : Rudin.Field ℚ where
     intro a
     simp only [Rat.instInv_mathlib]
     rw [Rat.div_def]
-    simp
+    simp [One.one]
+
   pow := (fun a n => a ^ n)
   pow_nat_def    := by apply Rat.pow_nat_def
-  hMul := (fun n a => n * a)
-  nat_mul_def       := by apply Rat.nat_mul_def
+  natMul_def     := by
+    intro a n
+    by_cases hn : n = 0
+    <;>simp [hn]
+    have : (↑(n-1):Rat) = n - 1 := by
+      refine Nat.cast_pred ?_
+      exact Nat.zero_lt_of_ne_zero hn
+    rw [this]
+    linarith
+
 
 /-1.17 ℚ IS OrderedField-/
 
@@ -62,12 +73,22 @@ instance : Rudin.OrderedField ℚ where
 
   gtz_mul_gtz_then_gtz := by apply Rat.gtz_mul_gtz_then_gtz
 
+theorem smul_eq_mul {n:Nat} {a:Rat} : n • a = n * a := by
+  induction n with
+  | zero => simp
+  | succ n hn => simp
+
+
+theorem gtz_pow_ge_one_add_exp_mul_base_sub_one {a : Rat} {n:ℕ} (ha: a > 0) :
+  a ^ n ≥ 1 + n * (a - 1) := by
+  have h := Rudin.gtz_pow_ge_one_add_exp_mul_base_sub_one (n:=n) ha
+  rw [smul_eq_mul] at h
+  exact h
 
 
 end Rat
 
-end Rudin
 
-theorem Rat.gtz_pow_ge_one_add_exp_mul_base_sub_one {a : Rat} {n:ℕ} (ha: a > 0) :
-  a ^ n ≥ 1 + n * (a - 1) := by
-  apply Rudin.gtz_pow_ge_one_add_exp_mul_base_sub_one
+
+
+end Rudin

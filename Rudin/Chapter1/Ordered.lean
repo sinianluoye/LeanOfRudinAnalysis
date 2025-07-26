@@ -229,49 +229,49 @@ theorem le_antisymm {a b:α} (hab : a ≤ b) (hba : b ≤ a) : a = b := by
 
 /- ----------------------------support mathlib ----------------------------- -/
 
-instance (priority := default-1) : Preorder α where
-  le_refl := by simp
-  le_trans := by apply le_trans
-  lt a b := a < b
-  lt_iff_le_not_ge := by
-    intro a b
-    have h1:= Rudin.not_le_iff_lt (a:=a) (b:=b)
-    rw [Rudin.le_iff_lt_or_eq]
-    simp
-    intro h
-    left
-    exact h
+-- instance (priority := default-1) : Preorder α where
+--   le_refl := by simp
+--   le_trans := by apply le_trans
+--   lt a b := a < b
+--   lt_iff_le_not_ge := by
+--     intro a b
+--     have h1:= Rudin.not_le_iff_lt (a:=a) (b:=b)
+--     rw [Rudin.le_iff_lt_or_eq]
+--     simp
+--     intro h
+--     left
+--     exact h
 
-instance (priority := default-1) : PartialOrder α where
-  le_antisymm := by
-    intro a b hab hba
-    exact le_antisymm hab hba
+-- instance (priority := default-1) : PartialOrder α where
+--   le_antisymm := by
+--     intro a b hab hba
+--     exact le_antisymm hab hba
 
-noncomputable instance (priority := default-1) : Min α where
-  min a b := by
-    classical
-    exact if h : a ≤ b then a else b
+-- noncomputable instance (priority := default-1) : Min α where
+--   min a b := by
+--     classical
+--     exact if h : a ≤ b then a else b
 
-noncomputable instance (priority := default-1) : Max α where
-  max a b := by
-    classical
-    exact if a ≤ b then b else a
+-- noncomputable instance (priority := default-1) : Max α where
+--   max a b := by
+--     classical
+--     exact if a ≤ b then b else a
 
-noncomputable instance (priority := default-1) : Ord α where
-  compare a b := by
-    classical
-    exact if a < b then Ordering.lt else if a > b then Ordering.gt else Ordering.eq
+-- noncomputable instance (priority := default-1) : Ord α where
+--   compare a b := by
+--     classical
+--     exact if a < b then Ordering.lt else if a > b then Ordering.gt else Ordering.eq
 
-noncomputable instance (priority := default-1) : LinearOrder α where
-  le_total := Rudin.le_total
-  toDecidableLE a := by
-    classical
-    exact fun b ↦ Classical.propDecidable (a ≤ b)
-  compare_eq_compareOfLessAndEq := by
-    intro a b
-    simp [compare]
-    simp [compareOfLessAndEq]
-    rcases lt_trichotomy (a:=a) (b:=b) with h|h|h
-    <;>simp [h]
+-- noncomputable instance (priority := default-1) : LinearOrder α where
+--   le_total := Rudin.le_total
+--   toDecidableLE a := by
+--     classical
+--     exact fun b ↦ Classical.propDecidable (a ≤ b)
+--   compare_eq_compareOfLessAndEq := by
+--     intro a b
+--     simp [compare]
+--     simp [compareOfLessAndEq]
+--     rcases lt_trichotomy (a:=a) (b:=b) with h|h|h
+--     <;>simp [h]
 
 end Rudin
