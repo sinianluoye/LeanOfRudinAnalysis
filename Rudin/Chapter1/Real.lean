@@ -2501,8 +2501,6 @@ theorem lt_then_ex_between {x y:RR} (hxy: x < y) : ∃ p, x < p ∧ p < y := by
   linarith
 
 -- 1.21
-
-
 theorem gtz_then_ex_gtz_natRoot {x:RR} {n:Nat} (hx: x > 0) (hn:n > 0) : ∃ y, y ^ n = x := by
   let E := {t:RR | t ^ n < x}
   have hnnz : n ≠ 0 := by linarith
@@ -2516,8 +2514,34 @@ theorem gtz_then_ex_gtz_natRoot {x:RR} {n:Nat} (hx: x > 0) (hn:n > 0) : ∃ y, y
   have h_upper_bound : BoundAbove E := by
     simp [BoundAbove, UpperBound]
     simp [E]
-    use 1 - x
+    use x + 1
     intro a ha
+    contrapose ha
+    simp at ha
+    simp
+    have hx1 : x + 1 > 1 := by linarith
+    have h1 := gto_then_natPow_gto_gt_base (n:=n) hx1
+    apply lt_then_le
+    by_cases hn1: n > 1
+    simp [hn1] at h1
+    have ha1 : (x+1) ^ n < a ^ n := by
+      apply gtz_lt_gtz_then_powNat_gtz_lt
+      linarith
+      linarith
+      linarith
+    have hx1: x < x + 1 := by linarith
+    linarith
+    simp at hn1
+    have hn2: n = 1 := by linarith
+    rw [hn2]
+    simp
+    linarith
+  let y := Sup E
+
+
+
+
+
 
 
 

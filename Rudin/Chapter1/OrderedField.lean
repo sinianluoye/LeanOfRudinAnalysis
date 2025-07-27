@@ -577,6 +577,35 @@ theorem gez_then_smul_gez {n:Nat} {a:α} (ha : a ≥ 0) : n • a ≥ 0 := by
 -- refer to one_add_mul_sub_le_pow, just proof for a > 0
 
 
+theorem gtz_lt_then_mul_lt {a b c d:α} (ha: a > 0) (hb: a < b) (hc: c > 0) (hd: c < d):
+  a * c < b * d := by
+  have h1: a * c < a * d := by exact gtz_mul_lt_gtz_mul ha hd
+  have h2: a * d < b * d := by
+    refine (gtz_mul_lt_right_cancel ?_).mpr hb
+    exact lt_trans hc hd
+  exact lt_trans h1 h2
+
+theorem gtz_le_then_mul_le {a b c d:α} (ha: a > 0) (hb: a ≤ b) (hc: c > 0) (hd: c ≤ d):
+  a * c ≤ b * d := by
+  have h1: a * c ≤ a * d := by exact (gtz_mul_le_left_cancel ha).mpr hd
+  have h2: a * d ≤  b * d := by
+    refine (gtz_mul_le_right_cancel ?_).mpr hb
+    rw [le_iff_lt_or_eq] at hd
+    rcases hd with hd|hd
+    exact lt_trans hc hd
+    rw [← hd]
+    exact hc
+  exact le_trans h1 h2
+
+
+
+theorem gto_mul_gto_then_gto {a b:α} (ha: a > 1) (hb: b > 1) : a * b > 1 := by
+  rw [← one_mul (a:=1)]
+  apply gtz_lt_then_mul_lt
+  simp
+  exact ha
+  simp
+  exact hb
 
 theorem gtz_pow_ge_one_add_exp_mul_base_sub_one {a : α} {n:ℕ} (ha: a > 0) :
   a ^ n ≥ 1 + n • (a - 1) := by
@@ -612,6 +641,81 @@ theorem gtz_pow_ge_one_add_exp_mul_base_sub_one {a : α} {n:ℕ} (ha: a > 0) :
       exact this
     exact Rudin.le_trans h1 h
 
+theorem gtz_then_powNat_gtz {x:α} {n:Nat} (hx: x > 0) : x ^ n > 0 := by
+  induction n with
+  | zero => simp
+  | succ n hi =>
+    simp
+    exact OrderedField.gtz_mul_gtz_then_gtz hi hx
+
+theorem gto_then_natPow_geo {x:α} {n:Nat} (hx: x > 1) : x ^ n ≥ 1 := by
+  induction n with
+  | zero => simp
+  | succ n hi =>
+    simp
+    rw [← one_mul (a:=1)]
+    apply gtz_le_then_mul_le
+    simp
+    exact hi
+    simp
+    apply lt_then_le
+    exact hx
+
+
+theorem gto_then_natPow_gto_gto {x:α} {n:Nat} (hx: x > 1) (hn: n > 0): x ^ n > 1 := by
+  have : n = n - 1 + 1 := by exact (Nat.sub_eq_iff_eq_add hn).mp rfl
+  rw [this]
+  simp
+  have h1 := gto_then_natPow_geo (n:=n-1) hx
+  rw [ge_iff_le, le_iff_lt_or_eq] at h1
+  rcases h1 with h1|h1
+  apply gto_mul_gto_then_gto
+  exact h1
+  exact hx
+  rw [← h1]
+  simp
+  exact hx
+
+theorem gto_then_natPow_gto_gt_base {x:α} {n:Nat} (hx: x > 1) (hn: n > 1) : x^n > x := by
+  have : n = n - 1 + 1 := by
+    refine (Nat.sub_eq_iff_eq_add ?_).mp rfl
+    exact Nat.one_le_of_lt hn
+  rw [this]
+  simp
+  rw (occs := .pos [1]) [← Rudin.one_mul (a:=x)]
+  rw [Rudin.gtz_mul_lt_right_cancel]
+  apply gto_then_natPow_gto_gto
+  exact hx
+  linarith
+  have h1: (1:α) > 0 := by simp
+  exact lt_trans h1 hx
+
+theorem gtz_lt_gtz_then_powNat_le {x y:α} {n:Nat} (hx: 0<x) (hy: x < y) : x^n ≤ y^n := by
+  induction n with
+  | zero => simp
+  | succ n hi =>
+    simp
+    apply gtz_le_then_mul_le
+    exact gtz_then_powNat_gtz hx
+    exact hi
+    exact hx
+    exact lt_then_le hy
+
+theorem gtz_lt_gtz_then_powNat_gtz_lt {x y : α} {n : Nat} (hx : 0 < x) (hy : x < y)
+    (hn : n > 0) : x ^ n < y ^ n := by
+  induction n with
+  | zero =>
+    cases hn
+  | succ n hi =>
+    by_cases hn1 : n > 0
+    simp
+    refine gtz_lt_then_mul_lt ?_ ?_ hx hy
+    exact gtz_then_powNat_gtz hx
+    exact hi hn1
+    simp at hn1
+    rw [hn1]
+    simp
+    exact hy
 
 
 end Rudin
