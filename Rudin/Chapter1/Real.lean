@@ -2319,6 +2319,7 @@ theorem ofRat_ext_iff {a b:Rat} : OfRat a = OfRat b ↔ a = b := by
     rw [Rudin.gt_div_gtz_iff_mul_gt]
     simp [Rudin.mul_add]
     exact hab
+    linarith
   have h2 := ht.mpr h1
   simp [t] at h2
   rw [← gt_iff_lt] at h2
@@ -2403,7 +2404,32 @@ noncomputable instance : CommRing RR where
     simp at ha
     simp [ha]
 
-instance : IsStrictOrderedRing RR where
+noncomputable instance : LinearOrder RR where
+  le_refl := by exact fun a ⦃a_1⦄ a ↦ a
+  le_trans := by exact fun a b c a_1 a_2 ⦃a_3⦄ a ↦ a_2 (a_1 a)
+  le_antisymm := by apply Rudin.le_antisymm
+  le_total := by apply Rudin.le_total
+  toDecidableLE a := by
+    classical
+    exact fun b ↦ Classical.propDecidable (a ≤ b)
+
+noncomputable instance : IsStrictOrderedRing RR where
+  add_le_add_left := by exact fun a b a_1 c ↦ le_then_add_le a_1
+  le_of_add_le_add_left := by
+    intro a b c h
+    rw [Rudin.add_le_left_cancel] at h
+    exact h
+  zero_le_one := by
+    apply lt_then_le
+    simp
+  exists_pair_ne := by
+    use 0
+    use 1
+    simp
+  mul_lt_mul_of_pos_left := by exact fun a b c a_1 a_2 ↦ gtz_mul_lt_gtz_mul a_2 a_1
+  mul_lt_mul_of_pos_right := by
+    intro a b c h1 h2
+    exact (gtz_mul_lt_right_cancel h2).mpr h1
 
 -- 1.20 (a)
 theorem gtz_then_ex_nat_mul_gt {x y:RR} (hx: x > 0) : ∃ n:Nat, n * x > y := by
@@ -2490,10 +2516,13 @@ theorem gtz_then_ex_gtz_natRoot {x:RR} {n:Nat} (hx: x > 0) (hn:n > 0) : ∃ y, y
   have h_upper_bound : BoundAbove E := by
     simp [BoundAbove, UpperBound]
     simp [E]
-    use 1+x+1
+    use 1 - x
     intro a ha
-    have : a ^ n ≥ a := by
-      rw [pow_nat_def]
+
+
+
+
+
 
 
 
