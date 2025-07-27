@@ -513,237 +513,29 @@ theorem smul_mul_assoc {a b:α} {n:Nat} : n • a * b = n • (a * b) := by
     rw [add_mul]
     rw [hi]
 
-/- ----------------------------------match mathlib for tactic support---------------------------------- -/
--- [CommRing R]
-
-
--- instance (priority := default - 1) : IntCast α where
---   intCast
---   | Int.ofNat n     => (n : α)
---   | Int.negSucc n   => -((n + 1 : Nat) : α)
-
--- instance (priority := default-1) : AddSemigroup α where
---   add_assoc := by apply Rudin.add_assoc
-
--- instance (priority := default-1) : AddZeroClass α where
---   zero_add := by simp
---   add_zero := by simp
-
--- instance (priority := default-1) : Semigroup α where
---   mul_assoc := by apply Rudin.mul_assoc
-
--- instance (priority := default-1) : CommMagma α where
---   mul_comm := by apply Rudin.mul_comm
-
--- instance (priority := default-1) : AddCommMagma α where
---   add_comm := by apply Rudin.add_comm
-
--- instance (priority := default-1) : CommSemigroup α where
-
--- instance (priority := default-1) : AddCommSemigroup α where
-
--- instance (priority := default-1) : AddLeftCancelSemigroup α where
---   add_left_cancel := by simp
-
--- instance (priority := default-1) : AddRightCancelSemigroup α where
---   add_right_cancel := by
---     intro a b c
---     repeat rw [Rudin.add_comm (b:=b)]
---     simp
-
--- instance (priority := default-1) : MulOneClass α where
---   one_mul := by
---     intro a
---     simp [OfNat.ofNat]
---     apply Field.one_mul
-
---   mul_one := by
---     simp [OfNat.ofNat]
---     simp [← one_eq_field_one]
-
--- instance (priority := default-1) : AddMonoid α where
---   nsmul n x := n • x
---   nsmul_zero := by simp [natMul_def]
---   nsmul_succ := by
---     intro n x
---     rw [natMul_def]
---     have : n + 1 ≠ 0 := by exact Ne.symm (Nat.zero_ne_add_one n)
---     simp [this]
-
--- instance (priority := default-1) : Monoid α where
---   npow n x := x ^ n
---   npow_zero := by simp
---   npow_succ := by
---     intro n x
---     rw [pow_nat_def]
---     have : n + 1 ≠ 0 := by exact Ne.symm (Nat.zero_ne_add_one n)
---     simp [this]
-
--- instance (priority := default-1) : CommMonoid α where
-
--- instance (priority := default-1) : AddCommMonoid α where
-
--- instance (priority := default-1) : AddMonoidWithOne α where
---   natCast n := OfNat.ofNat n
---   natCast_zero := by simp
---   natCast_succ := by
---     intro n
---     induction n with
---     | zero => simp
---     | succ n hi =>
---       simp [OfNat.ofNat, Nat.recAux,  NatCast.natCast]
---       rw [natMul_def]
---       have : n + 1 + 1 ≠ 0 := by simp
---       simp [this]
-
-
-
--- instance (priority := default-1) : AddLeftCancelMonoid α where
-
--- instance (priority := default-1) : AddRightCancelMonoid α where
-
--- instance (priority := default-1) : AddCancelMonoid α where
-
--- instance (priority := default-1) : AddCancelCommMonoid α where
-
--- instance (priority := default-1) : DivInvMonoid α where
---   div a b := a / b
---   div_eq_mul_inv := by
---     intro a b
---     have h:= Rudin.div_eq_mul_inv (a:=a) (b:=b)
---     exact h
-
--- instance (priority := default-1) : SubNegMonoid α where
---   sub a b := a - b
---   sub_eq_add_neg := by simp
---   zsmul n a :=
---     if n > 0 then (n.toNat) • a
---     else if n = 0 then 0
---     else - ((-n).toNat • a)
---   zsmul_zero' := by simp
---   zsmul_succ' := by
---     intro n a
---     have hn: (↑n.succ:Int) > 0 := by exact Int.ofNat_succ_pos n
---     have : (↑n.succ:Int).toNat > 0 := by exact Int.pos_iff_toNat_pos.mp hn
---     simp [this]
---     rw [natMul_def]
---     have hn1: n + 1 ≠ 0 := by simp
---     simp [hn1]
---     intro hn2
---     simp [hn2]
---   zsmul_neg' := by
---     intro n a
---     have hn1 : ¬ Int.negSucc n > 0 := by simp
---     have hn2 : Int.negSucc n ≠  0 := by simp
---     simp [hn1, hn2]
---     have : (-Int.negSucc n).toNat = n + 1 := by exact rfl
---     rw [this]
-
--- instance (priority := default-1) : AddGroup α where
---   neg_add_cancel := by simp
-
--- instance (priority := default-1) : AddCommGroup α where
-
-
--- instance (priority := default-1) : AddGroupWithOne α where
---   natCast_succ := by
---     intro n
---     induction n with
---     | zero =>
---       simp
---     | succ n hn =>
---       simp [NatCast.natCast, OfNat.ofNat, Nat.recAux]
---       rw [natMul_def]
---       have : n + 1 + 1 ≠ 0 := by simp
---       simp [this]
-
-
-
--- instance (priority := default-1) : MulZeroClass α where
---   zero_mul := by simp
---   mul_zero := by simp
-
--- instance (priority := default-1) : IsLeftCancelMulZero α where
---   mul_left_cancel_of_ne_zero := by
---     intro a b c ha h
---     rw [Rudin.mul_eq_left_cancel] at h
---     repeat assumption
-
--- instance (priority := default-1) : IsRightCancelMulZero α where
---   mul_right_cancel_of_ne_zero := by
---     intro a b c hb h
---     repeat rw [Rudin.mul_comm (b:=b)] at h
---     rw [Rudin.mul_eq_left_cancel] at h
---     repeat assumption
-
--- instance (priority := default-1) : IsCancelMulZero α where
-
--- instance (priority := default-1) : NoZeroDivisors α where
---   eq_zero_or_eq_zero_of_mul_eq_zero := by
---     intro a b hab
---     rw [mul_eq_zero_iff_eq_zero_or_eq_zero] at hab
---     exact hab
-
--- instance (priority := default-1) : SemigroupWithZero α where
-
--- instance (priority := default-1) : MulZeroOneClass α where
-
--- instance (priority := default-1) : MonoidWithZero α where
-
--- instance (priority := default-1) : CancelMonoidWithZero α where
-
--- instance (priority := default-1) : CommMonoidWithZero α where
-
--- instance (priority := default-1) : CancelCommMonoidWithZero α where
-
--- instance (priority := default-1) : MulDivCancelClass α where
---   mul_div_cancel := by exact fun a b a_1 ↦ mul_div_cancel a_1
-
--- instance (priority := default-1) : Distrib α where
---   left_distrib := by apply mul_add
---   right_distrib := by apply add_mul
-
--- instance (priority := default-1) : NonUnitalNonAssocSemiring α where
-
--- instance (priority := default-1) : NonUnitalSemiring α where
-
--- instance (priority := default-1) : NonAssocSemiring α where
-
--- instance (priority := default-1) : NonUnitalNonAssocRing α where
-
--- instance (priority := default-1) : NonUnitalRing α where
-
--- instance (priority := default-1) : NonAssocRing α where
-
-
--- instance (priority := default-1) : Semiring α where
-
--- instance (priority := default-1) : Ring α where
-
--- instance (priority := default-1) : NonUnitalNonAssocCommSemiring α where
-
--- instance (priority := default-1) : NonUnitalCommSemiring α where
-
--- instance (priority := default-1) : CommSemiring α where
-
--- instance (priority := default-1) : HasDistribNeg α where
---   neg_mul := by simp
---   mul_neg := by simp
-
--- instance (priority := default-1) : NonUnitalNonAssocCommRing α where
-
--- instance (priority := default-1) : NonUnitalCommRing α where
-
--- instance (priority := default-1) : CommRing α where
-
--- instance (priority := default-1) : Nontrivial α where
---   exists_pair_ne := by
---     use 0
---     use 1
---     apply Rudin.one_nz.symm
-
--- instance (priority := default-1) : IsDomain α where
-
-
+@[simp]
+theorem smul_zero {n:Nat} : n • 0 = 0 := by
+  simp
+
+instance (priority := default - 1) : AddCommMonoid α where
+  add_assoc := by exact fun a b c ↦ add_assoc
+  zero_add := by exact fun a ↦ zero_add
+  add_zero := by exact fun a ↦ add_zero
+  nsmul n a := n • a
+  add_comm := by exact fun a b ↦ add_comm
+  nsmul_zero := by exact fun x ↦ zero_smul
+  nsmul_succ := by exact fun n x ↦ add_one_smul
+
+instance (priority := default - 1) : CommMonoid α where
+  mul_assoc := by exact fun a b c ↦ Field.mul_assoc a b c
+  one_mul := by exact fun a ↦ one_mul
+  mul_one := by exact fun a ↦ mul_one
+  mul_comm := by exact fun a b ↦ Field.mul_comm a b
+  npow n a := a ^ n
+  npow_zero := by exact fun x ↦ pow_zero
+  npow_succ := by exact fun n x ↦ pow_nat_add_one
+
+theorem powNat_sub_powNat {a b:α} {n:Nat} : a^n - b^n = (a - b) * (∑ i ∈ Finset.range n, a ^ (n-1-i) * b ^ i) := by
+  sorry
 
 end Rudin

@@ -36,8 +36,7 @@ instance : Rudin.Field ℚ where
     rw [Rat.div_eq_mul_inv]
     rw [Rat.mul_inv_when_nz]
     exact rfl
-    exact ha
-
+    assumption
   mul_add       := by apply Rat.mul_add
   sub_eq_add_neg := Rat.sub_eq_add_neg
   div_eq_mul_inv := by
@@ -52,7 +51,7 @@ instance : Rudin.Field ℚ where
 
   pow := (fun a n => a ^ n)
   pow_nat_def    := by apply Rat.pow_nat_def
-  natMul_def     := by
+  natMul_def       := by
     intro a n
     by_cases hn : n = 0
     <;>simp [hn]
@@ -60,7 +59,9 @@ instance : Rudin.Field ℚ where
       refine Nat.cast_pred ?_
       exact Nat.zero_lt_of_ne_zero hn
     rw [this]
-    linarith
+    rw [Rat.sub_eq_add_neg]
+    rw [Rat.add_mul]
+    simp
 
 
 /-1.17 ℚ IS OrderedField-/
@@ -85,10 +86,6 @@ theorem gtz_pow_ge_one_add_exp_mul_base_sub_one {a : Rat} {n:ℕ} (ha: a > 0) :
   rw [smul_eq_mul] at h
   exact h
 
-
 end Rat
-
-
-
 
 end Rudin

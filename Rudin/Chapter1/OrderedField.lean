@@ -185,7 +185,7 @@ theorem neg_mul_lt_then_gt (ha: a < 0) (hbc: b < c) : a * b > a * c := by
 /-1.18 d-/
 @[simp] theorem pow_two_gtz {a:α} (ha: a ≠ 0) : a ^ 2 > 0 := by
   by_cases h : a > 0
-  rw [pow_two]
+  rw [pow_two (a:=a)]
   exact gtz_mul_gtz_then_gtz h h
   have : a < 0 := by
     simp at h
@@ -537,7 +537,7 @@ theorem gez_then_smul_gez {n:Nat} {a:α} (ha : a ≥ 0) : n • a ≥ 0 := by
     rw [← ha]
     simp
     rw [← ha] at hn
-    exact hn
+    simp at hn
     rw [← hn]
     simp
     exact ha
