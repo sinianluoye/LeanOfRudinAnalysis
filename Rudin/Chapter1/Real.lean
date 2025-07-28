@@ -2350,87 +2350,6 @@ theorem ofRat_ext_iff {a b:Rat} : OfRat a = OfRat b ↔ a = b := by
 
 /- ---------------------------------------------------------------------------- -/
 
-noncomputable instance : CommRing RR where
-  add_assoc := fun a b c ↦ add_assoc
-  zero_add := fun a ↦ zero_add
-  add_zero := by exact fun a ↦ add_zero
-  nsmul n a := n • a
-  add_comm := by exact fun a b ↦ add_comm
-  left_distrib := by exact fun a b c ↦ mul_add
-  right_distrib := by exact fun a b c ↦ add_mul
-  zero_mul := by exact fun a ↦ zero_mul
-  mul_zero := by
-    intro a
-    rw [mul_comm]
-    exact zero_mul
-  mul_assoc := by exact fun a b c ↦ mul_assoc
-  one_mul := by exact fun a ↦ one_mul
-  mul_one := by exact fun a ↦ mul_one
-  zsmul n a := OfRat n * a
-  neg_add_cancel := by exact fun a ↦ neg_add_eq_zero
-  mul_comm := by exact fun a b ↦ mul_comm
-  nsmul_zero := by exact fun x ↦ zero_smul
-  nsmul_succ := by exact fun n x ↦ add_one_smul
-  zsmul_zero' := by
-    intro a
-    -- Goal: OfRat ↑0 * a = 0
-    rw [Int.cast_zero]
-    rw [← zero_def]
-    exact zero_mul
-
-  zsmul_succ' := by
-    intro n a
-    rw (occs := .pos [3]) [← Rudin.one_mul (a:=a)]
-    rw [← Rudin.add_mul]
-    simp
-    repeat rw [Rudin.mul_comm (b:=a)]
-    by_cases ha : a ≠ 0
-    rw [Rudin.mul_eq_left_cancel]
-    rw [one_def, ofRat_add_ofRat_eq]
-    exact ha
-    simp at ha
-    simp [ha]
-
-  zsmul_neg' := by
-    intro n a
-    rw [← neg_mul]
-    rw [neg_ofRat_eq]
-    repeat rw [Rudin.mul_comm (b:=a)]
-    by_cases ha : a ≠ 0
-    rw [Rudin.mul_eq_left_cancel]
-    rw [ofRat_ext_iff]
-    simp
-    exact ha
-    simp at ha
-    simp [ha]
-
-noncomputable instance : LinearOrder RR where
-  le_refl := by exact fun a ⦃a_1⦄ a ↦ a
-  le_trans := by exact fun a b c a_1 a_2 ⦃a_3⦄ a ↦ a_2 (a_1 a)
-  le_antisymm := by apply Rudin.le_antisymm
-  le_total := by apply Rudin.le_total
-  toDecidableLE a := by
-    classical
-    exact fun b ↦ Classical.propDecidable (a ≤ b)
-
-noncomputable instance : IsStrictOrderedRing RR where
-  add_le_add_left := by exact fun a b a_1 c ↦ le_then_add_le a_1
-  le_of_add_le_add_left := by
-    intro a b c h
-    rw [Rudin.add_le_left_cancel] at h
-    exact h
-  zero_le_one := by
-    apply lt_then_le
-    simp
-  exists_pair_ne := by
-    use 0
-    use 1
-    simp
-  mul_lt_mul_of_pos_left := by exact fun a b c a_1 a_2 ↦ gtz_mul_lt_gtz_mul a_2 a_1
-  mul_lt_mul_of_pos_right := by
-    intro a b c h1 h2
-    exact (gtz_mul_lt_right_cancel h2).mpr h1
-
 -- 1.20 (a)
 theorem gtz_then_ex_nat_mul_gt {x y:RR} (hx: x > 0) : ∃ n:Nat, n * x > y := by
   rcases lt_trichotomy (a:=y) (b:=0) with hy|hy|hy
@@ -2508,7 +2427,6 @@ theorem gtz_then_ex_gtz_natRoot {x:RR} {n:Nat} (hx: x > 0) (hn:n > 0) : ∃ y, y
     simp [Set.not_empty_iff_ex_mem]
     use 0
     simp [E]
-    rw [pow_nat_def]
     simp [hnnz]
     linarith
   have h_upper_bound : BoundAbove E := by
@@ -2537,18 +2455,7 @@ theorem gtz_then_ex_gtz_natRoot {x:RR} {n:Nat} (hx: x > 0) (hn:n > 0) : ∃ y, y
     simp
     linarith
   let y := Sup E
-
-
-
-
-
-
-
-
-
-
-
-
+  sorry
 
 -- instance instHPowRRRat : Pow RR Rat where
 --   pow a n :=

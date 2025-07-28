@@ -517,6 +517,45 @@ theorem smul_mul_assoc {a b:α} {n:Nat} : n • a * b = n • (a * b) := by
 theorem smul_zero {n:Nat} : n • 0 = 0 := by
   simp
 
+theorem exp_eq_then_powNat_eq {m n:Nat} {a:α} (h: m = n): a ^ m = a ^ n := by simp [h]
+
+
+
+
+@[simp]
+theorem sub_zero {a:α} : a - 0 = a := by
+  rw [← Rudin.add_neg (a:=a)]
+  rw [Rudin.sub_eq_add_neg]
+  simp
+
+@[simp]
+theorem zero_powNat {n:Nat} : (0:α) ^ n = if n = 0 then 1 else 0 := by
+  split_ifs with hn
+  rw [hn]
+  simp
+  rw [pow_nat_def]
+  simp [hn]
+
+theorem powNat_nz_iff_base_nz {a:α} {n:Nat} (hn: n ≠ 0): a ^ n ≠ 0 ↔ a ≠ 0 := by
+  constructor
+  <;>intro h
+  <;>contrapose! h
+  rw [h]
+  simp
+  exact hn
+  induction' n with n hi
+  simp at h
+  by_cases hn1: n = 0
+  rw [hn1] at h
+  simp at h
+  exact h
+  rw [pow_nat_add_one] at h
+  rw [Rudin.mul_eq_zero_iff_eq_zero_or_eq_zero] at h
+  rcases h with h|h
+  exact hi hn1 h
+  exact h
+
+
 instance (priority := default - 1) : AddCommMonoid α where
   add_assoc := by exact fun a b c ↦ add_assoc
   zero_add := by exact fun a ↦ zero_add
@@ -535,7 +574,69 @@ instance (priority := default - 1) : CommMonoid α where
   npow_zero := by exact fun x ↦ pow_zero
   npow_succ := by exact fun n x ↦ pow_nat_add_one
 
-theorem powNat_sub_powNat {a b:α} {n:Nat} : a^n - b^n = (a - b) * (∑ i ∈ Finset.range n, a ^ (n-1-i) * b ^ i) := by
-  sorry
+instance (priority := default - 1) : NonUnitalNonAssocSemiring α where
+  left_distrib := by exact fun a b c ↦ Field.mul_add a b c
+  right_distrib := by exact fun a b c ↦ add_mul
+  zero_mul := by exact fun a ↦ zero_mul
+  mul_zero := by exact fun a ↦ mul_zero
+
+instance (priority := default - 1) : SemigroupWithZero α where
+
+instance (priority := default - 1) : NonUnitalSemiring α where
+
+instance (priority := default - 1) : MulZeroOneClass α where
+
+instance (priority := default - 1) : AddCommMonoidWithOne α where
+
+instance (priority := default - 1) : NonAssocSemiring α where
+
+instance (priority := default - 1) : Semiring α where
+
+instance (priority := default - 1) : AddMonoid α where
+  nsmul n a := n • a
+  nsmul_zero := by exact fun x ↦ zero_smul
+  nsmul_succ := by exact fun n x ↦ add_one_smul
+
+attribute [-simp] nsmul_eq_mul  Algebra.smul_mul_assoc
+
+instance (priority := default - 1) : SubNegMonoid α where
+  sub a b := a - b
+  sub_eq_add_neg := by exact fun a b ↦ Field.sub_eq_add_neg a b
+  zsmul n a := if n < 0 then -((-n).toNat • a) else n.toNat • a
+  zsmul_zero' := by
+    split_ifs with h
+    simp [h]
+    norm_num
+
+  zsmul_succ' := by
+    intro n a
+    split_ifs with h1 h2 h3
+    linarith
+    linarith
+    linarith
+    simp
+
+  zsmul_neg' := by
+    intro n a
+    split_ifs with h1 h2 h3
+    linarith
+    simp
+    have : (-Int.negSucc n).toNat = n + 1 := by
+      exact rfl
+    rw [this]
+    simp
+    linarith
+    simp at h1
+
+instance (priority := default - 1) : AddGroup α where
+  neg_add_cancel := by exact fun a ↦ neg_add_eq_zero
+
+instance (priority := default - 1) : AddCommGroup α where
+
+instance (priority := default - 1) : Ring α where
+
+instance (priority := default - 1) : CommRing α where
+
+
 
 end Rudin
