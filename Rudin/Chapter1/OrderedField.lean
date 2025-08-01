@@ -579,6 +579,7 @@ instance (priority := default-1) : IsStrictOrderedRing α where
     use 0
     simp
 
+
 -- refer to one_add_mul_sub_le_pow, just proof for a > 0
 
 
