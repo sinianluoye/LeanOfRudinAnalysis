@@ -32,15 +32,15 @@ An ordered set S is said to have the least-upper-bound property if
 the following is true:
  If E ⊂ S, Eis not empty, and E is bounded above, then supE exists in S.
 -/
-class LeastUpperBoundProperty (α: Type u) extends Ordered α where
+class LeastUpperBoundProperty  (α : Type*) [Ordered α] where
   subset_sup_exist : ∀ (E : Set α), E ≠ ∅ ∧ BoundAbove E → ∃ a, ExistsSup E a
 
-class GreatestLowerBoundProperty (α: Type u) extends Ordered α where
+class GreatestLowerBoundProperty (α : Type*) [Ordered α]  where
   subset_inf_exist : ∀ (E : Set α), E ≠ ∅ ∧ BoundBelow E → ∃ a, ExistsInf E a
 
 open Classical in
 noncomputable def Sup
-    {α : Type u} [LeastUpperBoundProperty α]
+    {α : Type u} [Ordered α] [LeastUpperBoundProperty α]
     (E : Set α)
     (h_non_empty : E ≠ ∅)
     (h_bound_above: BoundAbove E) : α :=
@@ -49,7 +49,7 @@ noncomputable def Sup
 
 open Classical in
 noncomputable def Inf
-    {α : Type u} [GreatestLowerBoundProperty α]
+    {α : Type u} [Ordered α] [GreatestLowerBoundProperty α]
     (E : Set α)
     (h_non_empty : E ≠ ∅)
     (h_bound_below: BoundBelow E) : α :=
@@ -87,7 +87,7 @@ Suppose S is an ordered set with the least-upper-bound property, B ⊂ S,
  In particular, inf B exists in S.
 -/
 theorem sup_lb_set_exist_and_eq_inf
-    {α : Type u} [LeastUpperBoundProperty α] {B : Set α}
+    {α : Type u} [Ordered α]  [LeastUpperBoundProperty α] {B : Set α}
     (hB_nonempty : ∃ b, b ∈ B)
     (hB_bound_below : BoundBelow B) :
     ∃ a : α, ExistsSup {x | LowerBound B x} a ∧ ExistsInf B a := by

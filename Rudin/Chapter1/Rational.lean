@@ -50,7 +50,7 @@ instance : Rudin.Field ℚ where
     simp [One.one]
 
   pow := (fun a n => a ^ n)
-  pow_nat_def    := by apply Rat.pow_nat_def
+  powNat_def    := by apply Rat.pow_nat_def
   natMul_def       := by
     intro a n
     by_cases hn : n = 0

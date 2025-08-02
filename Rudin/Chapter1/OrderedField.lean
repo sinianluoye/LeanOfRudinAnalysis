@@ -11,6 +11,14 @@ class OrderedField (α : Type u) extends Field α, Ordered α where
   add_lt_left_cancel {a b c :α} (h: a + b < a + c) : b < c
   gtz_mul_gtz_then_gtz {a b :α} (ha: a > 0) (hb: b > 0) : a * b > 0
 
+def Positive (α: Type u) [OrderedField α] := {x:α // x > 0}
+
+def Negative (α: Type u) [OrderedField α] := {x:α // x < 0}
+
+def NonPositive (α: Type u) [OrderedField α] := {x:α // x ≤ 0}
+
+def NonNegative (α: Type u) [OrderedField α] := {x:α // x ≥ 0}
+
 variable {α: Type u} [OrderedField α] {a b c : α}
 
 theorem add_lt_left_cancel : a + b < a + c ↔ b < c := by
@@ -723,5 +731,16 @@ theorem gtz_lt_gtz_then_powNat_gtz_lt {x y : α} {n : Nat} (hx : 0 < x) (hy : x 
     simp
     exact hy
 
+-- 1.20 (b)
+theorem lt_then_ex_between {x y:α} (hxy: x < y) : ∃ p, x < p ∧ p < y := by
+  use (x+y)/(1+1)
+  have : ((1:α) + 1) > 0 := by
+    simp
+  constructor
+  rw [Rudin.lt_div_gtz_iff_mul_lt this]
+  linarith
+  rw [← gt_iff_lt]
+  rw [Rudin.gt_div_gtz_iff_mul_gt this]
+  linarith
 
 end Rudin

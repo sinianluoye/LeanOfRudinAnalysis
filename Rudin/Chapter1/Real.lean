@@ -8,6 +8,7 @@ import Rudin.Chapter1.OrderedField
 import Rudin.Chapter1.Rational
 import Rudin.Chapter1.Bound
 import Rudin.Chapter1.Inequality
+import Rudin.Chapter1.PowRat
 
 attribute [-simp] nsmul_eq_mul
 
@@ -2144,7 +2145,7 @@ noncomputable instance instRudinFieldRR : Rudin.Field RR where
     rw [inv_eq_one_div]
     apply div_eq_mul_inv
   inv_eq_one_div := by apply inv_eq_one_div
-  pow_nat_def := by apply pow_nat_def
+  powNat_def := by apply pow_nat_def
   natMul_def := by apply nat_mul_def
 
 
@@ -2350,9 +2351,6 @@ theorem ofRat_ext_iff {a b:Rat} : OfRat a = OfRat b ↔ a = b := by
   rw [h]
   intro x
   rfl
-
-/- ---------------------------------------------------------------------------- -/
-
 
 
 end Real

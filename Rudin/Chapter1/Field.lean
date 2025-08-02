@@ -25,7 +25,7 @@ class Field (α : Type u)  extends
   sub_eq_add_neg : ∀ a b : α, a - b = a + -b
   div_eq_mul_inv : ∀ a b : α, a / b = a * b⁻¹
   inv_eq_one_div : ∀ a : α, a⁻¹ = one / a
-  pow_nat_def : ∀ a : α, ∀ n : Nat, a ^ n = if n = 0 then 1 else a ^ (n - 1) * a
+  powNat_def : ∀ a : α, ∀ n : Nat, a ^ n = if n = 0 then 1 else a ^ (n - 1) * a
   natMul_def : ∀ a : α, ∀ n : Nat, n • a = if n = 0 then 0 else (n - 1) • a + a
 
 variable {α: Type u} [Field α]
@@ -113,8 +113,8 @@ theorem sub_eq_add_neg {a b : α} : a - b = a + -b := by
 theorem div_eq_mul_inv {a b : α} : a / b = a * b⁻¹ := by
   apply Field.div_eq_mul_inv
 
-theorem pow_nat_def {a : α} {n : Nat} : a ^ n = if n = 0 then 1 else a ^ (n - 1) * a := by
-  have h := Field.pow_nat_def a n
+theorem powNat_def {a : α} {n : Nat} : a ^ n = if n = 0 then 1 else a ^ (n - 1) * a := by
+  have h := Field.powNat_def a n
   simp [one_eq_field_one]
   exact h
 
@@ -396,11 +396,11 @@ theorem sub_mul {a b c : α} : (a - b) * c = a * c - b * c := by
   rw [mul_comm (a:=b)]
 
 
-@[simp] theorem pow_zero {a : α} : a ^ 0 = 1 := by simp [pow_nat_def]
+@[simp] theorem pow_zero {a : α} : a ^ 0 = 1 := by simp [powNat_def]
 
-@[simp] theorem pow_one {a:α} : a ^ 1 = a := by simp [pow_nat_def]
+@[simp] theorem pow_one {a:α} : a ^ 1 = a := by simp [powNat_def]
 
-theorem pow_two {a : α} : a ^ 2 = a * a := by simp [pow_nat_def]
+theorem pow_two {a : α} : a ^ 2 = a * a := by simp [powNat_def]
 
 theorem div_eq_div_iff_mul_eq_mul {a b c d:α} (hbnz: b ≠ 0) (hdnz: d ≠ 0) : a / b = c / d ↔ a * d = b * c := by
   constructor
@@ -502,7 +502,7 @@ theorem add_smul {a:α} {n m:Nat} : (m + n) • a = m • a + n • a := by
 
 @[simp]
 theorem pow_nat_add_one {a:α} {n:Nat}: a ^ (n+1) = a ^ n * a := by
-  rw [pow_nat_def]
+  rw [powNat_def]
   rfl
 
 theorem smul_mul_assoc {a b:α} {n:Nat} : n • a * b = n • (a * b) := by
@@ -533,7 +533,7 @@ theorem zero_powNat {n:Nat} : (0:α) ^ n = if n = 0 then 1 else 0 := by
   split_ifs with hn
   rw [hn]
   simp
-  rw [pow_nat_def]
+  rw [powNat_def]
   simp [hn]
 
 theorem powNat_nz_iff_base_nz {a:α} {n:Nat} (hn: n ≠ 0): a ^ n ≠ 0 ↔ a ≠ 0 := by
@@ -555,6 +555,8 @@ theorem powNat_nz_iff_base_nz {a:α} {n:Nat} (hn: n ≠ 0): a ^ n ≠ 0 ↔ a �
   exact hi hn1 h
   exact h
 
+instance : Pow α Int where
+  pow a n := if n < 0 then 1 / (a ^ ((-n).toNat)) else a ^ (n.toNat)
 
 instance (priority := default - 1) : AddCommMonoid α where
   add_assoc := by exact fun a b c ↦ add_assoc

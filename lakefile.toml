@@ -2,6 +2,7 @@ name = "lean_of_rudin_analysis"
 version = "0.1.0"
 keywords = ["math"]
 defaultTargets = ["Rudin"]
+moreLinkArgs = ["-L./.lake/packages/LeanCopilot/.lake/build/lib", "-lctranslate2"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -12,3 +13,9 @@ scope = "leanprover-community"
 
 [[lean_lib]]
 name = "Rudin"
+
+[[require]]
+name = "LeanCopilot"
+git = "https://github.com/lean-dojo/LeanCopilot.git"
+rev = "main"
+
