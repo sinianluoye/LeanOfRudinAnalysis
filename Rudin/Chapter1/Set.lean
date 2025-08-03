@@ -73,7 +73,7 @@ theorem ssub_iff_lt (A B:Set α): A ⊂ B ↔ A < B := by rfl
 
 @[simp] theorem ssub_irrefl (A:Set α): ¬ A ⊂ A := by simp [ssub_def]
 
-@[simp] theorem sub_refl (A:Set α): A ⊆ A := by simp [sub_def]
+@[simp] theorem sub_refl (A:Set α): A ⊆ A := by simp
 
 @[simp] theorem ssub_asymm  (A B:Set α) (hab: A ⊂ B): ¬ B ⊂ A := by
   simp [ssub_def] at *

@@ -407,6 +407,7 @@ theorem rootNat_powNat [LeastUpperBoundProperty α] {x y z: α} {n m: Nat}
   rw [← hxy] at hxz
   sorry
 
+/-
 theorem rootNat_mul [LeastUpperBoundProperty α] {x y:α} {n:Nat} (hx: x > 0) (hy: y > 0) (hn: n > 0) :
   (RootNat x n hx hn) * (RootNat y n hy hn) = RootNat (x * y) n (by exact mul_pos hx hy) hn:= by
   let a := RootNat x n hx hn
@@ -418,8 +419,9 @@ theorem rootNat_mul [LeastUpperBoundProperty α] {x y:α} {n:Nat} (hx: x > 0) (h
   have hRootNat : (RootNat (x * y) n (mul_pos hx hy) hn) ^ n = x * y := rootNat_powNat_eq_self (mul_pos hx hy) hn
   have hRootNat_pos : RootNat (x * y) n (mul_pos hx hy) hn > 0 := (Classical.choose_spec (gtz_then_ex_gtz_rootNat (mul_pos hx hy) hn)).1
   exact (gtz_then_rootNat_unique hn hRootNat_pos (mul_pos ha hb) hRootNat hab_pow).symm
+-/
 
-open Classical in
+
 noncomputable def PowRat [LeastUpperBoundProperty α] (a : α) (n : ℚ) (ha : a ≥ 0) :=
   if h_int : n.isInt then
     a ^ n.num
@@ -430,7 +432,11 @@ noncomputable def PowRat [LeastUpperBoundProperty α] (a : α) (n : ℚ) (ha : a
         exact 0
       · -- `a` is positive (since `a ≥ 0` and `a ≠ 0`)
         have h_pos : (0 : α) < a := lt_of_le_of_ne ha (Ne.symm h0)
-        exact (RootNat a n.den h_pos n.den_pos) ^ n.num
+        -- existence of a positive `y` with `y ^ n.den = a`
+        have h := gtz_then_ex_gtz_rootNat (x:=a) (n:=n.den) h_pos (n.den_pos)
+        -- use classical choice to extract the witness from the existential proof
+        let y : α := Classical.choose h
+        exact y ^ n.num
 
 
 private theorem powRat_add_lemma_1 [LeastUpperBoundProperty α] {a: α} {m n: ℚ} (ha : a > 0) (hm: m.isInt) (hn: n.isInt):
@@ -467,6 +473,7 @@ private theorem powRat_add_lemma_2 [LeastUpperBoundProperty α] {a: α} {m n: �
     exact hm
   simp [hmn]
   simp [ha]
+  sorry
 
 
 
@@ -476,7 +483,9 @@ theorem powRat_add [LeastUpperBoundProperty α] {a: α} {m n: ℚ} (ha : a > 0) 
   by_cases hn : n.isInt
   <;>by_cases hm : m.isInt
   exact powRat_add_lemma_1 ha hm hn
-
+  sorry
+  sorry
+  sorry
 
 
 
