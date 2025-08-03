@@ -184,9 +184,9 @@ end Rudin_1_1
 namespace Rudin
 
 -- 1.9 1)
-example : ¬ ∃ s : ℚ, ExistsSup ({ p : ℚ | p ^ 2 < 2 }) s := by
+example : ¬ ∃ s : ℚ, IsSup ({ p : ℚ | p ^ 2 < 2 }) s := by
   intro h
-  simp [ExistsSup, UpperBound] at h
+  simp [IsSup, UpperBound] at h
   have h1 := Rudin_1_1.a_has_no_max
   apply h1
   simp [Rudin_1_1.A]
@@ -248,7 +248,7 @@ example : ¬ ∃ s : ℚ, ExistsSup ({ p : ℚ | p ^ 2 < 2 }) s := by
   linarith
 
 -- 1.9 2)
-lemma sup_mem_or_not {α : Type*}[Rudin.Ordered α] {E : Set α} {s : α} (h : ExistsSup E s) : s ∈ E ∨ s ∉ E := by
+lemma sup_mem_or_not {α : Type*}[Rudin.Ordered α] {E : Set α} {s : α} (h : IsSup E s) : s ∈ E ∨ s ∉ E := by
   classical
   exact (em (s ∈ E))
 
@@ -257,8 +257,8 @@ namespace Rudin_1_9_3
 
 def E := {x:ℚ | ∃ n : ℕ, x = 1 / (n+1) }
 
-lemma Sup_E_is_one : ExistsSup E 1 := by
-  simp [E, ExistsSup, UpperBound]
+lemma Sup_E_is_one : IsSup E 1 := by
+  simp [E, IsSup, UpperBound]
   constructor
   · intro n
     have hden : (0 : ℚ) < (n : ℚ) + 1 := by
@@ -274,8 +274,8 @@ lemma Sup_E_is_one : ExistsSup E 1 := by
     use 0
     linarith
 
-lemma Inf_E_is_zero : ExistsInf E 0 := by
-  simp [E, ExistsInf, LowerBound]
+lemma Inf_E_is_zero : IsInf E 0 := by
+  simp [E, IsInf, LowerBound]
   constructor
   norm_cast
   omega

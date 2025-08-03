@@ -19,9 +19,9 @@ def BoundBelow (E: Set α) := ∃ b, LowerBound E b
 
 /-1.8-/
 
-def ExistsSup (E: Set α) (a : α) := UpperBound E a ∧ ∀ b, b < a → ¬ UpperBound E b
+def IsSup (E: Set α) (a : α) := UpperBound E a ∧ ∀ b, b < a → ¬ UpperBound E b
 
-def ExistsInf (E: Set α) (a : α) := LowerBound E a ∧ ∀ b, b > a → ¬ LowerBound E b
+def IsInf (E: Set α) (a : α) := LowerBound E a ∧ ∀ b, b > a → ¬ LowerBound E b
 
 /-1.9-/
 -- see Examples.lean
@@ -33,36 +33,18 @@ the following is true:
  If E ⊂ S, Eis not empty, and E is bounded above, then supE exists in S.
 -/
 class LeastUpperBoundProperty  (α : Type*) [Ordered α] where
-  subset_sup_exist : ∀ (E : Set α), E ≠ ∅ ∧ BoundAbove E → ∃ a, ExistsSup E a
+  subset_sup_exist (E : Set α) (h_no_empty: E ≠ ∅) (h_bound_above: BoundAbove E) : ∃ a, IsSup E a
 
 class GreatestLowerBoundProperty (α : Type*) [Ordered α]  where
-  subset_inf_exist : ∀ (E : Set α), E ≠ ∅ ∧ BoundBelow E → ∃ a, ExistsInf E a
-
-open Classical in
-noncomputable def Sup
-    {α : Type u} [Ordered α] [LeastUpperBoundProperty α]
-    (E : Set α)
-    (h_non_empty : E ≠ ∅)
-    (h_bound_above: BoundAbove E) : α :=
-  Classical.choose (LeastUpperBoundProperty.subset_sup_exist (E := E) (And.intro h_non_empty h_bound_above))
-
-
-open Classical in
-noncomputable def Inf
-    {α : Type u} [Ordered α] [GreatestLowerBoundProperty α]
-    (E : Set α)
-    (h_non_empty : E ≠ ∅)
-    (h_bound_below: BoundBelow E) : α :=
-  Classical.choose (GreatestLowerBoundProperty.subset_inf_exist (E := E) (And.intro h_non_empty h_bound_below))
-
+  subset_inf_exist (E : Set α) (h_no_empty: E ≠ ∅)  (h_bound_below: BoundBelow E) :  ∃ a, IsInf E a
 
 theorem sup_only_one
   {α : Type u}[Ordered α]
   {E : Set α}
   {m n: α}
-  (hm: ExistsSup E m)
-  (hn: ExistsSup E n) : m = n := by
-  simp [ExistsSup, UpperBound] at hm hn
+  (hm: IsSup E m)
+  (hn: IsSup E n) : m = n := by
+  simp [IsSup, UpperBound] at hm hn
   have hm1 := hm.1
   have hn1 := hn.1
   have hm2 := hm.2
@@ -90,16 +72,16 @@ theorem sup_lb_set_exist_and_eq_inf
     {α : Type u} [Ordered α]  [LeastUpperBoundProperty α] {B : Set α}
     (hB_nonempty : ∃ b, b ∈ B)
     (hB_bound_below : BoundBelow B) :
-    ∃ a : α, ExistsSup {x | LowerBound B x} a ∧ ExistsInf B a := by
+    ∃ a : α, IsSup {x | LowerBound B x} a ∧ IsInf B a := by
   rcases hB_nonempty with ⟨ b, hb ⟩
   rcases hB_bound_below with ⟨ l, hl ⟩
   let L := {x | LowerBound B x}
   have : L = {x | LowerBound B x} := by rfl
   rw [← this]
-  simp [ExistsSup, LowerBound] at this
+  simp [LowerBound] at this
   have hB_upper_bound_L : ∀ x ∈ B, UpperBound L x := by
     intro x hx
-    simp [ExistsSup, UpperBound]
+    simp [UpperBound]
     intro y
     intro hy
     rw [this] at hy
@@ -107,12 +89,11 @@ theorem sup_lb_set_exist_and_eq_inf
 
   have hB_bound_above_L : BoundAbove L := by
     have := hB_upper_bound_L b hb
-    simp [ExistsSup] at this
+    simp at this
     use b
 
-  have hL_have_sup : ∃ s, ExistsSup L s := by
+  have hL_have_sup : ∃ s, IsSup L s := by
     apply LeastUpperBoundProperty.subset_sup_exist
-    constructor
     . simp [Set.ne_iff_ex_not_in]
       use l
       rw [Set.mem_setOf]
@@ -124,7 +105,7 @@ theorem sup_lb_set_exist_and_eq_inf
   use s
   constructor
   exact hs
-  simp [ExistsSup] at hs
+  simp [IsSup] at hs
   have hs1 := hs.1
   simp [UpperBound] at hs1
 

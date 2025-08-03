@@ -48,12 +48,11 @@ theorem gtz_then_ex_nat_mul_gt  [LeastUpperBoundProperty α] {x y: α} (hx: x > 
   have h_bound_above_A : BoundAbove A := by
     simp [BoundAbove]
     use y
-  have h_tmp := And.intro h_a_not_empy h_bound_above_A
-  have h_exist_sup := h_exist_sup h_tmp
+  have h_exist_sup := h_exist_sup h_a_not_empy h_bound_above_A
   rcases h_exist_sup with ⟨ s, hs⟩
   let t := s - x
   have h_t_not_ub: ¬ UpperBound A t := by
-    simp [ExistsSup] at hs
+    simp [IsSup] at hs
     have : t < s := by
       simp [t]
       linarith
@@ -69,7 +68,7 @@ theorem gtz_then_ex_nat_mul_gt  [LeastUpperBoundProperty α] {x y: α} (hx: x > 
     push_cast
     linarith
   have h_s_ge_m_1_x : s ≥ (m+1) * x := by
-    simp [ExistsSup, UpperBound] at hs
+    simp [IsSup, UpperBound] at hs
     apply hs.left
     assumption
   rw [← Rudin.not_le_iff_lt] at h_t_lt_m_1_x
@@ -78,7 +77,7 @@ theorem gtz_then_ex_nat_mul_gt  [LeastUpperBoundProperty α] {x y: α} (hx: x > 
 
 -- 1.21
 
-private theorem gtz_then_ex_gtz_natRoot_lemma_1 {x:α} {n:Nat} {E: Set α}
+private theorem gtz_then_ex_gtz_rootNat_lemma_1 {x:α} {n:Nat} {E: Set α}
   (hE: E = {t:α | t ^ n < x})
   (hx: x > 0)
   (hn: n > 1): E ≠ ∅ := by
@@ -89,7 +88,7 @@ private theorem gtz_then_ex_gtz_natRoot_lemma_1 {x:α} {n:Nat} {E: Set α}
   simp [hnnz]
   linarith
 
-private theorem gtz_then_ex_gtz_natRoot_lemma_2 {x:α} {n:Nat} {E: Set α}
+private theorem gtz_then_ex_gtz_rootNat_lemma_2 {x:α} {n:Nat} {E: Set α}
   (hE: E = {t:α | t ^ n < x})
   (hx: x > 0)
   (hn: n > 1): BoundAbove E := by
@@ -118,13 +117,13 @@ private theorem gtz_then_ex_gtz_natRoot_lemma_2 {x:α} {n:Nat} {E: Set α}
   simp
   linarith
 
-private theorem gtz_then_ex_gtz_natRoot_lemma_3 {y x:α} {n:Nat}
-  (hy: ExistsSup {t:α | t ^ n < x} y)
+private theorem gtz_then_ex_gtz_rootNat_lemma_3 {y x:α} {n:Nat}
+  (hy: IsSup {t:α | t ^ n < x} y)
   (hn: n > 1)
   (hx: x > 0):
   y > 0
   := by
-  simp [ExistsSup, UpperBound] at hy
+  simp [IsSup, UpperBound] at hy
   rcases hy with ⟨ hy1, hy2⟩
   contrapose! hy1
   use x / (x+1)
@@ -168,10 +167,10 @@ private theorem gtz_then_ex_gtz_natRoot_lemma_3 {y x:α} {n:Nat}
   linarith
 
 
-private theorem gtz_then_ex_gtz_natRoot_lemma_4  [LeastUpperBoundProperty α] {y h x:α} {n:Nat}
+private theorem gtz_then_ex_gtz_rootNat_lemma_4  [LeastUpperBoundProperty α] {y h x:α} {n:Nat}
   (hn: n > 1)
   (hx: x > 0)
-  (hy: ExistsSup {t:α | t ^ n < x} y)
+  (hy: IsSup {t:α | t ^ n < x} y)
   (h0: 0 < h)
   (h1: h < 1)
   (h2: h < (x - y^n) / (n * (y+1)^(n-1)))
@@ -179,7 +178,7 @@ private theorem gtz_then_ex_gtz_natRoot_lemma_4  [LeastUpperBoundProperty α] {y
    (y+h) ^ n < x
   := by
   rw [← nsmul_eq_mul] at h2
-  have hy0: y > 0 := gtz_then_ex_gtz_natRoot_lemma_3 hy hn hx
+  have hy0: y > 0 := gtz_then_ex_gtz_rootNat_lemma_3 hy hn hx
   let a := y
   let b := y + h
   have hab : a < b := by exact lt_add_of_pos_right a h0
@@ -207,15 +206,15 @@ private theorem gtz_then_ex_gtz_natRoot_lemma_4  [LeastUpperBoundProperty α] {y
     linarith
   linarith
 
-private theorem gtz_then_ex_gtz_natRoot_lemma_5 [LeastUpperBoundProperty α] {x y:α} {n:Nat}
+private theorem gtz_then_ex_gtz_rootNat_lemma_5 [LeastUpperBoundProperty α] {x y:α} {n:Nat}
   (hx: x > 0)
   (hn: n > 1)
-  (hy: ExistsSup {t:α | t ^ n < x} y)
+  (hy: IsSup {t:α | t ^ n < x} y)
   (hxy : y^n < x)
   :
   ∃ y > 0, y ^ n = x
   := by
-  have hy0 : y > 0 := gtz_then_ex_gtz_natRoot_lemma_3 hy hn hx
+  have hy0 : y > 0 := gtz_then_ex_gtz_rootNat_lemma_3 hy hn hx
   have hh : ∃ h, 0 < h ∧ h < 1 ∧ h < (x - y^n) / (n * (y+1)^(n-1)) := by
     by_cases h: 1 < (x - y^n) / (n * (y+1)^(n-1))
     have h1 : (1:α) / (1 + 1) < 1 := by
@@ -271,24 +270,24 @@ private theorem gtz_then_ex_gtz_natRoot_lemma_5 [LeastUpperBoundProperty α] {x 
     exact h1
     simp
   rcases hh with ⟨ h, hh1, hh2, hh3⟩
-  have h1 := gtz_then_ex_gtz_natRoot_lemma_4 hn hx hy hh1 hh2 hh3
+  have h1 := gtz_then_ex_gtz_rootNat_lemma_4 hn hx hy hh1 hh2 hh3
   have : y + h ∈ {t:α | t ^ n < x} := by
     exact h1
-  simp [ExistsSup, UpperBound] at hy
+  simp [IsSup, UpperBound] at hy
   exfalso
   have h' := hy.left (y+h) this
   linarith
 
-private theorem gtz_then_ex_gtz_natRoot_lemma_6 {x y k:α} {n:Nat}
+private theorem gtz_then_ex_gtz_rootNat_lemma_6 {x y k:α} {n:Nat}
   (hx: x > 0)
   (hn: n > 1)
-  (hy: ExistsSup {t:α | t ^ n < x} y)
+  (hy: IsSup {t:α | t ^ n < x} y)
   (hxy : x < y^n)
   (hk: k = (y^n - x) / (n * y^(n-1)))
   :
     ∃ y > 0, y ^ n = x
   := by
-  have hy0 := gtz_then_ex_gtz_natRoot_lemma_3 hy hn hx
+  have hy0 := gtz_then_ex_gtz_rootNat_lemma_3 hy hn hx
   have h1 : n * y^(n-1) > 0 := by
     refine gtz_mul_gtz_then_gtz ?_ ?_
     simp
@@ -305,7 +304,7 @@ private theorem gtz_then_ex_gtz_natRoot_lemma_6 {x y k:α} {n:Nat}
     simp [hk]
     rw [← Rudin.gt_iff_lt]
     rw [Rudin.gt_div_gtz_iff_mul_gt]
-    rw [Rudin.mul_comm, Rudin.mul_assoc, ← Rudin.pow_nat_add_one]
+    rw [Rudin.mul_comm, Rudin.mul_assoc, ← Rudin.powNat_add_one]
     have : n - 1 + 1 = n := by
       refine Nat.sub_add_cancel ?_
       exact Nat.one_le_of_lt hn
@@ -340,7 +339,7 @@ private theorem gtz_then_ex_gtz_natRoot_lemma_6 {x y k:α} {n:Nat}
     have hyt2 := powNat_sub_powNat_lt_sub_mul_exp_mul_max_powNat_exp_sub_one (a:=y-k) (b:=y) hn (by linarith) (by linarith)
     have hyt3 : (y - (y - k)) * n • y ^ (n - 1) = y^ n - x := by
       simp
-      simp [hk, nsmul_eq_mul]
+      simp [hk]
       rw [Rudin.div_mul_cancel]
       linarith
     have hyt4 : y ^ n - t ^ n < y ^ n - x := by
@@ -348,31 +347,33 @@ private theorem gtz_then_ex_gtz_natRoot_lemma_6 {x y k:α} {n:Nat}
     have ht1 : t ^ n > x := by
       linarith
     linarith
-  simp [ExistsSup] at hy
+  simp [IsSup] at hy
   have hy2 := hy.right (y-k) (by linarith)
   exfalso
   exact hy2 h_up
 
 
-theorem gtz_then_ex_gtz_natRoot [LeastUpperBoundProperty α] {x:α} {n:Nat} (hx: x > 0) (hn:n > 0) : ∃ y > 0, y ^ n = x := by
+theorem gtz_then_ex_gtz_rootNat [LeastUpperBoundProperty α] {x:α} {n:Nat} (hx: x > 0) (hn:n > 0) : ∃ y > 0, y ^ n = x := by
   by_cases hn1 : n = 1
   simp [hn1]
   linarith
   let E := {t:α | t ^ n < x}
   have hn2 : n > 1 := by exact Nat.lt_of_le_of_ne hn fun a ↦ hn1 (id (Eq.symm a))
-  let y := Sup E (gtz_then_ex_gtz_natRoot_lemma_1 (E:=E) (by rfl) hx hn2) (gtz_then_ex_gtz_natRoot_lemma_2 (E:=E) (by rfl) hx hn2)
-  have hy1 : ExistsSup E y := by
-    apply Classical.choose_spec
+  have h := LeastUpperBoundProperty.subset_sup_exist E
+    (gtz_then_ex_gtz_rootNat_lemma_1 (E:=E) (by rfl) hx hn2)
+    (gtz_then_ex_gtz_rootNat_lemma_2 (E:=E) (by rfl) hx hn2)
+  rcases h with ⟨ y, hy⟩
+
   rcases Rudin.lt_trichotomy (a:=y^n) (b:=x) with hxy|hxy|hxy
-  exact gtz_then_ex_gtz_natRoot_lemma_5 hx hn2 hy1 hxy
+  exact gtz_then_ex_gtz_rootNat_lemma_5 hx hn2 hy hxy
   use y
   constructor
-  exact gtz_then_ex_gtz_natRoot_lemma_3 hy1 hn2 hx
+  exact gtz_then_ex_gtz_rootNat_lemma_3 hy hn2 hx
   exact hxy
   let k:= (y^n - x) / (n * y^(n-1))
-  exact gtz_then_ex_gtz_natRoot_lemma_6 hx hn2 hy1 hxy (by rfl)
+  exact gtz_then_ex_gtz_rootNat_lemma_6 hx hn2 hy hxy (by rfl)
 
-theorem gtz_then_natRoot_unique [LeastUpperBoundProperty α] {x y z:α} {n:Nat}
+theorem gtz_then_rootNat_unique [LeastUpperBoundProperty α] {x y z:α} {n:Nat}
   (hn:n > 0)
   (hy: y > 0) (hz: z > 0)
   (hxy: y ^ n = x) (hxz: z ^ n = x): y = z := by
@@ -385,29 +386,38 @@ theorem gtz_then_natRoot_unique [LeastUpperBoundProperty α] {x y z:α} {n:Nat}
   linarith
 
 
-
-open Classical in
-noncomputable def RootNat [LeastUpperBoundProperty α] (x:α) (n:Nat) (hx: x > 0) (hn: n > 0) := Classical.choose (gtz_then_ex_gtz_natRoot hx hn)
+-- y ^ n = x
+def IsRootNat [LeastUpperBoundProperty α] (x:α) (n:Nat) (y:α) := y ^ n = x
 
 @[simp]
-theorem rootNat_pow [LeastUpperBoundProperty α] {x : α} {n : Nat}
+theorem rootNat_powNat_eq_self [LeastUpperBoundProperty α] {x y: α} {n : Nat}
+  (hxy: IsRootNat x n y):
+  y ^ n = x := by
+  simp [IsRootNat] at hxy
+  exact hxy
+
+theorem rootNat_powNat [LeastUpperBoundProperty α] {x y z: α} {n m: Nat}
   (hx : x > 0)
-  (hn : n > 0) :
-  (RootNat x n hx hn) ^ n = x := by
-  exact (Classical.choose_spec (gtz_then_ex_gtz_natRoot hx hn)).2
+  (hn : n > 0)
+  (hm : m > 0)
+  (hxy: IsRootNat x n y)
+  (hxz: IsRootNat (x^m) n z):
+  y ^ m = z := by
+  simp [IsRootNat] at *
+  rw [← hxy] at hxz
+  sorry
 
-
-theorem rootNat_mul_iff [LeastUpperBoundProperty α] {x y:α} {n:Nat} (hx: x > 0) (hy: y > 0) (hn: n > 0) :
-  RootNat (x * y) n (by exact mul_pos hx hy) hn = (RootNat x n hx hn) * (RootNat y n hy hn) := by
+theorem rootNat_mul [LeastUpperBoundProperty α] {x y:α} {n:Nat} (hx: x > 0) (hy: y > 0) (hn: n > 0) :
+  (RootNat x n hx hn) * (RootNat y n hy hn) = RootNat (x * y) n (by exact mul_pos hx hy) hn:= by
   let a := RootNat x n hx hn
   let b := RootNat y n hy hn
-  have ha : a > 0 := (Classical.choose_spec (gtz_then_ex_gtz_natRoot hx hn)).1
-  have hb : b > 0 := (Classical.choose_spec (gtz_then_ex_gtz_natRoot hy hn)).1
+  have ha : a > 0 := (Classical.choose_spec (gtz_then_ex_gtz_rootNat hx hn)).1
+  have hb : b > 0 := (Classical.choose_spec (gtz_then_ex_gtz_rootNat hy hn)).1
   have hab_pow : (a * b) ^ n = x * y := by
-    rw [mul_pow, rootNat_pow hx hn, rootNat_pow hy hn]
-  have hRootNat : (RootNat (x * y) n (mul_pos hx hy) hn) ^ n = x * y := rootNat_pow (mul_pos hx hy) hn
-  have hRootNat_pos : RootNat (x * y) n (mul_pos hx hy) hn > 0 := (Classical.choose_spec (gtz_then_ex_gtz_natRoot (mul_pos hx hy) hn)).1
-  exact gtz_then_natRoot_unique hn hRootNat_pos (mul_pos ha hb) hRootNat hab_pow
+    rw [mul_pow, rootNat_powNat_eq_self hx hn, rootNat_powNat_eq_self hy hn]
+  have hRootNat : (RootNat (x * y) n (mul_pos hx hy) hn) ^ n = x * y := rootNat_powNat_eq_self (mul_pos hx hy) hn
+  have hRootNat_pos : RootNat (x * y) n (mul_pos hx hy) hn > 0 := (Classical.choose_spec (gtz_then_ex_gtz_rootNat (mul_pos hx hy) hn)).1
+  exact (gtz_then_rootNat_unique hn hRootNat_pos (mul_pos ha hb) hRootNat hab_pow).symm
 
 open Classical in
 noncomputable def PowRat [LeastUpperBoundProperty α] (a : α) (n : ℚ) (ha : a ≥ 0) :=
@@ -420,11 +430,55 @@ noncomputable def PowRat [LeastUpperBoundProperty α] (a : α) (n : ℚ) (ha : a
         exact 0
       · -- `a` is positive (since `a ≥ 0` and `a ≠ 0`)
         have h_pos : (0 : α) < a := lt_of_le_of_ne ha (Ne.symm h0)
-        exact RootNat a n.den h_pos n.den_pos
+        exact (RootNat a n.den h_pos n.den_pos) ^ n.num
 
-theorem powRat_mul_powRat [LeastUpperBoundProperty α] (a: α) (m n: ℚ) (ha : a ≥ 0) :
-  (PowRat a m ha) * (PowRat a n ha) = PowRat a (m + n) ha := by
-  sorry
+
+private theorem powRat_add_lemma_1 [LeastUpperBoundProperty α] {a: α} {m n: ℚ} (ha : a > 0) (hm: m.isInt) (hn: n.isInt):
+   PowRat a (m + n) (by linarith) = (PowRat a m (by linarith)) * (PowRat a n (by linarith)) := by
+  simp [PowRat]
+  simp [hm, hn]
+  simp [Rat.isInt] at *
+  rw [← Rat.mkRat_self (a:=m), ← Rat.mkRat_self (a:=n)]
+  rw [Rat.mkRat_add_mkRat]
+  rw [hn, hm]
+  simp
+  have : ((m.num:Rat) + ↑n.num).den = 1 := by
+    rw [← Rat.ofInt_den (n:=↑m.num + ↑n.num)]
+    simp [Rat.ofInt]
+  simp [this]
+  have : ((↑m.num:Rat) + ↑n.num).num = m.num + n.num := by
+    rw [← Rat.ofInt_num (n:=↑m.num + ↑n.num)]
+    simp [Rat.ofInt]
+  simp [this]
+  rw [Rudin.powInt_add]
+  linarith
+  linarith
+  linarith
+
+private theorem powRat_add_lemma_2 [LeastUpperBoundProperty α] {a: α} {m n: ℚ} (ha : a > 0) (hm: ¬ m.isInt) (hn: n.isInt):
+   PowRat a (m + n) (by linarith) = (PowRat a m (by linarith)) * (PowRat a n (by linarith)) := by
+  simp [PowRat]
+  simp [hm, hn]
+  simp [Rat.isInt] at *
+  have hmn : (m + n).den ≠ 1 := by
+    have : n = n.num := by exact Eq.symm ((fun r ↦ (Rat.den_eq_one_iff r).mp) n hn)
+    rw [this]
+    apply Rat.den_ne_one_then_add_int_den_ne_one
+    exact hm
+  simp [hmn]
+  simp [ha]
+
+
+
+
+theorem powRat_add [LeastUpperBoundProperty α] {a: α} {m n: ℚ} (ha : a > 0) :
+   PowRat a (m + n) (by linarith) = (PowRat a m (by linarith)) * (PowRat a n (by linarith)) := by
+  by_cases hn : n.isInt
+  <;>by_cases hm : m.isInt
+  exact powRat_add_lemma_1 ha hm hn
+
+
+
 
 
 

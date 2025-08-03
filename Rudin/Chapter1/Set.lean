@@ -34,7 +34,7 @@ theorem ne_iff_ex_not_in (A B:Set α) : A ≠ B ↔ (∃ x ∈ A, x ∉ B) ∨ (
   <;>exact h.right h.left
 
 theorem ne_univ_iff_ex_not_in (S: Set α) : S ≠ Set.univ ↔ ∃ x, x ∉ S := by
-  simp [ne_iff_ex_not_in, in_univ]
+  simp [ne_iff_ex_not_in]
 
 
 theorem ssub_iff_sub_and_ne  (A B : Set α) : A ⊂ B ↔ A ⊆ B ∧ A ≠ B := by

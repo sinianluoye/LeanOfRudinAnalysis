@@ -66,7 +66,7 @@ theorem gtz_mul_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a * b > 0 := by
   constructor
   intro h
   apply (add_lt_left_cancel (a:=-b)).mp
-  simp [add_comm, ← sub_eq_add_neg]
+  simp [add_comm]
   exact h
   intro h
   apply (add_lt_left_cancel (a:=b)).mp
@@ -78,7 +78,7 @@ theorem gtz_mul_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a * b > 0 := by
   constructor
   intro h
   apply (add_lt_left_cancel (a:=-b)).mp
-  simp [add_comm, ← sub_eq_add_neg]
+  simp [add_comm]
   exact h
   intro h
   apply (add_lt_left_cancel (a:=b)).mp
@@ -480,7 +480,7 @@ theorem gt_div_ltz_iff_mul_lt (h: c < 0) : a > b / c ↔ a * c < b := by
   have h1 := gt_div_gtz_iff_mul_gt (a:=a) (b:=-b) (c:=-c) (neg_gtz_iff_ltz.mpr h)
   rw [Rudin.div_eq_mul_inv] at h1
   rw [Rudin.neg_inv] at h1
-  simp [Rudin.mul_neg, Rudin.neg_mul] at h1
+  simp at h1
   rw [← Rudin.div_eq_mul_inv] at h1
   rw [gt_iff_lt]
   exact h1

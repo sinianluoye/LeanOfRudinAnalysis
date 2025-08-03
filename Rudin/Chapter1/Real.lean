@@ -271,7 +271,7 @@ namespace Real
 
 instance instLeastUpperBoundPropertyRR : LeastUpperBoundProperty RR where
 
-  subset_sup_exist : ∀ (E : Set RR), E ≠ ∅ ∧ BoundAbove E → ∃ a, ExistsSup E a := by
+  subset_sup_exist : ∀ (E : Set RR), E ≠ ∅ ∧ BoundAbove E → ∃ a, IsSup E a := by
     intro A hA
     simp only [BoundAbove] at hA
     rcases hA with ⟨ hA1, ⟨ β  ,  hA2 ⟩⟩
@@ -327,13 +327,13 @@ instance instLeastUpperBoundPropertyRR : LeastUpperBoundProperty RR where
 
     let γ:RR := ⟨carr, carr_ne_empty, carr_ne_univ,  carr_lt_then_in, carr_ex_gt⟩
     use γ
-    by_cases h: ∃ δ, δ < γ ∧ ExistsSup A δ
+    by_cases h: ∃ δ, δ < γ ∧ IsSup A δ
     rcases h with ⟨ δ, h1, h2 ⟩
     have h3:= Real.Cut.lt_then_ex_not_in_carrier h1
     rcases h3 with ⟨ s, hs1, hs2⟩
     simp [Real.instMemRR] at hs1
     rw [Set.mem_setOf] at hs1
-    simp [ExistsSup, UpperBound] at h2
+    simp [IsSup, UpperBound] at h2
     rcases h2 with ⟨ h3, h4⟩
     rcases hs1 with ⟨ α , ha1, ha2⟩
     have h5 := h3 α ha1
