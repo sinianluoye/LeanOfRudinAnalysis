@@ -16,6 +16,16 @@ example {x s:α} (hx: 0 < x): s - x < s := by
   linarith
 
 
+theorem gtz_then_powInt_gtz {a:α} {n:Int} (ha: a > 0) :  a ^ n > 0 := by
+  induction' n with n hn n hn
+  simp
+  simp [ha]
+  exact hn
+  simp [powInt_sub_one, ha]
+  refine Left.mul_pos hn ?_
+  exact gtz_then_inv_gtz ha
+
+
 -- 1.20 (a)
 theorem gtz_then_ex_nat_mul_gt  [LeastUpperBoundProperty α] {x y: α} (hx: x > 0) : ∃ n:Nat, n • x > y := by
   rcases lt_trichotomy (a:=y) (b:=0) with hy|hy|hy
@@ -373,7 +383,7 @@ theorem gtz_then_ex_gtz_rootNat [LeastUpperBoundProperty α] {x:α} {n:Nat} (hx:
   let k:= (y^n - x) / (n * y^(n-1))
   exact gtz_then_ex_gtz_rootNat_lemma_6 hx hn2 hy hxy (by rfl)
 
-theorem gtz_then_rootNat_unique [LeastUpperBoundProperty α] {x y z:α} {n:Nat}
+theorem gtz_then_rootNat_unique {x y z:α} {n:Nat}
   (hn:n > 0)
   (hy: y > 0) (hz: z > 0)
   (hxy: y ^ n = x) (hxz: z ^ n = x): y = z := by
@@ -387,39 +397,126 @@ theorem gtz_then_rootNat_unique [LeastUpperBoundProperty α] {x y z:α} {n:Nat}
 
 
 -- y ^ n = x
-def IsRootNat [LeastUpperBoundProperty α] (x:α) (n:Nat) (y:α) := y ^ n = x
+def IsRootNat [LeastUpperBoundProperty α] (a:α) (n:Nat) (x:α) := x ^ n = a
+
+noncomputable def RootNat [LeastUpperBoundProperty α] (a:α) (n:Nat) (ha : 0 < a) (hn: 0 < n) : α := by
+  have h := gtz_then_ex_gtz_rootNat (x:=a) (n:=n) ha hn
+  let y := Classical.choose h
+  exact y
+
+theorem rootNat_gtz [LeastUpperBoundProperty α] {a : α} {n : Nat} (ha : 0 < a) (hn : 0 < n) :
+  RootNat a n ha hn > 0 := by
+  -- obtain the witness returned by `gtz_then_ex_gtz_rootNat`
+  have h := Classical.choose_spec (gtz_then_ex_gtz_rootNat (x := a) (n := n) ha hn)
+  exact h.1
+
 
 @[simp]
-theorem rootNat_powNat_eq_self [LeastUpperBoundProperty α] {x y: α} {n : Nat}
-  (hxy: IsRootNat x n y):
-  y ^ n = x := by
-  simp [IsRootNat] at hxy
-  exact hxy
+theorem rootNat_isRootNat [LeastUpperBoundProperty α] (a:α) (n:Nat) (ha : 0 < a) (hn: 0 < n) :
+  IsRootNat a n (RootNat a n ha hn) := by
+  -- use the equality part of the witness returned by `Classical.choose`
+  simpa [RootNat, IsRootNat] using
+    (Classical.choose_spec (gtz_then_ex_gtz_rootNat (x := a) (n := n) ha hn)).2
 
-theorem rootNat_powNat [LeastUpperBoundProperty α] {x y z: α} {n m: Nat}
-  (hx : x > 0)
-  (hn : n > 0)
-  (hm : m > 0)
-  (hxy: IsRootNat x n y)
-  (hxz: IsRootNat (x^m) n z):
-  y ^ m = z := by
-  simp [IsRootNat] at *
-  rw [← hxy] at hxz
-  sorry
 
-/-
-theorem rootNat_mul [LeastUpperBoundProperty α] {x y:α} {n:Nat} (hx: x > 0) (hy: y > 0) (hn: n > 0) :
-  (RootNat x n hx hn) * (RootNat y n hy hn) = RootNat (x * y) n (by exact mul_pos hx hy) hn:= by
-  let a := RootNat x n hx hn
-  let b := RootNat y n hy hn
-  have ha : a > 0 := (Classical.choose_spec (gtz_then_ex_gtz_rootNat hx hn)).1
-  have hb : b > 0 := (Classical.choose_spec (gtz_then_ex_gtz_rootNat hy hn)).1
-  have hab_pow : (a * b) ^ n = x * y := by
-    rw [mul_pow, rootNat_powNat_eq_self hx hn, rootNat_powNat_eq_self hy hn]
-  have hRootNat : (RootNat (x * y) n (mul_pos hx hy) hn) ^ n = x * y := rootNat_powNat_eq_self (mul_pos hx hy) hn
-  have hRootNat_pos : RootNat (x * y) n (mul_pos hx hy) hn > 0 := (Classical.choose_spec (gtz_then_ex_gtz_rootNat (mul_pos hx hy) hn)).1
-  exact (gtz_then_rootNat_unique hn hRootNat_pos (mul_pos ha hb) hRootNat hab_pow).symm
--/
+
+@[simp]
+theorem rootNat_powNat_eq_self [LeastUpperBoundProperty α] {a x: α} {n : Nat}
+  (ha: a > 0)
+  (hn: n > 0)
+  (h: x = RootNat a n ha hn):
+  x ^ n = a := by
+  -- `RootNat` satisfies the defining equality, rewrite via `h`
+  have hroot : (RootNat a n ha hn) ^ n = a := by
+    simpa [IsRootNat] using rootNat_isRootNat a n ha hn
+  simpa [h] using hroot
+
+
+theorem rootNat_powNat [LeastUpperBoundProperty α] {x : α} {n m : Nat}
+  (hn : n > 0) (hx : x > 0) :
+  (RootNat x n hx hn) ^ m = RootNat (x ^ m) n (pow_pos hx m) hn := by
+  -- abbreviations
+  let y₁ := (RootNat x n hx hn) ^ m
+  let y₂ := RootNat (x ^ m) n (pow_pos hx m) hn
+
+  -- positivity of y₁
+  have hy₁_pos : (0 : α) < y₁ := by
+    -- RootNat itself is positive
+    have hbase_pos : (0 : α) < RootNat x n hx hn := by
+      have h := Classical.choose_spec (gtz_then_ex_gtz_rootNat (x := x) (n := n) hx hn)
+      exact h.1
+    simpa [y₁] using pow_pos hbase_pos m
+
+  -- positivity of y₂
+  have hy₂_pos : (0 : α) < y₂ := by
+    have h := Classical.choose_spec (gtz_then_ex_gtz_rootNat (x := x ^ m) (n := n)
+                (pow_pos hx m) hn)
+    simpa [y₂] using h.1
+
+  -- y₁ ^ n = x ^ m
+  have hy₁_pow : y₁ ^ n = x ^ m := by
+    -- main algebraic manipulation
+    have hroot : (RootNat x n hx hn) ^ n = x := by
+      simpa [IsRootNat] using rootNat_isRootNat x n hx hn
+    simp [y₁] at *
+    calc
+      ((RootNat x n hx hn) ^ m) ^ n
+          = (RootNat x n hx hn) ^ (m * n) := by
+              simp [pow_mul]
+      _     = (RootNat x n hx hn) ^ (n * m) := by
+              simp [Nat.mul_comm]
+      _     = ((RootNat x n hx hn) ^ n) ^ m := by
+              simp [pow_mul]
+      _     = x ^ m := by
+              simp [hroot]
+
+  -- y₂ ^ n = x ^ m  (defining property of RootNat)
+  have hy₂_pow : y₂ ^ n = x ^ m := by
+    simpa [IsRootNat, y₂] using
+      rootNat_isRootNat (x ^ m) n (pow_pos hx m) hn
+
+  -- uniqueness of n-th roots
+  have h_eq :=
+    gtz_then_rootNat_unique (x := x ^ m) (y := y₁) (z := y₂) (n := n)
+      hn hy₁_pos hy₂_pos hy₁_pow hy₂_pow
+  simpa [y₁, y₂] using h_eq
+
+theorem rootNat_def [LeastUpperBoundProperty α] {x a:α} {n:Nat} (ha : 0 < a) (hn: 0 < n) (hx: x = RootNat a n ha hn):
+   x > 0 ∧ x ^ n = a := by
+  constructor
+  have h1:= rootNat_gtz ha hn
+  rw [hx]
+  exact h1
+  have h2 := rootNat_powNat_eq_self ha hn rfl
+  rw [← hx] at h2
+  exact h2
+
+
+
+
+-- x^n = a, y^n = b => (x*y)^n = a*b
+theorem rootNat_mul [LeastUpperBoundProperty α]
+  {a b : α} {n : Nat}
+  (hn : n > 0) (ha : a > 0) (hb : b > 0):
+  RootNat a n ha hn * RootNat b n hb hn = RootNat (a * b) n (by exact mul_pos ha hb) hn := by
+  let x := RootNat a n ha hn
+  let y := RootNat b n hb hn
+  let z := RootNat (a * b) n (by exact mul_pos ha hb) hn
+  have : x * y = z := by
+    have hx0 : x > 0 := by exact rootNat_gtz ha hn
+    have hy0 : y > 0 := by exact rootNat_gtz hb hn
+    have hz0 : z > 0 := by exact rootNat_gtz (mul_pos ha hb) hn
+    have hx1 : x ^ n = a := by exact rootNat_powNat_eq_self ha hn rfl
+    have hy1 : y ^ n = b := by exact rootNat_powNat_eq_self hb hn rfl
+    have hz1 : z ^ n = a * b := by
+      refine rootNat_powNat_eq_self ?_ hn ?_
+      exact Left.mul_pos ha hb
+      rfl
+    rw [← hx1, ← hy1] at hz1
+    rw [← mul_powNat (a:=x) (b:=y)] at hz1
+    have h1 := gtz_then_rootNat_unique hn hz0 (mul_pos hx0 hy0) (by rfl)
+    exact (h1 hz1.symm).symm
+  exact this
 
 
 noncomputable def PowRat [LeastUpperBoundProperty α] (a : α) (n : ℚ) (ha : a ≥ 0) :=
@@ -432,11 +529,7 @@ noncomputable def PowRat [LeastUpperBoundProperty α] (a : α) (n : ℚ) (ha : a
         exact 0
       · -- `a` is positive (since `a ≥ 0` and `a ≠ 0`)
         have h_pos : (0 : α) < a := lt_of_le_of_ne ha (Ne.symm h0)
-        -- existence of a positive `y` with `y ^ n.den = a`
-        have h := gtz_then_ex_gtz_rootNat (x:=a) (n:=n.den) h_pos (n.den_pos)
-        -- use classical choice to extract the witness from the existential proof
-        let y : α := Classical.choose h
-        exact y ^ n.num
+        exact (RootNat a n.den h_pos n.den_pos) ^ n.num
 
 
 private theorem powRat_add_lemma_1 [LeastUpperBoundProperty α] {a: α} {m n: ℚ} (ha : a > 0) (hm: m.isInt) (hn: n.isInt):
@@ -471,11 +564,58 @@ private theorem powRat_add_lemma_2 [LeastUpperBoundProperty α] {a: α} {m n: �
     rw [this]
     apply Rat.den_ne_one_then_add_int_den_ne_one
     exact hm
-  simp [hmn]
-  simp [ha]
+  simp [hmn, ha]
+  let x := RootNat a (m + n).den ha (m + n).den_pos
+  let y := RootNat a m.den ha m.den_pos
+  rcases rootNat_def (x:=x) ha (m + n).den_pos rfl with ⟨hx1, hx2⟩
+  rcases rootNat_def (x:=y) ha m.den_pos rfl with ⟨hy1, hy2⟩
+  have : x ^ (m + n).num = y ^ m.num * a ^ n.num := by
+    have hn1: n = n.num := by
+      exact Eq.symm ((fun r ↦ (Rat.den_eq_one_iff r).mp) n hn)
+    rw [hn1]
+    rw [Rat.add_int_num]
+    rw [powInt_add]
+    rw [hn1, Rat.add_int_den] at hx2
+    have hxy := gtz_then_rootNat_unique m.den_pos hx1 hy1 hx2 hy2
+    rw [← hxy]
+    rw [Int.mul_comm, powInt_mul, ← hx2]
+    have : ((↑n.num):Rat).num = n.num := by rfl
+    rw [this]
+    have : (x ^ (↑m.den:Int)) = x ^ m.den := by
+      simp [powInt_def, hx1]
+    rw [this]
+    repeat linarith
+
+  exact this
+
+private theorem powRat_add_lemma_3 [LeastUpperBoundProperty α] {a: α} {m n: ℚ} (ha : a > 0) (hm: ¬ m.isInt) (hn: ¬ n.isInt):
+   PowRat a (m + n) (by linarith) = (PowRat a m (by linarith)) * (PowRat a n (by linarith)) := by
+  simp [PowRat]
+  simp [hm, hn]
+  simp [Rat.isInt] at *
+  have hanz : a ≠ 0 := by linarith
+  by_cases hmn : (m+n).den = 1
+  <;>simp [hmn, hanz]
+  let x := RootNat a m.den ha m.den_pos
+  let y := RootNat a n.den ha n.den_pos
+  rcases rootNat_def (x:=x) ha m.den_pos rfl with ⟨ hx0, hx1⟩
+  rcases rootNat_def (x:=y) ha n.den_pos rfl with ⟨ hy0, hy1⟩
+  let k :Int := ((m.num * n.den + n.num * m.den).natAbs.gcd (m.den * n.den))
+  have : (a ^ (m + n).num) ^ k = (x ^ m.num * y ^ n.num) ^ k := by
+    rw [← powInt_mul]
+    rw [Rat.add_num_eq]
+    have hk1 : ↑((m.num * ↑n.den + n.num * ↑m.den).natAbs.gcd (m.den * n.den)) = k := by rfl
+    rw [hk1]
+    have h1 : (m.num * ↑n.den + n.num * ↑m.den) / k * k = (m.num * ↑n.den + n.num * ↑m.den) := by
+      refine Int.ediv_mul_cancel ?_
+      simp [k]
+      exact Rat.normalize.dvd_num rfl
+    rw [h1]
+    rw [Rudin.mul_powInt]
+    rw [← powInt_mul]
+    rw [← powInt_mul]
+    sorry
   sorry
-
-
 
 
 theorem powRat_add [LeastUpperBoundProperty α] {a: α} {m n: ℚ} (ha : a > 0) :
@@ -483,8 +623,10 @@ theorem powRat_add [LeastUpperBoundProperty α] {a: α} {m n: ℚ} (ha : a > 0) 
   by_cases hn : n.isInt
   <;>by_cases hm : m.isInt
   exact powRat_add_lemma_1 ha hm hn
-  sorry
-  sorry
+  exact powRat_add_lemma_2 ha hm hn
+  rw [Rat.add_comm]
+  rw [Rudin.mul_comm (a:=PowRat a m (by linarith))]
+  exact powRat_add_lemma_2 ha hn hm
   sorry
 
 

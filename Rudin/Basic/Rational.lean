@@ -793,6 +793,35 @@ theorem den_ne_one_then_add_int_den_ne_one {a:Rat} {b:Int} (ha: a.den ≠ 1) : (
   rw [sub_eq_add_neg, ← Int.cast_neg, ← Int.cast_add]
   exact Rat.den_intCast _
 
+theorem add_num_eq {a b:Rat} : (a + b).num = (a.num * b.den + b.num * a.den) / (a.num * b.den + b.num * a.den).natAbs.gcd (a.den * b.den) := by
+  rw [Rat.add_def]
+  simp [Rat.normalize]
+
+theorem add_den_eq {a b:Rat} : (a + b).den = (a.den * b.den)  / (a.num * b.den + b.num * a.den).natAbs.gcd (a.den * b.den) := by
+  rw [Rat.add_def]
+  simp [Rat.normalize]
+
+private lemma add_int_lemma_1 {a:Rat} {b:Int} : (a.num + b * ↑a.den).natAbs.gcd a.den = 1 := by
+  have h1: a.den = ((a.den):Int).natAbs := by
+    exact rfl
+  rw [h1]
+  rw [← Int.gcd_eq_natAbs_gcd_natAbs]
+  rw [← Int.isCoprime_iff_gcd_eq_one]
+  simp
+  refine IsCoprime.add_mul_right_left_iff.mpr ?_
+  rw [Int.isCoprime_iff_nat_coprime]
+  rw [← h1]
+  exact a.reduced
+
+theorem add_int_den {a:Rat} {b:Int} : (a+b).den = a.den := by
+  simp [add_den_eq]
+  rw [add_int_lemma_1 (a:=a) (b:=b)]
+  simp
+
+theorem add_int_num {a:Rat} {b:Int} : (a+b).num = a.num + b * a.den := by
+  simp [add_num_eq]
+  rw [add_int_lemma_1 (a:=a) (b:=b)]
+  simp
 
 end Rat
 

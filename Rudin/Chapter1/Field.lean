@@ -797,6 +797,21 @@ instance (priority := default - 1) : Ring α where
 
 instance (priority := default - 1) : CommRing α where
 
+theorem div_assoc {a b c:α} (hb: b ≠ 0) (hc: c ≠ 0): a / b / c = a / (b * c) := by
+  rw [Rudin.div_eq_div_iff_mul_eq_mul]
+  rw [← Rudin.mul_assoc]
+  simp [hb]
+  rw [Rudin.mul_comm]
+  exact hc
+  refine nz_and_nz_iff_mul_nz.mp ?_
+  exact Decidable.not_imp_iff_and_not.mp fun a ↦ hc (a hb)
+
+@[simp]
+theorem div_inv {a b:α} (hb: b ≠ 0) : a / b⁻¹ = a * b := by
+  rw [Rudin.div_eq_mul_inv]
+  rw [Rudin.inv_inv]
+  exact hb
+
 theorem powNat_mul {a:α} {m n:Nat} : a ^ (m * n) = (a ^ m) ^ n := by
   induction n with
   | zero => simp
@@ -805,6 +820,13 @@ theorem powNat_mul {a:α} {m n:Nat} : a ^ (m * n) = (a ^ m) ^ n := by
     simp
     rw [powNat_add]
     rw [hi]
+
+theorem mul_powNat {a b:α} {n:Nat} : (a*b) ^ n = a^n * b^n := by
+  induction' n with n hn
+  simp
+  simp
+  rw [hn]
+  ring
 
 theorem powNat_comm {a:α} {m n:Nat} : (a ^ m) ^ n = (a ^ n) ^ m := by
   repeat rw [← powNat_mul]
@@ -819,8 +841,7 @@ theorem powNat_eq_zero_iff {a:α} {n:Nat} : a ^ n = 0 ↔ a = 0 ∧ n ≠ 0 := b
   simp
   exact fun a a_1 ↦ a
 
-
-
+@[simp]
 theorem zero_powInt {n:Int}: (0:α) ^ n = if n = 0 then 1 else 0 := by simp [powInt_def]
 
 @[simp]
@@ -859,8 +880,70 @@ theorem powInt_negOne_eq_inv {a:α} (ha: a ≠ 0): a ^ (-1:Int) = a⁻¹ := by
   simp [ha]
   exact Eq.symm inv_eq_one_div
 
-theorem powInt_sub_one {a:α} {n:Int} (ha: a ≠ 0) : a ^ (n - 1) = a ^ n / a := by
-  sorry
+theorem powInt_sub_one {a:α} {n:Int} (ha: a ≠ 0) : a ^ (n - 1) = a ^ n * a⁻¹ := by
+  rw [Int.sub_eq_add_neg, powInt_add, powInt_negOne_eq_inv]
+  repeat exact ha
+
+@[simp]
+theorem powInt_nz_iff_base_nz {a:α} {n:Int} (hn: n ≠ 0): a ^ n ≠ 0 ↔ a ≠ 0 := by
+  constructor
+  intro h
+  intro h1
+  apply h
+  refine powInt_eq_zero_iff.mpr ?_
+  exact Decidable.not_imp_iff_and_not.mp fun a ↦ hn (a h1)
+  intro h
+  intro h1
+  rw [powInt_eq_zero_iff] at h1
+  exact h h1.left
+
+
+theorem powInt_sub {a:α} {m n:Int} {ha: a≠ 0}: a ^ (m - n) = a ^ m / a ^ n := by
+  induction' n with u hu v hv
+  simp
+  by_cases hu0 : u = 0
+  simp [hu0]
+  rw [powInt_sub_one, Rudin.div_eq_mul_inv]
+  exact ha
+  rw [Int.sub_eq_add_neg, Int.neg_add, ← Int.add_assoc, ← Int.sub_eq_add_neg, powInt_sub_one]
+  rw [← Int.sub_eq_add_neg, hu]
+  rw [powInt_add, ← Rudin.div_eq_mul_inv]
+  rw [Rudin.div_eq_div_iff_mul_eq_mul]
+  rw [← Rudin.mul_assoc, Rudin.div_mul_cancel, powInt_one, Rudin.mul_comm]
+  rw [powInt_nz_iff_base_nz]
+  exact ha
+  exact Int.ofNat_ne_zero.mpr hu0
+  exact ha
+  simp
+  intro h
+  rw [Rudin.mul_eq_zero_iff_eq_zero_or_eq_zero] at h
+  simp [ha] at h
+  rw [powInt_eq_zero_iff] at h
+  exact ha h.left
+  exact ha
+  exact ha
+  by_cases hv0 : v = 0
+  simp [hv0, ha]
+  rw [powInt_negOne_eq_inv, Rudin.div_inv]
+  exact ha
+  exact ha
+  rw [Int.sub_eq_add_neg, Int.neg_sub, Int.sub_eq_add_neg]
+  rw [← Int.add_comm, Int.add_assoc, Int.add_comm, powInt_add_one]
+  rw [Int.add_comm, ← Int.sub_eq_add_neg, hv]
+  rw [powInt_sub_one]
+  rw [← div_assoc, Rudin.div_inv]
+  exact ha
+  refine (powInt_nz_iff_base_nz ?_).mpr ha
+  simp [hv0]
+  exact inv_nz ha
+  exact ha
+  exact ha
+
+theorem powInt_neg {a:α} {n:Int} (ha: a ≠ 0) : a ^ (-n) = 1 / a^n := by
+  rw (occs := .pos [1]) [← Int.zero_add (a:=n)]
+  rw [Int.neg_add, Int.neg_zero, ← Int.sub_eq_add_neg, powInt_sub]
+  simp
+  exact ha
 
 theorem powInt_mul {a:α} {m n:Int} (ha: a ≠ 0) : a ^ (m * n) = (a ^ m) ^ n := by
   induction' n with n hn n hn
@@ -873,10 +956,48 @@ theorem powInt_mul {a:α} {m n:Int} (ha: a ≠ 0) : a ^ (m * n) = (a ^ m) ^ n :=
   rw [powInt_eq_zero_iff] at h
   exact ha h.left
   exact ha
-  sorry
+  by_cases hm : m = 0
+  simp [hm]
+  rw [powInt_sub_one]
+  simp [Int.mul_sub]
+  rw [powInt_sub]
+  simp at hn
+  rw [hn]
+  rw [Rudin.div_eq_mul_inv]
+  exact ha
+  refine (powInt_nz_iff_base_nz ?_).mpr ha
+  exact hm
 
+theorem powInt_comm {a:α} {m n:Int} (ha: a ≠ 0) : (a ^ m) ^ n = (a ^ n) ^ m := by
+  repeat rw [← powInt_mul]
+  rw [Int.mul_comm]
+  repeat exact ha
 
+private theorem mul_powInt_lemma_0 {a b:α} {n:Int} (ha: a = 0) :  (a * b) ^ n = a ^ n * b ^ n := by
+  simp [ha]
+  by_cases hn : n = 0
+  simp [hn]
+  simp [hn]
 
-
+theorem mul_powInt {a b:α} {n:Int} : (a * b) ^ n = a ^ n * b ^ n := by
+  by_cases ha : a = 0
+  exact mul_powInt_lemma_0 (n:=n) ha
+  by_cases hb : b = 0
+  rw [mul_comm]
+  rw [mul_comm (b:=b^n)]
+  exact mul_powInt_lemma_0 (n:=n) hb
+  have hab : a * b ≠ 0 := by
+    refine nz_and_nz_iff_mul_nz.mp ?_
+    exact Decidable.not_imp_iff_and_not.mp fun a ↦ hb (a ha)
+  induction' n with n hn n hn
+  simp
+  simp [ha, hb, hab]
+  rw [hn]
+  ring
+  simp [powInt_sub_one, ha, hb, hab]
+  rw [hn]
+  have : (a*b)⁻¹ = a⁻¹ * b⁻¹ := by exact Eq.symm (inv_mul_inv ha hb)
+  rw [this]
+  ring
 
 end Rudin
