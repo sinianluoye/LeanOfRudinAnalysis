@@ -532,6 +532,14 @@ noncomputable def PowRat [LeastUpperBoundProperty α] (a : α) (n : ℚ) (ha : a
         exact (RootNat a n.den h_pos n.den_pos) ^ n.num
 
 
+theorem powInt_eq_powRat [LeastUpperBoundProperty α] {a:α} {n:Int} (ha: a ≥ 0) : a ^ n = PowRat a (n:Rat) ha := by
+  simp [PowRat]
+  intro h
+  simp [Rat.isInt] at h
+
+
+
+
 private theorem powRat_add_lemma_1 [LeastUpperBoundProperty α] {a: α} {m n: ℚ} (ha : a > 0) (hm: m.isInt) (hn: n.isInt):
    PowRat a (m + n) (by linarith) = (PowRat a m (by linarith)) * (PowRat a n (by linarith)) := by
   simp [PowRat]
@@ -588,6 +596,7 @@ private theorem powRat_add_lemma_2 [LeastUpperBoundProperty α] {a: α} {m n: �
 
   exact this
 
+
 private theorem powRat_add_lemma_3 [LeastUpperBoundProperty α] {a: α} {m n: ℚ} (ha : a > 0) (hm: ¬ m.isInt) (hn: ¬ n.isInt):
    PowRat a (m + n) (by linarith) = (PowRat a m (by linarith)) * (PowRat a n (by linarith)) := by
   simp [PowRat]
@@ -600,21 +609,65 @@ private theorem powRat_add_lemma_3 [LeastUpperBoundProperty α] {a: α} {m n: �
   let y := RootNat a n.den ha n.den_pos
   rcases rootNat_def (x:=x) ha m.den_pos rfl with ⟨ hx0, hx1⟩
   rcases rootNat_def (x:=y) ha n.den_pos rfl with ⟨ hy0, hy1⟩
-  let k :Int := ((m.num * n.den + n.num * m.den).natAbs.gcd (m.den * n.den))
-  have : (a ^ (m + n).num) ^ k = (x ^ m.num * y ^ n.num) ^ k := by
-    rw [← powInt_mul]
-    rw [Rat.add_num_eq]
-    have hk1 : ↑((m.num * ↑n.den + n.num * ↑m.den).natAbs.gcd (m.den * n.den)) = k := by rfl
-    rw [hk1]
-    have h1 : (m.num * ↑n.den + n.num * ↑m.den) / k * k = (m.num * ↑n.den + n.num * ↑m.den) := by
-      refine Int.ediv_mul_cancel ?_
-      simp [k]
-      exact Rat.normalize.dvd_num rfl
-    rw [h1]
-    rw [Rudin.mul_powInt]
-    rw [← powInt_mul]
-    rw [← powInt_mul]
-    sorry
+  have h1 := Rat.add_den_eq_one_then_den_eq hmn
+  have : (a ^ (m + n).num) ^ (m.den * n.den) = (x ^ m.num * y ^ n.num) ^ (m.den * n.den) := by
+    repeat rw [powNat_eq_powInt]
+    rw [mul_powInt]
+    rw [powInt_comm (a:=x), powInt_comm (a:=y)]
+    have : (↑(m.den * n.den):Int) = (m.den:Int) * (n.den:Int) := by rfl
+    rw [this]
+    rw [powInt_mul (a:=x),←  powNat_eq_powInt (a:=x)]
+    rw [hx1]
+    rw [powInt_mul (a:=y), powInt_comm (a:=y), ←  powNat_eq_powInt (a:=y)]
+    rw [hy1]
+    repeat rw [← powInt_mul]
+    rw [← powInt_add]
+
+    have h2: m + n = (mkRat (m.num + n.num) m.den) := by
+      rw (occs := .pos [1]) [← Rat.mkRat_self (a:=m), ← Rat.mkRat_self (a:=n)]
+      rw [Rat.mkRat_add_mkRat]
+      repeat rw [← h1]
+      repeat rw [Int.mul_comm (b:=m.den)]
+      repeat rw [← Int.mul_add]
+      rw [Rat.mkRat_mul_left]
+      repeat exact m.den_nz
+      repeat exact n.den_nz
+
+    have h3 : (mkRat (m.num + n.num) m.den).den = 1 := by
+      rw [← h2]
+      simp [hmn]
+
+    have h4 : (m.num + n.num).natAbs.gcd m.den = m.den := by
+      simp [Rat.mkRat_def, Rat.normalize] at h3
+      rw [Nat.div_eq_iff_eq_mul_left] at h3
+      simp at h3
+      exact h3.symm
+      simp
+      right
+      exact Rat.den_pos m
+      exact Nat.gcd_dvd_right (m.num + n.num).natAbs m.den
+
+    have h5 : ↑((↑m.den * (m.num + n.num)).natAbs.gcd (m.den * m.den)) = m.den * m.den := by
+      refine Nat.gcd_eq_right ?_
+      rw [Nat.gcd_eq_right_iff_dvd] at h4
+      have : (↑m.den * (m.num + n.num)).natAbs = m.den * (m.num + n.num).natAbs := by simp [Int.natAbs_mul]
+      rw [this]
+      exact Nat.mul_dvd_mul_left m.den h4
+
+
+    have : (m + n).num * (↑m.den * ↑n.den) = ↑n.den * m.num + ↑m.den * n.num := by
+      rw [Rat.add_num_eq]
+      repeat rw [← h1]
+      rw [Int.mul_comm (b:=m.den)]
+      rw [Int.mul_comm (b:=m.den)]
+      repeat rw [← Int.mul_add]
+      rw [h5]
+      norm_cast
+      rw [Int.ediv_mul_cancel]
+      exact Rat.normalize.dvd_num (id (Eq.symm h5))
+    rw [this]
+    repeat linarith
+  sorry
   sorry
 
 

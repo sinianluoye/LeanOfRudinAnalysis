@@ -1000,4 +1000,9 @@ theorem mul_powInt {a b:α} {n:Int} : (a * b) ^ n = a ^ n * b ^ n := by
   rw [this]
   ring
 
+theorem powNat_eq_powInt {a:α} {n:Nat}: a ^ n = a ^ (n:Int) := by
+  rw [powInt_def]
+  by_cases ha : a = 0
+  <;>simp [ha]
+
 end Rudin

@@ -823,6 +823,31 @@ theorem add_int_num {a:Rat} {b:Int} : (a+b).num = a.num + b * a.den := by
   rw [add_int_lemma_1 (a:=a) (b:=b)]
   simp
 
+theorem add_den_eq_one_then_den_eq {m n:ℚ} (h: (m + n).den = 1): m.den = n.den := by
+
+  -- first, m = (m+n) - n
+  have eq1 : m = (m + n) - n := by ring
+  -- since (m+n).den = 1, (m+n) = (m+n).num
+  have eq2 : (m + n) = (m + n).num := by
+    rw [← Rat.num_div_den (m + n), h]
+    simp
+  -- combine those
+  have eq3 : m = (m + n).num - n := by rw [eq2] at eq1; exact eq1
+  -- rewrite subtraction as addition of negation
+  have eq4 : m = (m + n).num + -n := by rw [Rat.sub_eq_add_neg] at eq3; exact eq3
+  -- take denominators on both sides
+  have den_m : m.den = ((m + n).num + -n).den := congrArg Rat.den eq4
+  -- use add_int_den (for a = -n, b = (m+n).num) to see that adding an integer preserves the other denom
+  have den_eq : ((m + n).num + -n).den = (-n).den := by
+    rw [add_comm (a:=(m+n).num) (b:=-n)]
+    exact add_int_den (a:= -n) (b:=(m + n).num)
+  -- finish by noticing `(-n).den = n.den`
+  calc
+    m.den = ((m + n).num + -n).den := by exact den_m
+      _ = (-n).den                             := by rw [den_eq]
+      _ = n.den                                := by simp
+
+
 end Rat
 
 end Rudin
