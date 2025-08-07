@@ -1,6 +1,6 @@
 import Mathlib
-import Rudin.Chapter1.Main
-
+import Rudin.Chapter1.Bound
+import Rudin.Chapter1.Rational
 
 theorem prime_of_mul {x y p: ℤ} (hp:Prime p) (hxy: p ∣ x * y): p ∣ x ∨ p ∣ y := by
   apply (Prime.dvd_mul hp).mp
@@ -184,15 +184,15 @@ end Rudin_1_1
 namespace Rudin
 
 -- 1.9 1)
-example : ¬ ∃ s : ℚ, Sup ({ p : ℚ | p ^ 2 < 2 }) s := by
+example : ¬ ∃ s : ℚ, IsSup ({ p : ℚ | p ^ 2 < 2 }) s := by
   intro h
-  simp [Sup, UpperBound] at h
+  simp [IsSup, UpperBound] at h
   have h1 := Rudin_1_1.a_has_no_max
   apply h1
   simp [Rudin_1_1.A]
   rcases h with ⟨s, ⟨hs1, hs2⟩⟩
 
-  have htri := lt_trichotomy (s^2) 2
+  have htri := lt_trichotomy (a:=s^2) (b:=2)
   rcases htri with hlt | heq | hgt
   -- s ^ 2 < 2
   let s' := (2*s + 2) / (s + 2)
@@ -219,7 +219,9 @@ example : ¬ ∃ s : ℚ, Sup ({ p : ℚ | p ^ 2 < 2 }) s := by
     have h0_le_s : (0 : ℚ) ≤ s := hs1 0 h0_lt2
     have hsz : s = 0 := le_antisymm hs h0_le_s
     have : (2 : ℚ) < (0 : ℚ) := by
-      simpa [hsz] using hgt
+      rw [hsz] at hgt
+      ring_nf at hgt
+      exact hgt
     linarith
   let s' := (2*s + 2) / (s + 2)
   have := hs2 s'
@@ -246,7 +248,7 @@ example : ¬ ∃ s : ℚ, Sup ({ p : ℚ | p ^ 2 < 2 }) s := by
   linarith
 
 -- 1.9 2)
-lemma sup_mem_or_not {α : Type*}[RudinOrdered α] {E : Set α} {s : α} (h : Sup E s) : s ∈ E ∨ s ∉ E := by
+lemma sup_mem_or_not {α : Type*}[Rudin.Ordered α] {E : Set α} {s : α} (h : IsSup E s) : s ∈ E ∨ s ∉ E := by
   classical
   exact (em (s ∈ E))
 
@@ -255,8 +257,8 @@ namespace Rudin_1_9_3
 
 def E := {x:ℚ | ∃ n : ℕ, x = 1 / (n+1) }
 
-lemma Sup_E_is_one : Sup E 1 := by
-  simp [E, Sup, UpperBound]
+lemma Sup_E_is_one : IsSup E 1 := by
+  simp [E, IsSup, UpperBound]
   constructor
   · intro n
     have hden : (0 : ℚ) < (n : ℚ) + 1 := by
@@ -272,8 +274,8 @@ lemma Sup_E_is_one : Sup E 1 := by
     use 0
     linarith
 
-lemma Inf_E_is_zero : Inf E 0 := by
-  simp [E, Inf, LowerBound]
+lemma Inf_E_is_zero : IsInf E 0 := by
+  simp [E, IsInf, LowerBound]
   constructor
   norm_cast
   omega

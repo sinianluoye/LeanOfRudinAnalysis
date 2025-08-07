@@ -19,9 +19,9 @@ def BoundBelow (E: Set α) := ∃ b, LowerBound E b
 
 /-1.8-/
 
-def Sup (E: Set α) (a : α) := UpperBound E a ∧ ∀ b, b < a → ¬ UpperBound E b
+def IsSup (E: Set α) (a : α) := UpperBound E a ∧ ∀ b, b < a → ¬ UpperBound E b
 
-def Inf (E: Set α) (a : α) := LowerBound E a ∧ ∀ b, b > a → ¬ LowerBound E b
+def IsInf (E: Set α) (a : α) := LowerBound E a ∧ ∀ b, b > a → ¬ LowerBound E b
 
 /-1.9-/
 -- see Examples.lean
@@ -32,20 +32,19 @@ An ordered set S is said to have the least-upper-bound property if
 the following is true:
  If E ⊂ S, Eis not empty, and E is bounded above, then supE exists in S.
 -/
-class LeastUpperBoundProperty (α: Type u) extends Ordered α where
-  subset_sup_exist : ∀ (E : Set α), E ≠ ∅ ∧ BoundAbove E → ∃ a, Sup E a
+class LeastUpperBoundProperty  (α : Type*) [Ordered α] where
+  subset_sup_exist (E : Set α) (h_no_empty: E ≠ ∅) (h_bound_above: BoundAbove E) : ∃ a, IsSup E a
 
-class GreatestLowerBoundProperty (α: Type u) extends Ordered α where
-  subset_inf_exist : ∀ (E : Set α), E ≠ ∅ ∧ BoundBelow E → ∃ a, Inf E a
-
+class GreatestLowerBoundProperty (α : Type*) [Ordered α]  where
+  subset_inf_exist (E : Set α) (h_no_empty: E ≠ ∅)  (h_bound_below: BoundBelow E) :  ∃ a, IsInf E a
 
 theorem sup_only_one
   {α : Type u}[Ordered α]
   {E : Set α}
   {m n: α}
-  (hm: Sup E m)
-  (hn: Sup E n) : m = n := by
-  simp [Sup, UpperBound] at hm hn
+  (hm: IsSup E m)
+  (hn: IsSup E n) : m = n := by
+  simp [IsSup, UpperBound] at hm hn
   have hm1 := hm.1
   have hn1 := hn.1
   have hm2 := hm.2
@@ -70,19 +69,19 @@ Suppose S is an ordered set with the least-upper-bound property, B ⊂ S,
  In particular, inf B exists in S.
 -/
 theorem sup_lb_set_exist_and_eq_inf
-    {α : Type u} [LeastUpperBoundProperty α] {B : Set α}
+    {α : Type u} [Ordered α]  [LeastUpperBoundProperty α] {B : Set α}
     (hB_nonempty : ∃ b, b ∈ B)
     (hB_bound_below : BoundBelow B) :
-    ∃ a : α, Sup {x | LowerBound B x} a ∧ Inf B a := by
+    ∃ a : α, IsSup {x | LowerBound B x} a ∧ IsInf B a := by
   rcases hB_nonempty with ⟨ b, hb ⟩
   rcases hB_bound_below with ⟨ l, hl ⟩
   let L := {x | LowerBound B x}
   have : L = {x | LowerBound B x} := by rfl
   rw [← this]
-  simp [Sup, LowerBound] at this
+  simp [LowerBound] at this
   have hB_upper_bound_L : ∀ x ∈ B, UpperBound L x := by
     intro x hx
-    simp [Sup, UpperBound]
+    simp [UpperBound]
     intro y
     intro hy
     rw [this] at hy
@@ -90,12 +89,11 @@ theorem sup_lb_set_exist_and_eq_inf
 
   have hB_bound_above_L : BoundAbove L := by
     have := hB_upper_bound_L b hb
-    simp [Sup] at this
+    simp at this
     use b
 
-  have hL_have_sup : ∃ s, Sup L s := by
+  have hL_have_sup : ∃ s, IsSup L s := by
     apply LeastUpperBoundProperty.subset_sup_exist
-    constructor
     . simp [Set.ne_iff_ex_not_in]
       use l
       rw [Set.mem_setOf]
@@ -107,7 +105,7 @@ theorem sup_lb_set_exist_and_eq_inf
   use s
   constructor
   exact hs
-  simp [Sup] at hs
+  simp [IsSup] at hs
   have hs1 := hs.1
   simp [UpperBound] at hs1
 

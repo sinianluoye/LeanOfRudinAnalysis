@@ -22,10 +22,10 @@ theorem add_comm: a + b = b + a := by
   rw [Int.add_comm]
 
 @[simp] theorem zero_add : 0 + a = a := by
-  simp [add_def']
+  simp
 
 @[simp] theorem add_zero : a + 0 = a := by
-  simp [add_def']
+  simp
 
 theorem den_zero_then_zero (h: a.den = 0) : a = 0 := by
   rw [← mkRat_self a]
@@ -46,7 +46,7 @@ theorem nz_then_num_nz (h: a ≠ 0) : a.num ≠ 0 := by
 theorem add_assoc_lemma_1 (h: a = 0 ∨ b = 0 ∨ c = 0) : a + b + c = a + (b + c) := by
   rcases h with h | h | h
   <;>rw [h]
-  <;>simp [zero_add, add_zero]
+  <;>simp
 
 theorem add_assoc_lemma_2 (h: a ≠ 0 ∧ b ≠ 0 ∧ c ≠ 0) : a + b + c = a + (b + c) := by
   have hadnz := nz_then_den_nz h.left
@@ -56,7 +56,7 @@ theorem add_assoc_lemma_2 (h: a ≠ 0 ∧ b ≠ 0 ∧ c ≠ 0) : a + b + c = a +
   have hbcnz : b.den * c.den ≠ 0 :=  Nat.mul_ne_zero_iff.mpr ⟨ hbdnz, hcdnz ⟩
   rw [← mkRat_self a, ← mkRat_self b, ← mkRat_self c]
   repeat rw [mkRat_add_mkRat]
-  repeat simp [Int.add_mul, Int.mul_add, ← Int.mul_assoc, ← Int.add_assoc, ← Nat.mul_assoc]
+  repeat simp [Int.add_mul, ← Int.mul_assoc, ← Int.add_assoc, ← Nat.mul_assoc]
   rw [Int.mul_assoc b.num  ↑c.den  ↑a.den, Int.mul_comm (↑c.den) (↑a.den), ← Int.mul_assoc]
   rw [Int.mul_assoc c.num  ↑b.den  ↑a.den, Int.mul_comm (↑b.den) (↑a.den), ← Int.mul_assoc]
   exact hadnz
@@ -119,7 +119,7 @@ theorem mul_assoc : a * b * c = a * (b * c) := by
   by_cases h: a = 0 ∨ b = 0 ∨ c = 0
   rcases h with h|h|h
   <;>rw [h]
-  <;>simp [Rat.zero_mul, Rat.mul_zero]
+  <;>simp
   simp at h
   rw [← mkRat_self a]
   rw [← mkRat_self b]
@@ -131,7 +131,7 @@ theorem mul_add : a * (b + c) = a * b + a * c := by
   by_cases h: a = 0 ∨ b = 0 ∨ c = 0
   rcases h with h|h|h
   <;>rw [h]
-  <;>simp [Rat.zero_mul, Rat.mul_zero]
+  <;>simp
   simp at h
   have hadnz := nz_then_den_nz h.left
   have hbdnz := nz_then_den_nz h.right.left
@@ -167,7 +167,7 @@ theorem divInt_eq_one {a:Int} (ha: a ≠ 0): a /. a = 1 := by
   rw [← divInt_self 1]
   rw [one_num, one_den]
   rw (occs := .pos [2]) [← divInt_mul_left ha  (a:=a)]
-  simp [Int.mul_one]
+  simp
 
 theorem mul_inv_when_nz (hanz:a ≠ 0) : a * (1 / a) = 1 := by
   have hadnz := nz_then_den_nz hanz
@@ -711,7 +711,7 @@ theorem nat_mul_def {n:Nat}: n * a = if n = 0 then 0 else ↑(n - 1) * a + a:= b
     rfl
   have h4 : (↑(n-1):ℚ) = n - 1 := by
     rw [h3, h2]
-    simp [Rat.ofInt]
+    simp
     -- rfl
   rw [h4]
   rw (occs := .pos [3])[← Rat.one_mul a]
@@ -754,6 +754,141 @@ theorem gez_mul_gez_then_gez (ha: a ≥ 0) (hb: b ≥ 0) : a * b ≥ 0 := by
   left
   symm
   exact ha
+
+
+theorem mkRat_den_eq_iff {a:Int} {b c:Nat} (ha: a ≠ 0) (hb: b ≠ 0): (mkRat a b).den = c ↔ b = c * (a.natAbs.gcd b) := by
+  constructor
+  intro h
+  simp [mkRat] at h
+  simp [hb, Rat.normalize] at h
+  rw [← h]
+  rw [Nat.div_mul_cancel]
+  exact Nat.gcd_dvd_right a.natAbs b
+  intro h
+  simp [mkRat, hb, Rat.normalize]
+  rw [h]
+  rw [Nat.mul_div_assoc]
+  have : a.natAbs.gcd b / a.natAbs.gcd (c * a.natAbs.gcd b) = 1 := by
+    refine Eq.symm (Nat.eq_div_of_mul_eq_right ?_ ?_)
+    refine Nat.gcd_ne_zero_left ?_
+    exact Int.natAbs_ne_zero.mpr ha
+    simp
+    exact congrArg a.natAbs.gcd (id (Eq.symm h))
+  rw [this]
+  simp
+  exact dvd_of_eq (congrArg a.natAbs.gcd (id (Eq.symm h)))
+
+theorem den_ne_one_then_add_int_den_ne_one {a:Rat} {b:Int} (ha: a.den ≠ 1) : (a + b).den ≠ 1 := by
+  contrapose! ha
+  have : a = (a + b) - b := by ring
+  rw [this]
+
+  -- Use the characterization that den = 1 iff the number is an integer
+  have ab_int : (a + b : ℚ) = ((a + b).num : ℚ) := by
+    rw [← Rat.num_div_den (a + b), ha]
+    norm_cast
+    simp
+
+  rw [ab_int]
+  rw [sub_eq_add_neg, ← Int.cast_neg, ← Int.cast_add]
+  exact Rat.den_intCast _
+
+theorem add_num_eq {a b:Rat} : (a + b).num = (a.num * b.den + b.num * a.den) / (a.num * b.den + b.num * a.den).natAbs.gcd (a.den * b.den) := by
+  rw [Rat.add_def]
+  simp [Rat.normalize]
+
+theorem add_den_eq {a b:Rat} : (a + b).den = (a.den * b.den)  / (a.num * b.den + b.num * a.den).natAbs.gcd (a.den * b.den) := by
+  rw [Rat.add_def]
+  simp [Rat.normalize]
+
+private lemma add_int_lemma_1 {a:Rat} {b:Int} : (a.num + b * ↑a.den).natAbs.gcd a.den = 1 := by
+  have h1: a.den = ((a.den):Int).natAbs := by
+    exact rfl
+  rw [h1]
+  rw [← Int.gcd_eq_natAbs_gcd_natAbs]
+  rw [← Int.isCoprime_iff_gcd_eq_one]
+  simp
+  refine IsCoprime.add_mul_right_left_iff.mpr ?_
+  rw [Int.isCoprime_iff_nat_coprime]
+  rw [← h1]
+  exact a.reduced
+
+theorem add_int_den {a:Rat} {b:Int} : (a+b).den = a.den := by
+  simp [add_den_eq]
+  rw [add_int_lemma_1 (a:=a) (b:=b)]
+  simp
+
+theorem add_int_num {a:Rat} {b:Int} : (a+b).num = a.num + b * a.den := by
+  simp [add_num_eq]
+  rw [add_int_lemma_1 (a:=a) (b:=b)]
+  simp
+
+theorem add_den_eq_one_then_den_eq {m n:ℚ} (h: (m + n).den = 1): m.den = n.den := by
+
+  -- first, m = (m+n) - n
+  have eq1 : m = (m + n) - n := by ring
+  -- since (m+n).den = 1, (m+n) = (m+n).num
+  have eq2 : (m + n) = (m + n).num := by
+    rw [← Rat.num_div_den (m + n), h]
+    simp
+  -- combine those
+  have eq3 : m = (m + n).num - n := by rw [eq2] at eq1; exact eq1
+  -- rewrite subtraction as addition of negation
+  have eq4 : m = (m + n).num + -n := by rw [Rat.sub_eq_add_neg] at eq3; exact eq3
+  -- take denominators on both sides
+  have den_m : m.den = ((m + n).num + -n).den := congrArg Rat.den eq4
+  -- use add_int_den (for a = -n, b = (m+n).num) to see that adding an integer preserves the other denom
+  have den_eq : ((m + n).num + -n).den = (-n).den := by
+    rw [add_comm (a:=(m+n).num) (b:=-n)]
+    exact add_int_den (a:= -n) (b:=(m + n).num)
+  -- finish by noticing `(-n).den = n.den`
+  calc
+    m.den = ((m + n).num + -n).den := by exact den_m
+      _ = (-n).den                             := by rw [den_eq]
+      _ = n.den                                := by simp
+
+
+theorem add_den_eq_one_then_den_dvd_num_add {m n:ℚ} (h: (m + n).den = 1) : (m.den:Int) ∣ (m.num + n.num) := by
+  have h_den_eq := add_den_eq_one_then_den_eq h
+  rw [← Rat.mkRat_self (a:=m), ← Rat.mkRat_self (a:=n), Rat.mkRat_add_mkRat (z₁:=m.den_nz) (z₂:=n.den_nz), h_den_eq, ← Int.add_mul] at h
+  rw [Rat.mkRat_mul_right (a0:=n.den_nz)] at h
+  simp [Rat.mkRat_def, Rat.normalize] at h
+  rw [Nat.div_eq_iff_eq_mul_left, Nat.one_mul] at h
+  rw [Int.ofNat_dvd_left]
+  rw [h_den_eq]
+  exact Nat.gcd_eq_right_iff_dvd.mp (id (Eq.symm h))
+  refine Nat.gcd_pos_of_pos_right (m.num + n.num).natAbs ?_
+  exact den_gtz
+  exact Nat.gcd_dvd_right (m.num + n.num).natAbs n.den
+
+
+
+theorem add_den_eq_one_then_add_num_eq {m n:ℚ} (h: (m + n).den = 1): (m + n).num = (m.num + n.num) / m.den := by
+  have h_den_cast : (↑(m.den * n.den):Int) = m.den * n.den := by norm_num
+  have h_den_eq := add_den_eq_one_then_den_eq h
+  have h_den_dvd := add_den_eq_one_then_den_dvd_num_add h
+  rw [add_den_eq] at h
+  rw [add_num_eq]
+  rw [Nat.div_eq_iff_eq_mul_left, Nat.one_mul] at h
+  rw [← h]
+  rw [Int.ediv_eq_iff_eq_mul_left]
+  rw [h_den_cast]
+  repeat rw [← h_den_eq]
+  rw [← Int.mul_assoc, Int.ediv_mul_cancel, Int.add_mul]
+  exact h_den_dvd
+  rw [h_den_cast]
+  refine Int.mul_ne_zero_iff.mpr ?_
+  norm_cast
+  constructor
+  exact m.den_nz
+  exact n.den_nz
+  exact normalize.dvd_num h
+  refine Nat.gcd_pos_of_pos_right (m.num * ↑n.den + n.num * ↑m.den).natAbs ?_
+  simp
+  exact And.intro (den_gtz (a:=m)) (den_gtz (a:=n))
+  exact Nat.gcd_dvd_right (m.num * ↑n.den + n.num * ↑m.den).natAbs (m.den * n.den)
+
+
 
 
 

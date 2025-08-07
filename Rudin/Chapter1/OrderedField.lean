@@ -1,7 +1,7 @@
 import Mathlib
 import Rudin.Chapter1.Ordered
 import Rudin.Chapter1.Field
-
+attribute [-simp] nsmul_eq_mul  Algebra.smul_mul_assoc
 
 namespace Rudin
 
@@ -10,6 +10,14 @@ class OrderedField (α : Type u) extends Field α, Ordered α where
   -- axioms
   add_lt_left_cancel {a b c :α} (h: a + b < a + c) : b < c
   gtz_mul_gtz_then_gtz {a b :α} (ha: a > 0) (hb: b > 0) : a * b > 0
+
+def Positive (α: Type u) [OrderedField α] := {x:α // x > 0}
+
+def Negative (α: Type u) [OrderedField α] := {x:α // x < 0}
+
+def NonPositive (α: Type u) [OrderedField α] := {x:α // x ≤ 0}
+
+def NonNegative (α: Type u) [OrderedField α] := {x:α // x ≥ 0}
 
 variable {α: Type u} [OrderedField α] {a b c : α}
 
@@ -58,7 +66,7 @@ theorem gtz_mul_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a * b > 0 := by
   constructor
   intro h
   apply (add_lt_left_cancel (a:=-b)).mp
-  simp [add_comm, ← sub_eq_add_neg]
+  simp [add_comm]
   exact h
   intro h
   apply (add_lt_left_cancel (a:=b)).mp
@@ -70,7 +78,7 @@ theorem gtz_mul_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a * b > 0 := by
   constructor
   intro h
   apply (add_lt_left_cancel (a:=-b)).mp
-  simp [add_comm, ← sub_eq_add_neg]
+  simp [add_comm]
   exact h
   intro h
   apply (add_lt_left_cancel (a:=b)).mp
@@ -185,7 +193,7 @@ theorem neg_mul_lt_then_gt (ha: a < 0) (hbc: b < c) : a * b > a * c := by
 /-1.18 d-/
 @[simp] theorem pow_two_gtz {a:α} (ha: a ≠ 0) : a ^ 2 > 0 := by
   by_cases h : a > 0
-  rw [pow_two]
+  rw [pow_two (a:=a)]
   exact gtz_mul_gtz_then_gtz h h
   have : a < 0 := by
     simp at h
@@ -198,7 +206,12 @@ theorem neg_mul_lt_then_gt (ha: a < 0) (hbc: b < c) : a * b > a * c := by
   apply ltz_mul_ltz_gtz
   <;> exact this
 
-
+@[simp] theorem pow_two_gez {a:α} : a ^ 2 ≥ 0 := by
+  by_cases ha: a = 0
+  rw [ha]
+  simp
+  apply lt_then_le
+  exact pow_two_gtz ha
 
 @[simp] theorem one_gtz : (1:α) > 0 := by
   have h1 : (1:α) ^ 2 > 0 := by
@@ -467,7 +480,7 @@ theorem gt_div_ltz_iff_mul_lt (h: c < 0) : a > b / c ↔ a * c < b := by
   have h1 := gt_div_gtz_iff_mul_gt (a:=a) (b:=-b) (c:=-c) (neg_gtz_iff_ltz.mpr h)
   rw [Rudin.div_eq_mul_inv] at h1
   rw [Rudin.neg_inv] at h1
-  simp [Rudin.mul_neg, Rudin.neg_mul] at h1
+  simp at h1
   rw [← Rudin.div_eq_mul_inv] at h1
   rw [gt_iff_lt]
   exact h1
@@ -516,9 +529,34 @@ theorem gtz_add_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a + b > 0 := by
   simp at hb
   exact lt_trans ha hb
 
+theorem gez_then_smul_gez {n:Nat} {a:α} (ha : a ≥ 0) : n • a ≥ 0 := by
+  induction n with
+  | zero => simp
+  | succ n hn =>
+    simp
+    simp at hn
+    rw [le_iff_lt_or_eq] at hn
+    rcases hn with hn|hn
+    apply lt_then_le
+    simp at ha
+    rw [le_iff_lt_or_eq] at ha
+    rcases ha with ha|ha
+    exact gtz_add_gtz_then_gtz hn ha
+    rw [← ha]
+    simp
+    rw [← ha] at hn
+    simp at hn
+    rw [← hn]
+    simp
+    exact ha
+
+
+
+
 /- support mathlib -/
 --  [IsStrictOrderedRing R]
 -- IsOrderedCancelAddMonoid R, ZeroLEOneClass R
+
 
 instance (priority := default-1) : IsOrderedAddMonoid α where
   add_le_add_left := by
@@ -534,12 +572,186 @@ instance (priority := default-1) : ZeroLEOneClass α where
   zero_le_one := by
     rw [Rudin.le_iff_lt_or_eq]
     left
-    exact one_gtz
+    simp [OfNat.ofNat]
+    rw [← one_eq_field_one, ← zero_eq_field_zero]
+    simp
+
+instance (priority := default - 1) : DenselyOrdered α where
+  dense := by
+    intro a b h
+    use (a + b) / (1 + 1)
+    constructor
+    simp [Rudin.lt_div_gtz_iff_mul_lt, mul_add]
+    exact h
+    rw [← gt_iff_lt, Rudin.gt_div_gtz_iff_mul_gt, mul_add]
+    simp
+    exact h
+    simp
 
 instance (priority := default-1) : IsStrictOrderedRing α where
   mul_lt_mul_of_pos_left := fun a b c a_2 a_3 ↦ gtz_mul_lt_gtz_mul a_3 a_2
   mul_lt_mul_of_pos_right := by
     intro a b c hab hc
     exact (gtz_mul_lt_right_cancel hc).mpr hab
+  exists_pair_ne := by
+    use 1
+    use 0
+    simp
+
+
+-- refer to one_add_mul_sub_le_pow, just proof for a > 0
+
+
+theorem gtz_lt_then_mul_lt {a b c d:α} (ha: a > 0) (hb: a < b) (hc: c > 0) (hd: c < d):
+  a * c < b * d := by
+  have h1: a * c < a * d := by exact gtz_mul_lt_gtz_mul ha hd
+  have h2: a * d < b * d := by
+    refine (gtz_mul_lt_right_cancel ?_).mpr hb
+    exact lt_trans hc hd
+  exact lt_trans h1 h2
+
+theorem gtz_le_then_mul_le {a b c d:α} (ha: a > 0) (hb: a ≤ b) (hc: c > 0) (hd: c ≤ d):
+  a * c ≤ b * d := by
+  have h1: a * c ≤ a * d := by exact (gtz_mul_le_left_cancel ha).mpr hd
+  have h2: a * d ≤  b * d := by
+    refine (gtz_mul_le_right_cancel ?_).mpr hb
+    rw [le_iff_lt_or_eq] at hd
+    rcases hd with hd|hd
+    exact lt_trans hc hd
+    rw [← hd]
+    exact hc
+  exact le_trans h1 h2
+
+
+
+theorem gto_mul_gto_then_gto {a b:α} (ha: a > 1) (hb: b > 1) : a * b > 1 := by
+  rw [← one_mul (a:=1)]
+  apply gtz_lt_then_mul_lt
+  simp
+  exact ha
+  simp
+  exact hb
+
+theorem gtz_pow_ge_one_add_exp_mul_base_sub_one {a : α} {n:ℕ} (ha: a > 0) :
+  a ^ n ≥ 1 + n • (a - 1) := by
+  induction n with
+  | zero =>
+    rw [Rudin.pow_zero]
+    simp
+  | succ n h =>
+    simp
+    simp at h
+    rw [← Rudin.gtz_mul_le_right_cancel (a:=a) ha] at h
+    simp [add_mul] at h
+    rw [← Rudin.add_assoc]
+    rw [Rudin.add_comm, ← Rudin.add_assoc]
+    rw [Rudin.sub_eq_add_neg]
+    rw [Rudin.add_assoc (a:=a)]
+    simp
+    have : n • (a - 1) ≤  n • (a - 1) * a := by
+      rw [← Rudin.add_le_left_cancel (a:=- (n • (a - 1)))]
+      simp only [neg_add]
+      rw [Rudin.add_comm]
+      rw [← Rudin.sub_eq_add_neg]
+      rw (occs := .pos [2]) [← mul_one (a:=n • (a - 1))]
+      rw [← Rudin.mul_sub (a:=n • (a - 1)) (b:=a) (c:=1)]
+      rw [smul_mul_assoc]
+      have : (a-1) * (a-1) = (a-1) ^ 2 := by
+        simp
+      rw [this]
+      apply gez_then_smul_gez
+      exact Rudin.pow_two_gez
+    have h1:a + n • (a - 1) ≤ a + n • (a - 1) * a := by
+      rw [add_le_left_cancel]
+      exact this
+    exact Rudin.le_trans h1 h
+
+theorem gtz_then_powNat_gtz {x:α} {n:Nat} (hx: x > 0) : x ^ n > 0 := by
+  induction n with
+  | zero => simp
+  | succ n hi =>
+    simp
+    exact OrderedField.gtz_mul_gtz_then_gtz hi hx
+
+theorem gto_then_natPow_geo {x:α} {n:Nat} (hx: x > 1) : x ^ n ≥ 1 := by
+  induction n with
+  | zero => simp
+  | succ n hi =>
+    simp
+    rw [← one_mul (a:=1)]
+    apply gtz_le_then_mul_le
+    simp
+    exact hi
+    simp
+    apply lt_then_le
+    exact hx
+
+
+theorem gto_then_natPow_gto_gto {x:α} {n:Nat} (hx: x > 1) (hn: n > 0): x ^ n > 1 := by
+  have : n = n - 1 + 1 := by exact (Nat.sub_eq_iff_eq_add hn).mp rfl
+  rw [this]
+  simp
+  have h1 := gto_then_natPow_geo (n:=n-1) hx
+  rw [ge_iff_le, le_iff_lt_or_eq] at h1
+  rcases h1 with h1|h1
+  apply gto_mul_gto_then_gto
+  exact h1
+  exact hx
+  rw [← h1]
+  simp
+  exact hx
+
+theorem gto_then_natPow_gto_gt_base {x:α} {n:Nat} (hx: x > 1) (hn: n > 1) : x^n > x := by
+  have : n = n - 1 + 1 := by
+    refine (Nat.sub_eq_iff_eq_add ?_).mp rfl
+    exact Nat.one_le_of_lt hn
+  rw [this]
+  simp
+  rw (occs := .pos [1]) [← Rudin.one_mul (a:=x)]
+  rw [Rudin.gtz_mul_lt_right_cancel]
+  apply gto_then_natPow_gto_gto
+  exact hx
+  linarith
+  have h1: (1:α) > 0 := by simp
+  exact lt_trans h1 hx
+
+theorem gtz_lt_gtz_then_powNat_le {x y:α} {n:Nat} (hx: 0<x) (hy: x < y) : x^n ≤ y^n := by
+  induction n with
+  | zero => simp
+  | succ n hi =>
+    simp
+    apply gtz_le_then_mul_le
+    exact gtz_then_powNat_gtz hx
+    exact hi
+    exact hx
+    exact lt_then_le hy
+
+theorem gtz_lt_gtz_then_powNat_gtz_lt {x y : α} {n : Nat} (hx : 0 < x) (hy : x < y)
+    (hn : n > 0) : x ^ n < y ^ n := by
+  induction n with
+  | zero =>
+    cases hn
+  | succ n hi =>
+    by_cases hn1 : n > 0
+    simp
+    refine gtz_lt_then_mul_lt ?_ ?_ hx hy
+    exact gtz_then_powNat_gtz hx
+    exact hi hn1
+    simp at hn1
+    rw [hn1]
+    simp
+    exact hy
+
+-- 1.20 (b)
+theorem lt_then_ex_between {x y:α} (hxy: x < y) : ∃ p, x < p ∧ p < y := by
+  use (x+y)/(1+1)
+  have : ((1:α) + 1) > 0 := by
+    simp
+  constructor
+  rw [Rudin.lt_div_gtz_iff_mul_lt this]
+  linarith
+  rw [← gt_iff_lt]
+  rw [Rudin.gt_div_gtz_iff_mul_gt this]
+  linarith
 
 end Rudin

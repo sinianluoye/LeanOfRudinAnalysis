@@ -7,6 +7,10 @@ import Rudin.Chapter1.Ordered
 import Rudin.Chapter1.OrderedField
 import Rudin.Chapter1.Rational
 import Rudin.Chapter1.Bound
+import Rudin.Chapter1.Inequality
+import Rudin.Chapter1.PowRat
+
+attribute [-simp] nsmul_eq_mul
 
 namespace Rudin
 
@@ -95,9 +99,13 @@ theorem mem_then_ex_add_mem_and_add_delta_not_mem {r d:ℚ} (hr: r ∈ α) (hd: 
       simp
       exact hr
     | succ n ih =>
-      rw [Nat.cast_succ]
-      apply h
+      have hn:= h n
+      simp
+      apply hn
       exact ih
+
+
+
 
   rcases ex_not_mem (α := α) with ⟨ s, hs⟩
   rcases exists_nat_gt ((s-r)/d) with ⟨ n, hn⟩
@@ -227,10 +235,10 @@ instance : Ordered Cut where
     exact h1.mpr (Or.inr this)
 
 theorem le_def {a b:Cut} : a ≤ b ↔ (∀ x, x ∈ a.carrier → x ∈ b.carrier) := by
-  simp only [Rudin.Real.instMemRR, instLERR, ← Set.sub_iff_le, Set.sub_def]
+  simp only [instLERR, ← Set.sub_iff_le, Set.sub_def]
 
 theorem lt_def {a b:Cut} : a < b ↔ (∀ x, x ∈ a.carrier → x ∈ b.carrier) ∧ ∃ x ∈ b.carrier, x ∉ a.carrier:= by
-  simp [Rudin.Real.instMemRR, instLTRR, ← Set.ssub_iff_lt, Set.ssub_def]
+  simp [instLTRR, ← Set.ssub_iff_lt, Set.ssub_def]
 
 theorem ex_delta_between_lt_diff
   (h: α < β) :
@@ -263,8 +271,9 @@ namespace Real
 
 instance instLeastUpperBoundPropertyRR : LeastUpperBoundProperty RR where
 
-  subset_sup_exist : ∀ (E : Set RR), E ≠ ∅ ∧ BoundAbove E → ∃ a, Sup E a := by
-    intro A hA
+  subset_sup_exist (E : Set RR) (h_no_empty: E ≠ ∅) (h_bound_above: BoundAbove E): ∃ a, IsSup E a := by
+    let A:= E
+    let hA := And.intro h_no_empty h_bound_above
     simp only [BoundAbove] at hA
     rcases hA with ⟨ hA1, ⟨ β  ,  hA2 ⟩⟩
     -- p ∈ γ if and only if p ∈ α for some α ∈ A
@@ -319,13 +328,13 @@ instance instLeastUpperBoundPropertyRR : LeastUpperBoundProperty RR where
 
     let γ:RR := ⟨carr, carr_ne_empty, carr_ne_univ,  carr_lt_then_in, carr_ex_gt⟩
     use γ
-    by_cases h: ∃ δ, δ < γ ∧ Sup A δ
+    by_cases h: ∃ δ, δ < γ ∧ IsSup A δ
     rcases h with ⟨ δ, h1, h2 ⟩
     have h3:= Real.Cut.lt_then_ex_not_in_carrier h1
     rcases h3 with ⟨ s, hs1, hs2⟩
     simp [Real.instMemRR] at hs1
     rw [Set.mem_setOf] at hs1
-    simp [Sup, UpperBound] at h2
+    simp [IsSup, UpperBound] at h2
     rcases h2 with ⟨ h3, h4⟩
     rcases hs1 with ⟨ α , ha1, ha2⟩
     have h5 := h3 α ha1
@@ -337,7 +346,7 @@ instance instLeastUpperBoundPropertyRR : LeastUpperBoundProperty RR where
       exact this
     exfalso
     exact hs2 h6
-    simp [Sup] at *
+    simp at *
     constructor
     simp [UpperBound]
     intro α hα
@@ -524,6 +533,7 @@ theorem neg_def_ne_empty {α: RR} : NegDef α ≠ ∅ := by
   use p
   use 1
   simp
+  simp at h1
   exact h1
 
 theorem neg_def_ne_univ {α: RR} : NegDef α ≠ Set.univ := by
@@ -756,7 +766,7 @@ theorem add_left_cancel {a b c:RR} : a + b = a + c ↔ b = c := by
   rw [h]
 
 theorem le_then_add_le {a b c:RR} (hbc: b ≤ c) : a + b ≤ a + c:= by
-  simp only [Cut.le_def, HAdd.hAdd, instAddRR, AddDef, Set.mem_setOf] at hbc
+  simp only [Cut.le_def] at hbc
   simp only [Cut.le_def, HAdd.hAdd, instAddRR, AddDef, Set.mem_setOf]
   intro x hx
   rcases hx with ⟨ r, hr, s, hs, hrs⟩
@@ -811,7 +821,7 @@ def GtzMulDef (α:RR) (β:RR)  := { p : ℚ | ∃ r s : ℚ, r ∈ α ∧ s ∈ 
 
 theorem gtz_then_ex_mem_gtz {α:RR} (h: α > 0) : ∃ x ∈ α, x > 0 := by
   simp [zero_def, OfRatDef, OfRat, Cut.lt_def] at h
-  simp [Cut.lt_def]
+  simp
   rcases h with ⟨ h, ⟨ x, hx1, hx2⟩⟩
   rcases α.ex_gt hx1  with ⟨ y, hy⟩
   use y
@@ -898,7 +908,7 @@ theorem gtz_mul_def_ex_gt {p:ℚ} {α β:RR}
 
 
 theorem gtz_mul_def_gtz_mul_gtz_then_gtz {α β:RR} (h1: α > 0) (h2: β > 0) : GtzMulDef α β > (0:RR).carrier := by
-  simp only [gt_iff_lt, zero_def, OfRatDef, OfRat, GtzMulDef, Cut.lt_def, Set.lt_iff_ssubset, Set.ssub_def]
+  simp only [gt_iff_lt, zero_def, OfRatDef, OfRat, GtzMulDef, Set.lt_iff_ssubset, Set.ssub_def]
   simp
   constructor
   intro x hx
@@ -1111,16 +1121,21 @@ theorem one_gtzMul {α : RR} (ha : α > 0) : GtzMul 1 α one_gz ha = α := by
   intro hx
   rcases Cut.lt_then_ex_not_in_carrier (a:=0) (b:=1) (one_gz) with ⟨ r', hr1', hr2'⟩
   simp [zero_def, one_def, OfRatDef, OfRat] at hr1' hr2'
-  rcases (1:RR).ex_gt hr1' with ⟨ r, hr1, hr2⟩
+
+  -- turn the inequality into a membership proof for the cut `1`
+  have hr1_mem : (r' : ℚ) ∈ (1 : RR) := by
+    simpa [one_def, OfRat, OfRatDef, Rudin.Real.instMemRR] using hr1'
+
+  rcases (1 : RR).ex_gt hr1_mem with ⟨ r, hr1, hr2⟩
   simp [one_def, OfRatDef, OfRat] at hr1
   rcases lt_trichotomy (a:=x) (b:=0) with hx1|hx1|hx1
   use r
-  simp [hr1, hr2, hr2']
+  simp [hr1]
   rcases Cut.lt_then_ex_not_in_carrier ha with ⟨ s', hs1', hs2'⟩
   simp [zero_def, OfRatDef, OfRat] at hs2'
   rcases α.ex_gt hs1' with ⟨s, hs1, hs2⟩
   use s
-  simp [hs1, hs2]
+  simp [hs1]
   constructor
   linarith
   constructor
@@ -1130,12 +1145,12 @@ theorem one_gtzMul {α : RR} (ha : α > 0) : GtzMul 1 α one_gz ha = α := by
     repeat linarith
   linarith
   use r
-  simp [hr1, hr2, hr2']
+  simp [hr1]
   rcases Cut.lt_then_ex_not_in_carrier ha with ⟨ s', hs1', hs2'⟩
   simp [zero_def, OfRatDef, OfRat] at hs2'
   rcases α.ex_gt hs1' with ⟨s, hs1, hs2⟩
   use s
-  simp [hs1, hs2]
+  simp [hs1]
   constructor
   linarith
   constructor
@@ -1166,13 +1181,6 @@ theorem one_gtzMul {α : RR} (ha : α > 0) : GtzMul 1 α one_gz ha = α := by
   linarith
 
 
-
-
-
-
-
-
-
 theorem mul_comm  {a b:RR} : a * b = b * a := by
   have h {x:RR} (hx:x<0): -x > 0 := by
     rw [← neg_ltz_iff_gtz]
@@ -1192,7 +1200,7 @@ theorem mul_comm  {a b:RR} : a * b = b * a := by
     simp [h1, h2, h3] at hx
     rw [gtzMul_comm]
     exact hx
-    simp [h1, h2, h3] at hx
+    simp [h2, h3] at hx
     exact hx
     simp [h1, h4, h5] at hx
     rw [gtzMul_comm]
@@ -1200,7 +1208,7 @@ theorem mul_comm  {a b:RR} : a * b = b * a := by
     simp [h1, h4, h5, h6] at hx
     rw [gtzMul_comm]
     exact hx
-    simp [h1, h4, h5, h6] at hx
+    simp [h5, h6] at hx
     exact hx
     simp [h1, h4] at hx
     exact hx
@@ -1226,11 +1234,11 @@ theorem mul_assoc {a b c:RR} : a * b * c = a * (b * c) := by
   rcases lt_trichotomy (a:=a) (b:=0) with ha|ha|ha
   <;>have ha1 := h a
   <;>simp [ha] at ha1
-  <;>simp [ha, ha1]
+  <;>simp [ha]
   <;>rcases lt_trichotomy (a:=b) (b:=0) with hb|hb|hb
   <;>have hb1 := h b
   <;>simp [hb] at hb1
-  <;>simp [hb, hb1]
+  <;>simp [hb]
   <;>rcases lt_trichotomy (a:=c) (b:=0) with hc|hc|hc
   <;>have hc1 := h c
   <;>simp [hc] at hc1
@@ -1269,7 +1277,7 @@ theorem one_gz : (1:RR) > 0 := by
   simp [zero_def, one_def, OfRatDef, OfRat, Cut.instLTRR, Set.ssub_def]
   constructor
   intro a ha
-  have h1:0<1 := by linarith
+  have h1: (0:Rat) < 1 := by linarith
   linarith
   use 0
   simp
@@ -1441,7 +1449,7 @@ noncomputable instance instDivRR : Div RR where
 
 
 theorem gtzInv_gtz {a:RR} (ha:a > 0) : GtzInv a ha > 0 := by
-  simp [GtzInv, zero_def, OfRat, OfRatDef, GtzInvDef, Cut.ext_iff, Cut.lt_def]
+  simp [GtzInv, zero_def, OfRat, OfRatDef, GtzInvDef, Cut.lt_def]
   rcases Cut.gt_ofRat_ex_mem_gt ha with ⟨ r, hr1, hr2⟩
   rcases a.ex_not_mem with ⟨ s, hs⟩
   have h1:= Cut.in_lt_not_in hr1 hs
@@ -1480,7 +1488,6 @@ theorem gtzInv_gtz {a:RR} (ha:a > 0) : GtzInv a ha > 0 := by
   pow_nat_def : ∀ a : α, ∀ n : Nat, a ^ n = if n = 0 then 1 else a ^ (n - 1) * a
   nat_mul_def : ∀ a : α, ∀ n : Nat, n * a = if n = 0 then 0 else (n - 1) * a + a
 -/
-
 theorem Cut.ex_mem_gtz_and_gto_mul_not_mem {a:RR} {n:ℚ}
   (ha: a > 0)  (hn: n > 1) :
   ∃ p, p ∈ a ∧ p > 0 ∧ n * p ∉ a := by
@@ -1509,7 +1516,7 @@ theorem Cut.ex_mem_gtz_and_gto_mul_not_mem {a:RR} {n:ℚ}
     intro q
     have hngz : n > 0 := by linarith
     rcases exists_nat_gt ((q/r-1)/(n - 1)) with ⟨ m, hm⟩
-    have h1 := Rat.gtz_pow_ge_one_add_exp_mul_base_sub_one (n:=m) hngz
+    have h1 := gtz_pow_ge_one_add_exp_mul_base_sub_one (n:=m) hngz
     have h2 := pow_in m
     have hn1 : n - 1 > 0 := by linarith
     have h3 : (1 + m * (n - 1)) * r > q := by
@@ -1525,7 +1532,16 @@ theorem Cut.ex_mem_gtz_and_gto_mul_not_mem {a:RR} {n:ℚ}
       repeat assumption
     have h4 : n ^ m > q/r := by
       rw [← Rudin.gt_div_gtz_iff_mul_gt] at h3
-      linarith
+            -- 先把两条不等式里的 `Nat.cast` 统一，
+      -- 并保证方向与 `gtz_pow_ge_one_add_exp_mul_base_sub_one` 相同
+      have h1' : (1 : ℚ) + (m : ℚ) * (n - 1) ≤ n ^ m := by
+        simpa [nsmul_eq_mul] using h1                     -- ≤ 方向
+
+      have h3' : (1 : ℚ) + (m : ℚ) * (n - 1) > q / r := by
+        simpa using h3                     -- 同时统一 `Nat.cast`
+
+      -- `linarith` 现在可以直接使用
+      linarith [h1', h3']
       assumption
     have h5 : n ^ m * r > q := by
       rw [← Rudin.gt_div_gtz_iff_mul_gt]
@@ -1557,7 +1573,7 @@ theorem Cut.gt_then_ex_mem_gt_and_lt {α:Cut} {r s:ℚ} (ha : α > r) (hpq: r < 
   rw [← h]
   assumption
   have : OfRat r < OfRat s := by
-    simp [Cut.lt_def, OfRat, OfRatDef, Cut.ext_iff]
+    simp [Cut.lt_def, OfRat, OfRatDef]
     constructor
     intro x hx
     linarith
@@ -1575,7 +1591,7 @@ theorem Cut.gt_then_ex_mem_gt_and_lt {α:Cut} {r s:ℚ} (ha : α > r) (hpq: r < 
 private theorem gtzMul_gtzInv_eq_OfRat_one {a:RR} (ha: a > 0) : GtzMulDef a a⁻¹ = {x | x < 1} := by
   have ha3 : GtzInv a ha > 0 := gtzInv_gtz ha
   simp [instInvRR, ha]
-  simp [one_def, OfRat,OfRatDef, HMul.hMul, instMulRR, gtzInv_gtz, GtzMulDef, GtzInv, GtzInvDef, Cut.ext_iff, Set.ext_iff]
+  simp [HMul.hMul, GtzMulDef, GtzInv, GtzInvDef, Set.ext_iff]
   intro x
   constructor
   intro hx
@@ -1662,7 +1678,7 @@ theorem mul_inv_when_nz {a:RR} (ha: a ≠ 0) : a * (1 / a) = 1 := by
   simp [one_def, OfRat,OfRatDef, HMul.hMul, instMulRR, gtzInv_gtz]
 
   rcases lt_trichotomy (a:=a) (b:=0) with ha1|ha1|ha1
-  <;>simp [ha1, ha,  Rudin.lt_then_not_gt, gtzInv_gtz, GtzMul]
+  <;>simp [ha1,  Rudin.lt_then_not_gt, gtzInv_gtz, GtzMul]
 
   have ha2 : -a > 0 := by
     rw [← neg_ltz_iff_gtz]
@@ -1712,7 +1728,7 @@ private theorem gtz_add_gtz_then_gtz {a b:RR} (ha: a > 0) (hb: b > 0) : a + b > 
 
 private theorem gtzMul_mul_add {a b c : RR} (ha: a > 0) (hb: b > 0) (hc: c > 0) :
   GtzMul a (b + c) (ha) (gtz_add_gtz_then_gtz hb hc) = GtzMul a b ha hb + GtzMul a c ha hc := by
-  simp [ha, hb, hc, GtzMul, GtzMulDef, Cut.ext_iff, Set.ext_iff, HAdd.hAdd, AddDef, instAddRR]
+  simp [GtzMul, GtzMulDef, Cut.ext_iff, Set.ext_iff, HAdd.hAdd, AddDef, instAddRR]
   intro x
   constructor
   intro hx
@@ -1854,7 +1870,7 @@ theorem mul_neg {a b:RR} : a * -b = - (a * b) := by
     simp
     apply lt_then_le
     exact ha
-  simp [ha, ha1, ha2]
+  simp [ha, ha2]
   rcases Rudin.lt_trichotomy (a:=b) (b:=0) with hb|hb|hb
   have hb1: -b > 0 := by
     rw [← neg_ltz_iff_gtz]
@@ -1881,7 +1897,7 @@ theorem mul_neg {a b:RR} : a * -b = - (a * b) := by
     simp
     apply eq_then_le
     exact ha
-  simp [ha2, ha]
+  simp [ha]
   simp [ha]
   rcases Rudin.lt_trichotomy (a:=b) (b:=0) with hb|hb|hb
   have hb1: -b > 0 := by
@@ -1897,7 +1913,7 @@ theorem mul_neg {a b:RR} : a * -b = - (a * b) := by
     simp
     apply eq_then_le
     exact hb
-  simp [hb, hb2]
+  simp [hb]
   have : ¬ -b > 0 := by
     rw [← neg_ltz_iff_gtz]
     rw [neg_neg]
@@ -2042,8 +2058,8 @@ theorem pow_nat_def {a:RR} {n:ℕ} :  a ^ n = if n = 0 then 1 else a ^ (n - 1) *
   simp [hn]
   rw [mul_comm]
 
-noncomputable instance instHMulRRNat : HMul Nat RR RR where
-  hMul n a := OfRat n * a
+noncomputable instance instSMulRR : SMul Nat RR where
+  smul n a := OfRat n * a
 
 -- Rudin chapter1 appendix step8 (a)
 theorem ofRat_add_ofRat_eq {a b:Rat}: OfRat a + OfRat b = OfRat (a + b)  := by
@@ -2077,22 +2093,14 @@ theorem ofRat_add_ofRat_eq {a b:Rat}: OfRat a + OfRat b = OfRat (a + b)  := by
   ring_nf
 
 
-theorem nat_mul_def {a:RR} {n:ℕ} : n * a = if n = 0 then 0 else (n - 1) * a + a := by
-  simp [HMul.hMul]
+theorem nat_mul_def {a:RR} {n:ℕ} : n • a = if n = 0 then 0 else (n - 1) • a + a := by
+  simp [HSMul.hSMul, instSMulRR]
   by_cases hn:n = 0
   <;>simp [hn]
   have : OfRat 0 = 0 := by rfl
   simp [this]
-  have : Mul.mul 0 a = 0 * a := rfl
-  rw [this]
-  rw [zero_mul]
   rw (occs := .pos [3]) [← one_mul (a:=a)]
   repeat rw [mul_comm (b:=a)]
-  have :  Mul.mul (OfRat ↑n) a = (OfRat ↑n) * a := by rfl
-  simp [this]
-  have : Mul.mul (OfRat ↑(n - 1)) a = OfRat ↑(n - 1) * a := by rfl
-  simp [this]
-  rw [mul_comm (a:=OfRat ↑(n - 1)) (b:=a)]
   rw [← mul_add]
   have : (↑(n - 1):Rat) = ↑n - 1 := by
     refine Nat.cast_pred ?_
@@ -2103,7 +2111,7 @@ theorem nat_mul_def {a:RR} {n:ℕ} : n * a = if n = 0 then 0 else (n - 1) * a + 
     rw [ofRat_add_ofRat_eq]
     rw [sub_add_cancel]
   rw [this]
-  rw [mul_comm]
+
 
 noncomputable instance instRudinFieldRR : Rudin.Field RR where
   -- add axioms
@@ -2131,8 +2139,9 @@ noncomputable instance instRudinFieldRR : Rudin.Field RR where
     rw [inv_eq_one_div]
     apply div_eq_mul_inv
   inv_eq_one_div := by apply inv_eq_one_div
-  pow_nat_def := by apply pow_nat_def
-  nat_mul_def := by apply nat_mul_def
+  powNat_def := by apply pow_nat_def
+  natMul_def := by apply nat_mul_def
+
 
 theorem gtz_mul_gtz_then_gtz {a b :RR} (ha: a > 0) (hb: b > 0) : a * b > 0 := by
   simp [HMul.hMul, instMulRR, ha, hb]
@@ -2179,7 +2188,7 @@ private theorem ofRat_mul_ofRat_eq_lemma_1 {a b:Rat} (ha: a > 0) (hb: b > 0): Of
     rw [zero_def, gt_iff_lt]
     rw [ofRat_lt_ofRat_iff_lt]
     linarith
-  simp [HMul.hMul, instMulRR, ha, hb, ha1, hb1]
+  simp [HMul.hMul, instMulRR, ha1, hb1]
   simp [GtzMul, GtzMulDef, OfRat, OfRatDef, Cut.ext_iff, Set.ext_iff]
   intro x
   constructor
@@ -2295,31 +2304,47 @@ theorem ofRat_mul_ofRat_eq {a b:Rat}: OfRat a * OfRat b = OfRat (a * b) := by
   simp [this]
   exact ofRat_mul_ofRat_eq_lemma_3 hb
 
-
-/- ---------------------------------------------------------------------------- -/
-
-theorem gtz_then_ex_nat_mul_gt {x y:RR} (hx: x > 0) : ∃ n:Nat, n * x > y := by
-  rcases lt_trichotomy (a:=y) (b:=0) with hy|hy|hy
-  use 0
-  simp
+theorem ofRat_ext_iff {a b:Rat} : OfRat a = OfRat b ↔ a = b := by
+  simp [OfRat,OfRatDef, Set.ext_iff]
+  constructor
+  intro h
+  let t := (a + b) / (1 + 1)
+  rcases lt_trichotomy (a := a) (b := b) with hab | hab | hab
+  have ht := h t
+  have h1 : t < b := by
+    simp [t]
+    rw [← gt_iff_lt]
+    rw [Rudin.gt_div_gtz_iff_mul_gt]
+    simp [Rudin.mul_add]
+    exact hab
+    linarith
+  have h2 := ht.mpr h1
+  simp [t] at h2
+  rw [← gt_iff_lt] at h2
+  rw [Rudin.gt_div_gtz_iff_mul_gt] at h2
+  simp [Rudin.mul_add] at h2
   linarith
-  rw [hy]
-  use 1
-  simp
   linarith
-  simp at hx
-  let A := {t | ∃ n:ℕ, t = n * x}
-  by_contra h
-  simp at h
-  have h_up_y : UpperBound A y := by
-    simp [UpperBound]
-    intro r hr
-    simp [A] at hr
-    rcases  hr with ⟨n, hn⟩
-    have := h n
-    rw [← hn] at this
-    exact this
-  have h_exist_sup := L subset_sup_exist
+  exact hab
+  have h1 : t < a := by
+    simp [t]
+    rw [← gt_iff_lt]
+    rw [Rudin.gt_div_gtz_iff_mul_gt]
+    simp [Rudin.mul_add]
+    exact hab
+    linarith
+  have ht := h t
+  have h2 := ht.mp h1
+  simp [t] at h2
+  rw [← gt_iff_lt] at h2
+  rw [Rudin.gt_div_gtz_iff_mul_gt] at h2
+  simp [Rudin.mul_add] at h2
+  linarith
+  linarith
+  intro h
+  rw [h]
+  intro x
+  rfl
 
 
 end Real

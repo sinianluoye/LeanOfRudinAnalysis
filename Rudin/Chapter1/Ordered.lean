@@ -82,7 +82,7 @@ theorem le_trans {a b c : α} (hab: a ≤ b) (hbc: b ≤ c): a ≤ c := by
     exact h.left h1
 
   . intro h1
-    simp [h1, h] at htri
+    simp [h] at htri
     have : ¬ (a = b ∨ b < a) := by simp [htri]
     apply this
     rw [le_iff_lt_or_eq] at h1
