@@ -622,50 +622,12 @@ private theorem powRat_add_lemma_3 [LeastUpperBoundProperty α] {a: α} {m n: �
     rw [hy1]
     repeat rw [← powInt_mul]
     rw [← powInt_add]
-
-    have h2: m + n = (mkRat (m.num + n.num) m.den) := by
-      rw (occs := .pos [1]) [← Rat.mkRat_self (a:=m), ← Rat.mkRat_self (a:=n)]
-      rw [Rat.mkRat_add_mkRat]
-      repeat rw [← h1]
-      repeat rw [Int.mul_comm (b:=m.den)]
-      repeat rw [← Int.mul_add]
-      rw [Rat.mkRat_mul_left]
-      repeat exact m.den_nz
-      repeat exact n.den_nz
-
-    have h3 : (mkRat (m.num + n.num) m.den).den = 1 := by
-      rw [← h2]
-      simp [hmn]
-
-    have h4 : (m.num + n.num).natAbs.gcd m.den = m.den := by
-      simp [Rat.mkRat_def, Rat.normalize] at h3
-      rw [Nat.div_eq_iff_eq_mul_left] at h3
-      simp at h3
-      exact h3.symm
-      simp
-      right
-      exact Rat.den_pos m
-      exact Nat.gcd_dvd_right (m.num + n.num).natAbs m.den
-
-    have h5 : ↑((↑m.den * (m.num + n.num)).natAbs.gcd (m.den * m.den)) = m.den * m.den := by
-      refine Nat.gcd_eq_right ?_
-      rw [Nat.gcd_eq_right_iff_dvd] at h4
-      have : (↑m.den * (m.num + n.num)).natAbs = m.den * (m.num + n.num).natAbs := by simp [Int.natAbs_mul]
-      rw [this]
-      exact Nat.mul_dvd_mul_left m.den h4
-
-
-    have : (m + n).num * (↑m.den * ↑n.den) = ↑n.den * m.num + ↑m.den * n.num := by
-      rw [Rat.add_num_eq]
-      repeat rw [← h1]
-      rw [Int.mul_comm (b:=m.den)]
-      rw [Int.mul_comm (b:=m.den)]
-      repeat rw [← Int.mul_add]
-      rw [h5]
-      norm_cast
-      rw [Int.ediv_mul_cancel]
-      exact Rat.normalize.dvd_num (id (Eq.symm h5))
-    rw [this]
+    rw [Rat.add_den_eq_one_then_add_num_eq]
+    repeat rw [← h1]
+    rw [← Int.mul_assoc, Int.ediv_mul_cancel]
+    rw [Int.add_mul]
+    repeat rw [Int.mul_comm (b:=m.den)]
+    exact Rat.add_den_eq_one_then_den_dvd_num_add hmn
     repeat linarith
   sorry
   sorry

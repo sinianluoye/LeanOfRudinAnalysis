@@ -848,6 +848,50 @@ theorem add_den_eq_one_then_den_eq {m n:ℚ} (h: (m + n).den = 1): m.den = n.den
       _ = n.den                                := by simp
 
 
+theorem add_den_eq_one_then_den_dvd_num_add {m n:ℚ} (h: (m + n).den = 1) : (m.den:Int) ∣ (m.num + n.num) := by
+  have h_den_eq := add_den_eq_one_then_den_eq h
+  rw [← Rat.mkRat_self (a:=m), ← Rat.mkRat_self (a:=n), Rat.mkRat_add_mkRat (z₁:=m.den_nz) (z₂:=n.den_nz), h_den_eq, ← Int.add_mul] at h
+  rw [Rat.mkRat_mul_right (a0:=n.den_nz)] at h
+  simp [Rat.mkRat_def, Rat.normalize] at h
+  rw [Nat.div_eq_iff_eq_mul_left, Nat.one_mul] at h
+  rw [Int.ofNat_dvd_left]
+  rw [h_den_eq]
+  exact Nat.gcd_eq_right_iff_dvd.mp (id (Eq.symm h))
+  refine Nat.gcd_pos_of_pos_right (m.num + n.num).natAbs ?_
+  exact den_gtz
+  exact Nat.gcd_dvd_right (m.num + n.num).natAbs n.den
+
+
+
+theorem add_den_eq_one_then_add_num_eq {m n:ℚ} (h: (m + n).den = 1): (m + n).num = (m.num + n.num) / m.den := by
+  have h_den_cast : (↑(m.den * n.den):Int) = m.den * n.den := by norm_num
+  have h_den_eq := add_den_eq_one_then_den_eq h
+  have h_den_dvd := add_den_eq_one_then_den_dvd_num_add h
+  rw [add_den_eq] at h
+  rw [add_num_eq]
+  rw [Nat.div_eq_iff_eq_mul_left, Nat.one_mul] at h
+  rw [← h]
+  rw [Int.ediv_eq_iff_eq_mul_left]
+  rw [h_den_cast]
+  repeat rw [← h_den_eq]
+  rw [← Int.mul_assoc, Int.ediv_mul_cancel, Int.add_mul]
+  exact h_den_dvd
+  rw [h_den_cast]
+  refine Int.mul_ne_zero_iff.mpr ?_
+  norm_cast
+  constructor
+  exact m.den_nz
+  exact n.den_nz
+  exact normalize.dvd_num h
+  refine Nat.gcd_pos_of_pos_right (m.num * ↑n.den + n.num * ↑m.den).natAbs ?_
+  simp
+  exact And.intro (den_gtz (a:=m)) (den_gtz (a:=n))
+  exact Nat.gcd_dvd_right (m.num * ↑n.den + n.num * ↑m.den).natAbs (m.den * n.den)
+
+
+
+
+
 end Rat
 
 end Rudin
