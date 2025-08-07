@@ -576,6 +576,17 @@ instance (priority := default-1) : ZeroLEOneClass α where
     rw [← one_eq_field_one, ← zero_eq_field_zero]
     simp
 
+instance (priority := default - 1) : DenselyOrdered α where
+  dense := by
+    intro a b h
+    use (a + b) / (1 + 1)
+    constructor
+    simp [Rudin.lt_div_gtz_iff_mul_lt, mul_add]
+    exact h
+    rw [← gt_iff_lt, Rudin.gt_div_gtz_iff_mul_gt, mul_add]
+    simp
+    exact h
+    simp
 
 instance (priority := default-1) : IsStrictOrderedRing α where
   mul_lt_mul_of_pos_left := fun a b c a_2 a_3 ↦ gtz_mul_lt_gtz_mul a_3 a_2
