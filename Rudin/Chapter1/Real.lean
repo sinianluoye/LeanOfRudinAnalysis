@@ -2347,6 +2347,87 @@ theorem ofRat_ext_iff {a b:Rat} : OfRat a = OfRat b ↔ a = b := by
   rfl
 
 
+theorem exists_rat_btwn {a b:RR} (h: a < b) : ∃ r:Rat, a < r ∧ r < b := by
+  -- pick p ∈ b \ a
+  rcases Real.Cut.lt_then_ex_not_in_carrier (a:=a) (b:=b) h with ⟨p, hpB, hpNotA⟩
+  -- pick t ∈ b with p < t
+  rcases b.ex_gt hpB with ⟨t, htB, hpt⟩
+  -- take the midpoint r = (p + t)/2
+  let r : ℚ := (p + t) / (1+1)
+  have two_pos : (0 : ℚ) < 2 := by norm_num
+
+  -- p < r
+  have hp_lt_r : p < r := by
+    -- p < (p + t)/2  ↔  2 * p < p + t
+    have h2 : (1+1) * p < p + t := by
+      simp [Rudin.add_mul]
+      exact hpt
+    have : p < (p + t) / (1+1) := by
+      rw [Rudin.lt_div_gtz_iff_mul_lt]
+      simp [Rudin.mul_add]
+      exact hpt
+      linarith
+    simpa [r] using this
+
+  -- r < t
+  have hr_lt_t : r < t := by
+    -- (p + t)/2 < t  ↔  p + t < t * 2
+    have h2 : p + t < t + t := by
+      have : p + t < t + t := by linarith [hpt]
+      simp
+      exact hpt
+
+    have : (p + t) / (1+1) < t := by
+      rw [← gt_iff_lt]
+      rw [Rudin.gt_div_gtz_iff_mul_gt]
+      simp [Rudin.mul_add]
+      exact hpt
+      linarith
+    simpa [r] using this
+
+  -- show a < r
+  have h_ar : a < (r : RR) := by
+    -- a < OfRat r
+    simp [Real.Cut.lt_def, OfRat, OfRatDef]  -- expand definitions
+    constructor
+    · -- ∀ x ∈ a, x < r
+      intro x hx
+      have hx_lt_p : x < p := a.in_lt_not_in hx hpNotA
+      exact lt_trans hx_lt_p hp_lt_r
+    · -- witness: p ∈ OfRat r and p ∉ a
+      refine ⟨p, ?_, hpNotA⟩
+      simpa [OfRat, OfRatDef] using hp_lt_r
+
+  -- show r < b
+  have h_rb : (r : RR) < b := by
+    -- OfRat r < b
+    simp [Real.Cut.lt_def, OfRat, OfRatDef]
+    constructor
+    · -- ∀ x < r, x ∈ b (since r < t and t ∈ b, b is downward closed)
+      intro x hx
+      have hx_lt_t : x < t := lt_trans hx hr_lt_t
+      exact b.lt_then_in htB hx_lt_t
+    · -- witness: t ∈ b and t ∉ OfRat r (since r < t)
+      refine ⟨t, ?_, ?_⟩
+      · exact htB
+      · linarith
+
+  exact ⟨r, h_ar, h_rb⟩
+
+theorem exists_rat_gt {a:RR} : ∃ r:Rat, a < r := by
+  let b := a + 1
+  rcases exists_rat_btwn (a:=a) (b:=b) (by linarith) with ⟨ r, hr⟩
+  use r
+  exact hr.left
+
+
+theorem exists_rat_lt {a:RR} : ∃ r:Rat, a > r := by
+  let b := a - 1
+  rcases exists_rat_btwn (a:=b) (b:=a) (by linarith) with ⟨ r, hr⟩
+  use r
+  exact hr.right
+
+
 end Real
 
 
