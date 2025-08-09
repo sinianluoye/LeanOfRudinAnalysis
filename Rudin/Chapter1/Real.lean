@@ -494,11 +494,14 @@ instance instCoeRatRR : Coe Rat RR where
 instance instOfNatRR (n : Nat) : OfNat RR n where
   ofNat := OfRat n
 
+noncomputable instance : NatCast RR where
+  natCast n := OfRat n
+
 instance : Zero RR where
-  zero := (instOfNatRR 0).ofNat
+  zero := OfRat 0
 
 instance : One RR where
-  one := (instOfNatRR 1).ofNat
+  one := OfRat 1
 
 theorem zero_def : (0 : RR) = OfRat 0 := by rfl
 
@@ -507,6 +510,14 @@ theorem one_def : (1 : RR) = OfRat 1 := by rfl
 @[simp]
 theorem ofRat_eq_rat {a:Rat} : OfRat a = (a:RR) := by rfl
 
+@[simp]
+theorem natCast_eq_ofNat {n:Nat}: (n:RR) = OfRat n := by rfl
+
+@[simp]
+theorem ofRat_zero_eq_zero : OfRat 0 = 0 := rfl
+
+@[simp]
+theorem ofRat_one_eq_one : OfRat 1 = 1 := rfl
 
 theorem Cut.gt_ofRat_ex_mem_gt {α : RR} {q:ℚ} (h: α > OfRat q) :
   ∃ x ∈ α , x > q := by
@@ -714,7 +725,7 @@ theorem zero_add {a:RR} : 0 + a = a := by
   simp
 
 theorem add_neg {a:RR} : a + -a = 0 := by
-  simp [neg_def, zero_def]
+  rw [neg_def, zero_def]
   simp [HAdd.hAdd, instAddRR, AddDef, OfRatDef, OfRat, NegDef]
   apply Set.ext
   intro x
@@ -2097,8 +2108,6 @@ theorem nat_mul_def {a:RR} {n:ℕ} : n • a = if n = 0 then 0 else (n - 1) • 
   simp [HSMul.hSMul, instSMulRR]
   by_cases hn:n = 0
   <;>simp [hn]
-  have : OfRat 0 = 0 := by rfl
-  simp [this]
   rw (occs := .pos [3]) [← one_mul (a:=a)]
   repeat rw [mul_comm (b:=a)]
   rw [← mul_add]
@@ -2427,6 +2436,10 @@ theorem exists_rat_lt {a:RR} : ∃ r:Rat, a > r := by
   use r
   exact hr.right
 
+
+theorem ofRat_add_mul {a b:Rat} {r:RR} : OfRat (a + b) * r = OfRat a * r + OfRat b * r := by
+  rw [← add_mul]
+  rw [← ofRat_add_ofRat_eq]
 
 end Real
 
