@@ -40,6 +40,16 @@ theorem add_le_left_cancel : a + b ≤ a + c ↔ b ≤ c := by
 theorem gtz_mul_gtz_then_gtz (ha: a > 0) (hb: b > 0) : a * b > 0 := by
   apply OrderedField.gtz_mul_gtz_then_gtz ha hb
 
+theorem gez_mul_gez_then_gez (ha: a ≥ 0) (hb: b ≥ 0) : a * b ≥ 0 := by
+  rcases Rudin.le_iff_lt_or_eq.mp ha with ha|ha
+  <;>rcases Rudin.le_iff_lt_or_eq.mp hb with hb|hb
+  apply lt_then_le
+  exact OrderedField.gtz_mul_gtz_then_gtz ha hb
+  simp [← hb]
+  simp [← ha]
+  simp [← hb]
+
+
 
 /-1.18 a-/
 @[simp] theorem neg_ltz_iff_gtz : -a < 0 ↔ a > 0 := by
@@ -741,6 +751,17 @@ theorem gtz_lt_gtz_then_powNat_gtz_lt {x y : α} {n : Nat} (hx : 0 < x) (hy : x 
     rw [hn1]
     simp
     exact hy
+
+theorem gtz_powNat_lt_gtz_powNat_iff_lt {x y : α} {n : Nat} (hy : 0 < y) (hn: n > 0)
+  (hxy: x ^ n < y ^ n):
+  x < y := by
+  rcases Rudin.lt_trichotomy (a:=x) (b:=y) with h|h|h
+  exact h
+  rw [h] at hxy
+  linarith
+  have h1 := gtz_lt_gtz_then_powNat_gtz_lt (x:=y) (y:=x) (n:=n) hy h hn
+  linarith
+
 
 -- 1.20 (b)
 theorem lt_then_ex_between {x y:α} (hxy: x < y) : ∃ p, x < p ∧ p < y := by

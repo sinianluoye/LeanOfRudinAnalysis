@@ -494,11 +494,14 @@ instance instCoeRatRR : Coe Rat RR where
 instance instOfNatRR (n : Nat) : OfNat RR n where
   ofNat := OfRat n
 
+noncomputable instance : NatCast RR where
+  natCast n := OfRat n
+
 instance : Zero RR where
-  zero := (instOfNatRR 0).ofNat
+  zero := OfRat 0
 
 instance : One RR where
-  one := (instOfNatRR 1).ofNat
+  one := OfRat 1
 
 theorem zero_def : (0 : RR) = OfRat 0 := by rfl
 
@@ -507,6 +510,14 @@ theorem one_def : (1 : RR) = OfRat 1 := by rfl
 @[simp]
 theorem ofRat_eq_rat {a:Rat} : OfRat a = (a:RR) := by rfl
 
+@[simp]
+theorem natCast_eq_ofNat {n:Nat}: (n:RR) = OfRat n := by rfl
+
+@[simp]
+theorem ofRat_zero_eq_zero : OfRat 0 = 0 := rfl
+
+@[simp]
+theorem ofRat_one_eq_one : OfRat 1 = 1 := rfl
 
 theorem Cut.gt_ofRat_ex_mem_gt {α : RR} {q:ℚ} (h: α > OfRat q) :
   ∃ x ∈ α , x > q := by
@@ -714,7 +725,7 @@ theorem zero_add {a:RR} : 0 + a = a := by
   simp
 
 theorem add_neg {a:RR} : a + -a = 0 := by
-  simp [neg_def, zero_def]
+  rw [neg_def, zero_def]
   simp [HAdd.hAdd, instAddRR, AddDef, OfRatDef, OfRat, NegDef]
   apply Set.ext
   intro x
@@ -2097,8 +2108,6 @@ theorem nat_mul_def {a:RR} {n:ℕ} : n • a = if n = 0 then 0 else (n - 1) • 
   simp [HSMul.hSMul, instSMulRR]
   by_cases hn:n = 0
   <;>simp [hn]
-  have : OfRat 0 = 0 := by rfl
-  simp [this]
   rw (occs := .pos [3]) [← one_mul (a:=a)]
   repeat rw [mul_comm (b:=a)]
   rw [← mul_add]
@@ -2346,6 +2355,91 @@ theorem ofRat_ext_iff {a b:Rat} : OfRat a = OfRat b ↔ a = b := by
   intro x
   rfl
 
+
+theorem exists_rat_btwn {a b:RR} (h: a < b) : ∃ r:Rat, a < r ∧ r < b := by
+  -- pick p ∈ b \ a
+  rcases Real.Cut.lt_then_ex_not_in_carrier (a:=a) (b:=b) h with ⟨p, hpB, hpNotA⟩
+  -- pick t ∈ b with p < t
+  rcases b.ex_gt hpB with ⟨t, htB, hpt⟩
+  -- take the midpoint r = (p + t)/2
+  let r : ℚ := (p + t) / (1+1)
+  have two_pos : (0 : ℚ) < 2 := by norm_num
+
+  -- p < r
+  have hp_lt_r : p < r := by
+    -- p < (p + t)/2  ↔  2 * p < p + t
+    have h2 : (1+1) * p < p + t := by
+      simp [Rudin.add_mul]
+      exact hpt
+    have : p < (p + t) / (1+1) := by
+      rw [Rudin.lt_div_gtz_iff_mul_lt]
+      simp [Rudin.mul_add]
+      exact hpt
+      linarith
+    simpa [r] using this
+
+  -- r < t
+  have hr_lt_t : r < t := by
+    -- (p + t)/2 < t  ↔  p + t < t * 2
+    have h2 : p + t < t + t := by
+      have : p + t < t + t := by linarith [hpt]
+      simp
+      exact hpt
+
+    have : (p + t) / (1+1) < t := by
+      rw [← gt_iff_lt]
+      rw [Rudin.gt_div_gtz_iff_mul_gt]
+      simp [Rudin.mul_add]
+      exact hpt
+      linarith
+    simpa [r] using this
+
+  -- show a < r
+  have h_ar : a < (r : RR) := by
+    -- a < OfRat r
+    simp [Real.Cut.lt_def, OfRat, OfRatDef]  -- expand definitions
+    constructor
+    · -- ∀ x ∈ a, x < r
+      intro x hx
+      have hx_lt_p : x < p := a.in_lt_not_in hx hpNotA
+      exact lt_trans hx_lt_p hp_lt_r
+    · -- witness: p ∈ OfRat r and p ∉ a
+      refine ⟨p, ?_, hpNotA⟩
+      simpa [OfRat, OfRatDef] using hp_lt_r
+
+  -- show r < b
+  have h_rb : (r : RR) < b := by
+    -- OfRat r < b
+    simp [Real.Cut.lt_def, OfRat, OfRatDef]
+    constructor
+    · -- ∀ x < r, x ∈ b (since r < t and t ∈ b, b is downward closed)
+      intro x hx
+      have hx_lt_t : x < t := lt_trans hx hr_lt_t
+      exact b.lt_then_in htB hx_lt_t
+    · -- witness: t ∈ b and t ∉ OfRat r (since r < t)
+      refine ⟨t, ?_, ?_⟩
+      · exact htB
+      · linarith
+
+  exact ⟨r, h_ar, h_rb⟩
+
+theorem exists_rat_gt {a:RR} : ∃ r:Rat, a < r := by
+  let b := a + 1
+  rcases exists_rat_btwn (a:=a) (b:=b) (by linarith) with ⟨ r, hr⟩
+  use r
+  exact hr.left
+
+
+theorem exists_rat_lt {a:RR} : ∃ r:Rat, a > r := by
+  let b := a - 1
+  rcases exists_rat_btwn (a:=b) (b:=a) (by linarith) with ⟨ r, hr⟩
+  use r
+  exact hr.right
+
+
+theorem ofRat_add_mul {a b:Rat} {r:RR} : OfRat (a + b) * r = OfRat a * r + OfRat b * r := by
+  rw [← add_mul]
+  rw [← ofRat_add_ofRat_eq]
 
 end Real
 
