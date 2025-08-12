@@ -1,5 +1,6 @@
 import Mathlib
 import Rudin.Chapter1.Field
+import Rudin.Chapter1.OrderedField
 
 namespace Rudin
 
@@ -67,8 +68,6 @@ theorem powNat_sub_powNat_eq {a b:α} {n:Nat} : a^n - b^n = (a - b) * (∑ x ∈
   rw [← mul_assoc, mul_comm (a:=a-b), mul_assoc]
   rw [← hi]
   ring
-
-
 
 
 

@@ -762,6 +762,32 @@ theorem gtz_powNat_lt_gtz_powNat_iff_lt {x y : α} {n : Nat} (hy : 0 < y) (hn: n
   have h1 := gtz_lt_gtz_then_powNat_gtz_lt (x:=y) (y:=x) (n:=n) hy h hn
   linarith
 
+theorem gez_powNat_le_gez_powNat_iff_le {x y : α} {n : Nat} (hx: 0 ≤ x) (hy : 0 ≤ y) (hn: n > 0)
+  (hxy: x ^ n ≤ y ^ n):
+  x ≤ y := by
+  have hnnz : n ≠ 0 := by linarith
+  rcases le_iff_lt_or_eq.mp hx with hx|hx
+  rcases le_iff_lt_or_eq.mp hy with hy|hy
+  rcases le_iff_lt_or_eq.mp hxy with hxy|hxy
+  apply lt_then_le
+  exact gtz_powNat_lt_gtz_powNat_iff_lt hy hn hxy
+  apply eq_then_le
+  rcases lt_trichotomy (a:=x) (b:=y) with h1|h1|h1
+  have := gtz_lt_gtz_then_powNat_gtz_lt hx h1 hn
+  linarith
+  exact h1
+  have := gtz_lt_gtz_then_powNat_gtz_lt hy h1 hn
+  linarith
+  simp [← hy, hnnz] at hxy
+  rw [← ge_iff_le] at hxy
+  contrapose! hxy
+  exact gtz_then_powNat_gtz hx
+  rw [← hx]
+  linarith
+
+
+
+
 
 -- 1.20 (b)
 theorem lt_then_ex_between {x y:α} (hxy: x < y) : ∃ p, x < p ∧ p < y := by
@@ -774,5 +800,17 @@ theorem lt_then_ex_between {x y:α} (hxy: x < y) : ∃ p, x < p ∧ p < y := by
   rw [← gt_iff_lt]
   rw [Rudin.gt_div_gtz_iff_mul_gt this]
   linarith
+
+
+theorem ltz_add_ltz_then_ltz {x y:α} (hx: x < 0) (hy: y < 0) : x + y < 0 := by
+  exact Right.add_neg hx hy
+
+theorem lez_add_ltz_then_ltz {x y:α} (hx: x ≤ 0) (hy: y < 0) : x + y < 0 := by
+  exact Right.add_neg_of_nonpos_of_neg hx hy
+
+theorem lez_add_lez_then_lez {x y:α} (hx: x ≤ 0) (hy: y ≤ 0) : x + y ≤ 0 := by
+  exact add_nonpos hx hy
+
+
 
 end Rudin

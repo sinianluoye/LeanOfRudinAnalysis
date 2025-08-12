@@ -752,6 +752,7 @@ instance (priority := default - 1) : NonAssocSemiring α where
 
 instance (priority := default - 1) : Semiring α where
 
+
 instance (priority := default - 1) : AddMonoid α where
   nsmul n a := n • a
   nsmul_zero := by exact fun x ↦ zero_smul
@@ -796,6 +797,21 @@ instance (priority := default - 1) : AddCommGroup α where
 instance (priority := default - 1) : Ring α where
 
 instance (priority := default - 1) : CommRing α where
+
+instance (priority := default - 1) : NonUnitalCommRing α where
+
+instance (priority := default - 1) : AddZeroClass α where
+  zero_add a := by simp
+  add_zero a := by simp
+
+instance (priority := default - 1) : MulOneClass α where
+  one_mul a := by simp
+  mul_one a := by simp
+
+instance (priority := default - 1) : NonUnitalNonAssocCommRing α where
+
+instance (priority := default - 1) : NonUnitalNonAssocCommSemiring α where
+
 
 theorem div_assoc {a b c:α} (hb: b ≠ 0) (hc: c ≠ 0): a / b / c = a / (b * c) := by
   rw [Rudin.div_eq_div_iff_mul_eq_mul]
@@ -1004,5 +1020,7 @@ theorem powNat_eq_powInt {a:α} {n:Nat}: a ^ n = a ^ (n:Int) := by
   rw [powInt_def]
   by_cases ha : a = 0
   <;>simp [ha]
+
+
 
 end Rudin

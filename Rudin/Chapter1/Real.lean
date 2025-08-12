@@ -2443,5 +2443,4 @@ theorem ofRat_add_mul {a b:Rat} {r:RR} : OfRat (a + b) * r = OfRat a * r + OfRat
 
 end Real
 
-
 end Rudin

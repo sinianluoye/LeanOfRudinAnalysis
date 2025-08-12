@@ -1,5 +1,6 @@
 import Mathlib
 import Rudin.Chapter1.Real
+import Rudin.Chapter1.FinsetIdentity
 
 #check Complex
 
@@ -92,17 +93,30 @@ theorem add_assoc {x y z: CC} : x + y + z = x + (y + z) := by
   repeat rw [add_def]
   repeat rw [Rudin.add_assoc]
 
+theorem add_re {x y:CC} : (x + y).re = x.re + y.re := by simp [add_def]
+theorem add_im {x y:CC} : (x + y).im = x.im + y.im := by simp [add_def]
+
 instance : Sub Complex where sub x y := ⟨ x.re - y.re, x.im - y.im⟩
 
 theorem sub_def {x y: CC} : x - y = ⟨ x.re - y.re, x.im - y.im⟩ := rfl
+
+theorem sub_re {x y:CC} : (x - y).re = x.re - y.re := by simp [sub_def]
+theorem sub_im {x y:CC} : (x - y).im = x.im - y.im := by simp [sub_def]
 
 instance : Neg Complex where neg x := ⟨ -x.re, -x.im⟩
 
 theorem neg_def {x: CC} : -x = ⟨ -x.re, -x.im⟩ := rfl
 
+theorem neg_re {x:CC} : (-x).re = - (x.re) := by simp [neg_def]
+theorem neg_im {x:CC} : (-x).im = - (x.im) := by simp [neg_def]
+
 instance : Mul Complex where mul x y := ⟨ x.re*y.re - x.im*y.im, x.re*y.im + y.re*x.im⟩
 
 theorem mul_def {x y: CC} : x * y = ⟨ x.re*y.re - x.im*y.im, x.re*y.im + y.re*x.im⟩ := rfl
+
+theorem mul_re {x y:CC} : (x * y).re = x.re*y.re - x.im*y.im := by simp [mul_def]
+theorem mul_im {x y:CC} : (x * y).im = x.re*y.im + y.re*x.im := by simp [mul_def]
+
 
 theorem mul_comm {x y: CC} : x * y = y * x := by
   repeat rw [mul_def]
@@ -311,6 +325,14 @@ theorem ofReal_add_ofReal_eq {a b:RR} : OfReal a + OfReal b = OfReal (a + b) := 
 theorem ofReal_mul_ofReal_eq {a b:RR} : OfReal a * OfReal b = OfReal (a * b) := by
   simp [OfReal, mul_def]
 
+@[simp]
+theorem ofReal_mul_ofReal_re {a b:RR} : (OfReal a * OfReal b).re = a * b := by
+  simp [mul_re]
+
+@[simp]
+theorem ofReal_mul_re {a:RR} {b:CC} : ((OfReal a) * b).re = a * b.re := by
+  simp [mul_re]
+
 -- 1.27
 def I : CC := ⟨ 0, 1 ⟩
 
@@ -325,30 +347,40 @@ theorem complex_add_format {a b:RR} : a + b * I = ⟨ a, b ⟩ := by
 -- 1.30
 def Conjugate (z:CC) : CC := ⟨ z.re, -z.im ⟩
 
-theorem conj_def {z:CC} : Conjugate z = ⟨ z.re, -z.im ⟩ := rfl
+postfix:1024 "ᶜ" => Complex.Conjugate   -- use zᶜ (\^c)
+
+theorem conj_def {z:CC} : zᶜ = ⟨ z.re, -z.im ⟩ := rfl
+
+@[simp]
+theorem conj_conj {z:CC}: zᶜᶜ = z := by
+  simp [conj_def]
 
 -- 1.31 a
-theorem conj_add {z w:CC} : Conjugate (z + w) = Conjugate z + Conjugate w := by
+theorem conj_add {z w:CC} : (z + w)ᶜ = zᶜ + wᶜ := by
   simp [conj_def, add_def]
   ring
 
 -- 1.31 b
-theorem conj_mul {z w:CC} : Conjugate (z * w) = Conjugate z * Conjugate w := by
+theorem conj_mul {z w:CC} : (z * w)ᶜ = zᶜ * wᶜ  := by
   simp [conj_def, mul_def]
   ring
 
 -- 1.31 c
-theorem add_conj {z:CC} : z + Conjugate z = z.re + z.re := by
+theorem add_conj {z:CC} : z + zᶜ = z.re + z.re := by
   simp [conj_def, add_def]
 
-theorem sub_conj {z:CC} : z - Conjugate z = I * (z.im + z.im) := by
+theorem sub_conj {z:CC} : z - zᶜ = I * (z.im + z.im) := by
   simp [conj_def, sub_def, I, mul_def, add_def]
 
 -- 1.31 d
-theorem mul_conj_im_eq_zero {z:CC} : (z * Conjugate z).im = 0 := by
+theorem mul_conj {z:CC} : z * zᶜ = z.re * z.re + z.im * z.im := by
+  simp [conj_def, mul_def, add_def]
+
+theorem mul_conj_im_eq_zero {z:CC} : (z * zᶜ).im = 0 := by
   simp [conj_def, mul_def]
 
-theorem nz_then_mul_conj_re_gtz {z:CC} (hz: z ≠ 0): (z * Conjugate z).re > 0 := by
+
+theorem nz_then_mul_conj_re_gtz {z:CC} (hz: z ≠ 0): (z * zᶜ).re > 0 := by
   simp [conj_def, mul_def]
   rcases nz_iff_re_nz_or_im_nz.mp hz with hz1|hz1
   have h1: z.re ^ 2 > 0 := by exact pow_two_pos_of_ne_zero hz1
@@ -358,19 +390,23 @@ theorem nz_then_mul_conj_re_gtz {z:CC} (hz: z ≠ 0): (z * Conjugate z).re > 0 :
   have h2: z.im ^ 2 > 0 := by exact pow_two_pos_of_ne_zero hz1
   linarith
 
-theorem mul_conj_re_gez {z:CC} : (z * Conjugate z).re ≥ 0 := by
+theorem mul_conj_re_gez {z:CC} : (z * zᶜ).re ≥ 0 := by
   by_cases hz: z = 0
   simp [hz]
   exact lt_then_le (nz_then_mul_conj_re_gtz hz)
 
 @[simp]
-theorem ofReal_conj {r:RR} : Conjugate r = r := by
+theorem conj_ofReal {r:RR} : rᶜ = r := by
   simp [conj_def, OfReal]
 
--- 1.32
-noncomputable def Abs (a:CC) : RR := Sqrt ((a * Conjugate a).re) (mul_conj_re_gez (z:=a))
+@[simp]
+theorem conj_zero : Conjugate 0 = 0 := by
+  simp [conj_def, zero_def]
 
-theorem abs_def {a:CC} : Abs a = Sqrt ((a * Conjugate a).re) (mul_conj_re_gez) := rfl
+-- 1.32
+noncomputable def Abs (a:CC) : RR := Sqrt ((a * aᶜ).re) (mul_conj_re_gez (z:=a))
+
+theorem abs_def {a:CC} : Abs a = Sqrt ((a * aᶜ).re) (mul_conj_re_gez) := rfl
 
 theorem abs_def' {a:CC} : Abs a = Sqrt (a.re*a.re + a.im*a.im) (by
   refine Left.add_nonneg ?_ ?_
@@ -389,6 +425,7 @@ theorem nz_then_abs_gtz {z:CC} (hz: z ≠ 0): Abs z > 0 := by
 @[simp]
 theorem abs_zero : Abs 0 = 0 := by simp [abs_def]
 
+@[simp]
 theorem abs_gez {z:CC} : Abs z ≥ 0 := by
   by_cases hz : z = 0
   apply Rudin.eq_then_le
@@ -396,12 +433,23 @@ theorem abs_gez {z:CC} : Abs z ≥ 0 := by
   apply Rudin.lt_then_le
   exact nz_then_abs_gtz hz
 
+
+@[simp]
+theorem abs_eq_zero_iff_zero {z:CC} : Abs z = 0 ↔ z = 0 := by
+  constructor
+  <;>intro h
+  contrapose! h
+  apply nz_then_abs_gtz at h
+  linarith
+  simp [h]
+
 --1.33 b
-theorem abs_eq_abs_conj {z:CC} : Abs z = Abs (Conjugate z) := by
+@[simp]
+theorem abs_conj {z:CC} :   Abs (zᶜ)  = Abs z := by
   simp [conj_def, abs_def, Rudin.mul_comm]
 
 -- 1.33 c
-theorem abs_mul_eq_mul_abs {z w:CC} : Abs (z * w) = Abs z * Abs w := by
+theorem abs_mul {z w:CC} : Abs (z * w) = Abs z * Abs w := by
   by_cases hz: z = 0
   simp [hz]
   by_cases hw: w = 0
@@ -427,7 +475,234 @@ theorem abs_re_le_abs {z:CC} : Abs z.re ≤ Abs z := by
   simp
   exact mul_self_nonneg z.im
 
+theorem mul_conj_eq_sqr_abs {z:CC} : z * zᶜ = (Abs z) ^ 2 := by
+  simp [abs_def, mul_def, conj_def]
 
+theorem conj_mul_eq_sqr_abs {z:CC} : zᶜ * z = (Abs z) ^ 2 := by
+  simp [Rudin.mul_comm, mul_conj_eq_sqr_abs]
+
+theorem sqr_abs_eq {z:CC} : (Abs z) ^ 2 = (z * zᶜ).re := by
+  simp [abs_def, mul_def, conj_def]
+
+theorem conj_conj_mul_eq {z w:CC} : (zᶜ * w)ᶜ = z * wᶜ := by
+  simp [conj_def, mul_def]
+  ring_nf
+
+theorem mul_conj_add_conj_mul_eq {z w:CC} : (zᶜ * w + z * wᶜ).re = (zᶜ * w).re + (zᶜ * w).re := by
+  simp [conj_def, mul_def, add_def]
+
+theorem ofReal_le_abs_ofReal {r:RR} : r ≤ Abs r := by
+  simp [abs_ofReal]
+  split_ifs with h
+  exact fun ⦃a⦄ a ↦ a
+  simp at h
+  have h1: -r > 0 := by exact Left.neg_pos_iff.mpr h
+  apply lt_then_le
+  exact lt_trans h h1
+
+theorem conj_mul_conj_eq {z w:CC} : (z * wᶜ)ᶜ = zᶜ * w := by
+  simp [conj_def, mul_def]
+  ring
+
+
+-- 1.33 e
+theorem abs_add_le_add_abs {z w:CC}: Abs (z+w) ≤ Abs z + Abs w := by
+  have : (Abs (z + w)) ^ 2 ≤ (Abs z + Abs w) ^ 2 := by
+    rw [sqr_abs_eq (z:=z+w)]
+    simp [conj_add, mul_add, add_mul, add_re, ← sqr_abs_eq]
+    rw [← Rudin.add_assoc]
+    rw [Rudin.add_assoc (a:=Abs z * Abs z) (b:=(z * wᶜ).re)  (c:=((w * zᶜ).re)), ← add_re (x:=z * wᶜ) (y:=(w * zᶜ))]
+    repeat rw [Rudin.mul_add]
+    rw [← Rudin.add_assoc]
+    repeat rw [Rudin.add_assoc (a:= Abs z * Abs z)]
+    simp
+    rw [Rudin.mul_comm, mul_conj_add_conj_mul_eq]
+    repeat rw [← abs_mul]
+    repeat rw [Rudin.mul_comm (b:=z)]
+    ring_nf
+    simp
+    have  h1 : (z * wᶜ).re ≤ Abs ((z * wᶜ).re) := by
+      exact ofReal_le_abs_ofReal
+    have h2 : Abs ((z * wᶜ).re) ≤ Abs (z *wᶜ) := by exact abs_re_le_abs
+    have h3 : Abs (z *wᶜ) = Abs (z * w) := by
+      rw [abs_mul, abs_conj]
+      rw [abs_mul]
+    linarith
+  apply gez_powNat_le_gez_powNat_iff_le at this
+  exact this
+  simp
+  simp
+  refine Left.add_nonneg ?_ ?_
+  simp
+  simp
+  simp
+
+theorem sqr_abs_eq_abs_mul_abs_conj {z:CC} : (Abs z)^2 = Abs z * Abs (zᶜ) := by
+  simp
+
+@[simp]
+theorem conj_neg {z:CC} : (-z)ᶜ = - zᶜ := by
+  simp [conj_def, neg_def]
+
+-- 1.34 cauchy-schwarz
+open Finset in
+theorem sum_re_eq_re_sum {n:Nat} {a:Nat → CC} : ∑ i ∈ range n, (a i).re = re (∑ i ∈ range n, a i) := by
+  have h1 := sum_distribute (p := fun (x:CC) => x.re) (hp := by
+    simp
+    intro x y
+    simp [add_re]
+  ) (n:=n) (a:=a)
+  exact h1.symm
+
+open Finset in
+theorem sum_ofReal_eq_ofReal_sum {n:Nat} {a:Nat → RR} : ∑ i ∈ range n, ((a i) : Complex) = OfReal (∑ i in range n, (a i)) := by
+  have h1 := sum_distribute (p := fun (x:RR) => OfReal x) (hp := by
+    simp
+    intro x y
+    exact Eq.symm ofReal_add_ofReal_eq
+  ) (n:=n) (a:=a)
+  exact h1.symm
+
+open Finset in
+theorem conj_sum_eq_sum_conj {n:Nat} {a:Nat → CC} : (∑ i ∈ range n, (a i))ᶜ = ∑ i ∈ range n, (a i)ᶜ := by
+  have h1 := sum_distribute (p := fun (x:CC) => xᶜ) (hp := by
+    simp
+    intro x y
+    exact conj_add
+  ) (n:=n) (a:=a)
+  exact h1
+
+open Finset in
+theorem sqr_abs_sum_mul_conj_le_mul_sum_sqr_abs {n:Nat} {a b:Nat → CC}:
+  Abs (∑ i ∈ range n, (a i)* (b i)ᶜ) ^ 2 ≤
+  (∑ i ∈ range n, (Abs (a i)) ^ 2) * (∑ i ∈ range n, (Abs (b i)) ^ 2) := by
+  let A := (∑ i ∈ range n, (Abs (a i)) ^ 2)
+  have ha: A = (∑ i ∈ range n, (Abs (a i)) ^ 2) := rfl
+  let B := (∑ i ∈ range n, (Abs (b i)) ^ 2)
+  have hb: B = (∑ i ∈ range n, (Abs (b i)) ^ 2) := rfl
+  let C := ∑ i ∈ range n, (a i)* (b i)ᶜ
+  have hc : C = ∑ i ∈ range n, (a i)* (b i)ᶜ := rfl
+  rw [← ha, ← hb, ← hc]
+  by_cases hb0: B = 0
+  have hb1 := hb0
+  rw [hb] at hb0
+  rw [sum_sqr_eq_zero_iff_eq_zero] at hb0
+  have h1: ∀ i ∈ range n, a i * (b i)ᶜ = 0 := by
+    intro i hi
+    have h2:= hb0 i hi
+    simp at h2
+    rw [h2]
+    simp [conj_zero]
+
+  have h2:C = 0 := by
+    simp [C]
+    rw [Finset.sum_eq_zero]
+    exact h1
+  rw [h2, hb1]
+  simp
+  let t := ∑ i ∈ range n, (Abs (B * (a i) - C * (b i))) ^ 2
+  have ht : t = ∑ i ∈ range n, (Abs (B * (a i) - C * (b i))) ^ 2 := rfl
+  have htz : t ≥ 0 := by
+    rw [ht]
+    refine Finset.sum_nonneg ?_
+    intro i hi
+    exact sqr_gez
+  have hbgez : B ≥ 0 := by
+    rw [hb]
+    apply Finset.sum_nonneg
+    intro i h
+    exact sqr_gez
+  have hbgz : B > 0 := by exact lt_of_le_of_ne hbgez fun a ↦ hb0 (id (Eq.symm a))
+  have : t = B * (A * B - (Abs C)^2) := by
+    rw [ht]
+    have : ∑ i ∈ range n, Abs (↑B * a i - C * b i) ^ 2 = ∑ i ∈ range n, ((B * a i - C * b i) * (B * a i - C * b i)ᶜ).re := by
+      refine func_eq_then_range_sum_eq_range_sum ?_
+      exact fun i a_1 ↦ sqr_abs_eq
+    rw [this]
+    have : ∀ i ∈ range n, (B * a i - C * b i) * (B * a i - C * b i)ᶜ =
+      B^2 *(Abs (a i))^2 - B * Cᶜ * (a i) * (b i)ᶜ - B * C * (a i)ᶜ * (b i) + (Abs C) ^ 2 * (Abs (b i))^2 := by
+      intro i hi
+      simp only [← mul_assoc, Rudin.sub_eq_add_neg, conj_add, mul_add, add_mul, conj_mul]
+      have :  B * a i * (B)ᶜ * (a i)ᶜ =  ↑B ^ 2 * ↑(Abs (a i)) ^ 2 := by
+        rw [Rudin.mul_comm (b:=Bᶜ), ← Rudin.mul_assoc]
+        rw [Rudin.mul_assoc]
+        rw [mul_conj (z:=a i)]
+        rw [Rudin.mul_comm (a:=Bᶜ) (b:=↑B)]
+        rw [mul_conj]
+        simp [ofReal_add_ofReal_eq, ofReal_re, ofReal_im, ofReal_zero, abs_def, mul_conj, ofReal_mul_ofReal_eq]
+      rw [this]
+      repeat rw [Rudin.add_assoc (a:=((B:CC) ^ 2 * Abs (a i) ^ 2 ))]
+      rw [Rudin.add_eq_left_cancel]
+      have : ↑B * a i * (-(C * b i))ᶜ =  -(↑B * Cᶜ * a i * (b i)ᶜ) := by
+        rw [conj_neg, mul_neg, conj_mul]
+        ring_nf
+      rw [this]
+      repeat rw [Rudin.add_assoc (a:=-(↑B * Cᶜ * a i * (b i)ᶜ))]
+      rw [Rudin.add_eq_left_cancel]
+      have : -(C * b i) * (B)ᶜ * (a i)ᶜ = -(↑B * C * (a i)ᶜ * b i) := by
+        simp [conj_ofReal]
+        ring_nf
+      rw [this]
+      rw [Rudin.add_eq_left_cancel]
+      rw [conj_neg, conj_mul, neg_mul_neg, ←mul_assoc]
+      rw [Rudin.mul_comm (a:=C), Rudin.mul_assoc (c:=Cᶜ)]
+      rw [Rudin.mul_comm, ← mul_assoc]
+      rw [Rudin.mul_comm (b:=b i)]
+      simp only [mul_conj_eq_sqr_abs]
+      ring_nf
+    have hsum :
+        ∑ i ∈ range n, ((B * a i - C * b i) * (B * a i - C * b i)ᶜ).re
+          =
+        ∑ i ∈ range n,
+          (B^2 *(Abs (a i))^2 - B * Cᶜ * (a i) * (b i)ᶜ - B * C * (a i)ᶜ * (b i) + (Abs C) ^ 2 * (Abs (b i))^2).re := by
+      refine Finset.sum_congr rfl ?_
+      intro i hi
+      -- 用 congrArg 取实部后 simpa
+      simpa using congrArg Complex.re (this i hi)
+    -- 用得到的求和等式改写
+    rw [hsum]
+    rw [sum_re_eq_re_sum]
+    simp only [Rudin.sub_eq_add_neg, ← sum_add_distribute, add_re, ← mul_sum]
+    have : ∑ i ∈ range n, ((Abs (a i)):Complex) ^ 2 = (A:Complex) := by
+      simp [ha]
+      rw [← sum_ofReal_eq_ofReal_sum]
+      simp [← ofReal_mul_ofReal_eq]
+
+    rw [this]
+    have : ((B:Complex) ^ 2 * (↑A:Complex)).re = B ^ 2 * A := by simp [mul_re]
+    rw [this]
+    rw [Rudin.mul_add]
+    ring_nf
+    rw [Rudin.add_comm (b:=B ^ 2 * A)]
+    repeat rw [Rudin.add_assoc]
+    rw [Rudin.add_eq_left_cancel]
+    simp [sum_neg_distrib, neg_re, ← sum_re_eq_re_sum]
+    repeat rw [← Rudin.add_assoc]
+    simp only [sum_re_eq_re_sum, ← neg_re, ← add_re]
+    have : ∑ i ∈ range n, ↑B * Cᶜ * a i * (b i)ᶜ = B * Cᶜ *  ∑ i ∈ range n, a i * (b i)ᶜ := by
+      rw [mul_sum]
+      ring_nf
+    rw [this, ← hc]
+    have : (∑ i ∈ range n, ↑B * C * (a i)ᶜ * (b i)) = B * C * (∑ i ∈ range n, (a i)ᶜ * b i) := by
+      rw [mul_sum (b:=(B * C))]
+      ring_nf
+    rw [this]
+    have :  ∑ i ∈ range n, (a i)ᶜ * b i = Cᶜ := by simp [hc, conj_sum_eq_sum_conj, conj_mul_conj_eq]
+    rw [this]
+    have : ∑ x ∈ range n, (Abs (b x):Complex) ^ 2 = B := by
+      simp [hb, ← sum_ofReal_eq_ofReal_sum, ofReal_mul_ofReal_eq]
+
+    rw [this]
+    simp only [Rudin.mul_assoc, conj_mul_eq_sqr_abs, mul_conj_eq_sqr_abs]
+    ring_nf
+    simp [neg_re]
+    left
+    simp [pow_two]
+  rw [this] at htz
+  have : A * B - Abs C ^ 2 ≥ 0 := by
+    exact nonneg_of_mul_nonneg_right htz hbgz
+  simp at this
+  linarith
 
 end Complex
 

@@ -1008,5 +1008,10 @@ theorem sqrt_le_iff_le [LeastUpperBoundProperty α] {x y:α} (hx: x ≥ 0) (hy: 
   simp [sqrt_def]
   apply rootNat_le_iff_le
 
+theorem nz_then_sqr_gtz [LeastUpperBoundProperty α] {x:α} (hx: x ≠ 0) : x^2 > 0 := by
+  exact pow_two_pos_of_ne_zero hx
+
+theorem sqr_gez [LeastUpperBoundProperty α] {x:α} : x ^ 2 ≥ 0 := by
+  exact sq_nonneg x
 
 end Rudin
