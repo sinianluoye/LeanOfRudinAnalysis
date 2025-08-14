@@ -1014,4 +1014,24 @@ theorem nz_then_sqr_gtz [LeastUpperBoundProperty α] {x:α} (hx: x ≠ 0) : x^2 
 theorem sqr_gez [LeastUpperBoundProperty α] {x:α} : x ^ 2 ≥ 0 := by
   exact sq_nonneg x
 
+theorem sqrt_gez [LeastUpperBoundProperty α] {x:α} (hx: x ≥ 0): Sqrt x hx ≥ 0 := by
+  have : ∃ y ≥ 0, x = y ^ 2 := by
+    by_cases hxz : x = 0
+    use 0
+    simp
+    exact hxz
+    have hx1 : x > 0 := by
+      exact lt_of_le_of_ne hx fun a ↦ hxz (id (Eq.symm a))
+    have h1:= gtz_then_ex_gtz_rootNat (x:=x) (n:=2) hx1 (by norm_num)
+    rcases h1 with ⟨ y, hy1, hy2⟩
+    use y
+    constructor
+    linarith
+    exact hy2.symm
+  rcases this with ⟨ y, hy1, hy2⟩
+  rcases le_iff_lt_or_eq.mp hy1 with hy1|hy1
+  have h:= sqrt_sqr_gtz hy1
+  sorry
+
+
 end Rudin
